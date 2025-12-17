@@ -1,0 +1,186 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ENUMS
+
+enum TeamStatus {
+  ACTIVE
+  DISQUALIFIED
+  COMPLETED
+}
+
+enum CheckpointStatus {
+  PENDING
+  APPROVED
+  FAILED
+}
+
+enum QuestionType {
+  NORMAL
+  SNAKE_DODGE
+}
+
+enum QuestionStatus {
+  PENDING
+  CORRECT
+  INCORRECT
+}
+
+enum BoardRuleType {
+  SNAKE
+  LADDER
+}
+
+// LOGIN TABLES 
+
+model ParticipantLogin {
+  id        String   @id @default(uuid())
+  teamId    String   @unique
+  password  String
+  createdAt DateTime @default(now())
+
+  team      Team     @relation(fields: [teamId], references: [id])
+}
+
+model AdminLogin {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  password  String
+  createdAt DateTime @default(now())
+}
+
+model SuperAdminLogin {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  password  String
+  createdAt DateTime @default(now())
+}
+
+// TEAM MANAGEMENT
+
+model Team {
+  id              String     @id @default(uuid())
+  teamCode        String     @unique
+  teamName        String
+  currentPosition Int        @default(1)
+  currentRoom     Int        @default(1)
+  totalTimeSec    Int        @default(0)
+  status          TeamStatus @default(ACTIVE)
+  canRollDice     Boolean    @default(true)
+  
+  members         TeamMember[]
+  checkpoints     Checkpoint[]
+  diceRolls       DiceRoll[]
+  timeLogs        TimeLog[]
+  login           ParticipantLogin?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model TeamMember {
+  id     String @id @default(uuid())
+  teamId String
+  name   String
+
+  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+}
+
+// GAME FLOW
+
+model DiceRoll {
+  id           String   @id @default(uuid())
+  teamId       String
+  value        Int
+  positionFrom Int
+  positionTo   Int
+  roomAssigned Int
+  createdAt    DateTime @default(now())
+
+  team         Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+}
+
+model Checkpoint {
+  id               String           @id @default(uuid())
+  teamId           String
+  checkpointNumber Int
+  positionBefore   Int
+  positionAfter    Int
+  roomNumber       Int
+  status           CheckpointStatus @default(PENDING)
+  isSnakePosition  Boolean          @default(false)
+  snakeDodgeAttempted Boolean       @default(false)
+
+  questionAssign   QuestionAssignment?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  team             Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, checkpointNumber])
+}
+
+// QUESTION ENGINE
+
+model Question {
+  id          String       @id @default(uuid())
+  text        String
+  difficulty  Int          @default(1)
+  type        QuestionType @default(NORMAL)
+  isActive    Boolean      @default(true)
+
+  assignments QuestionAssignment[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model QuestionAssignment {
+  id           String         @id @default(uuid())
+  checkpointId String         @unique
+  questionId   String
+  status       QuestionStatus @default(PENDING)
+  assignedAt   DateTime       @default(now())
+  answeredAt   DateTime?
+
+  checkpoint   Checkpoint @relation(fields: [checkpointId], references: [id], onDelete: Cascade)
+  question     Question   @relation(fields: [questionId], references: [id])
+}
+
+// BOARD RULES (SNAKES & LADDERS)
+
+model BoardRule {
+  id       String        @id @default(uuid())
+  type     BoardRuleType
+  startPos Int           @unique
+  endPos   Int
+}
+
+// TIMER & PENALTIES
+
+model TimeLog {
+  id        String   @id @default(uuid())
+  teamId    String
+  seconds   Int
+  reason    String
+  createdAt DateTime @default(now())
+
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+}
+
+// AUDIT LOG
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  actor     String
+  action    String
+  target    String
+  details   String?
+  createdAt DateTime @default(now())
+}

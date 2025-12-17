@@ -1,6 +1,5 @@
-/**
- * Standard API Response Utilities
- */
+  //Standard API Response Utilities
+ 
 
 const sendSuccess = (res, data = null, message = 'Success', statusCode = 200) => {
   return res.status(statusCode).json({

@@ -1,9 +1,9 @@
 const { MESSAGES } = require('../config/constants');
 const { sendError } = require('../utils/response.util');
 
-/**
- * Global error handler middleware
- */
+
+//Global error handler middleware
+ 
 const errorHandler = (err, req, res, next) => {
   console.error('Error:', err);
 
@@ -37,9 +37,7 @@ const errorHandler = (err, req, res, next) => {
   return sendError(res, message, statusCode);
 };
 
-/**
- * 404 Not Found handler
- */
+//404 Not Found handler
 const notFoundHandler = (req, res) => {
   return sendError(res, `Route ${req.originalUrl} not found`, 404);
 };

@@ -1,7 +1,4 @@
-
-
-
- // Convert seconds to human readable format (HH:MM:SS)
+// Convert seconds to human readable format (HH:MM:SS)
  
 const formatTime = (totalSeconds) => {
   const hours = Math.floor(totalSeconds / 3600);

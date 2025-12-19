@@ -18,7 +18,7 @@ router.use('/questions', questionRoutes);
 // API info
 router.get('/', (req, res) => {
   res.json({
-    message: 'Snakes & Ladders Tech Quest API',
+    message: 'Snakes & Ladders API',
     version: '1.0.0',
     endpoints: {
       auth: '/api/auth',

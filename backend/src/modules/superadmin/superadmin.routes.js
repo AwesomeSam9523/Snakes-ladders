@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const superadminController = require('./superadmin.controller');
-const { verifyToken } = require('../auth/auth.service');
+const { verifyToken } = require('../../middlewares/session.middleware');
 const { superadminOnly } = require('../../middlewares/role.middleware');
 
 // Apply authentication and superadmin check to all routes

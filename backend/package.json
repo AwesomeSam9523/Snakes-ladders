@@ -4,12 +4,14 @@
   "description": "Backend for Snakes & Ladders Tech Quest Game",
   "main": "src/server.js",
   "scripts": {
+    "dev": "node --watch src/server.js",
     "start": "node src/server.js",
-    "dev": "nodemon src/server.js",
-    "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev",
-    "prisma:studio": "prisma studio",
-    "prisma:seed": "node prisma/seed.js"
+    "db:generate": "node node_modules/prisma/build/index.js generate",
+    "db:push": "node node_modules/prisma/build/index.js db push",
+    "db:migrate": "node node_modules/prisma/build/index.js migrate dev",
+    "db:studio": "node node_modules/prisma/build/index.js studio",
+    "db:seed": "node prisma/seed.js",
+    "db:seed-maps": "node prisma/seed-maps.js"
   },
   "keywords": ["snakes", "ladders", "game", "tech-quest"],
   "author": "",

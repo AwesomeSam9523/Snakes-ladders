@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const questionController = require('./question.controller');
-const { verifyToken } = require('../auth/auth.service');
+const { verifyToken } = require('../../middlewares/session.middleware');
 const { adminOnly, superadminOnly } = require('../../middlewares/role.middleware');
 
 // Apply authentication to all routes

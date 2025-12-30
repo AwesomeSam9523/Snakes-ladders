@@ -1,0 +1,11 @@
+{
+    "assignmentId": "qa_assignment_456",
+    "question": {
+      "id": "q_question_789",
+      "text": "Implement a function to find the longest palindromic substring in a given string. What is the optimal time complexity?",
+      "difficulty": "HARD",
+      "type": "CODE"
+    },
+    "isSnakeDodge": false
+  }
+  

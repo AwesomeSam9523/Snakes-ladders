@@ -1,0 +1,19 @@
+{
+    "diceRoll": {
+      "id": "roll_abc123",
+      "value": 4,
+      "positionFrom": 15,
+      "positionTo": 19
+    },
+    "checkpoint": {
+      "id": "cp_xyz789",
+      "roomNumber": 12,
+      "status": "PENDING",
+      "isSnakePosition": false
+    },
+    "team": {
+      "canRollDice": false,
+      "currentPosition": 19
+    }
+  }
+  

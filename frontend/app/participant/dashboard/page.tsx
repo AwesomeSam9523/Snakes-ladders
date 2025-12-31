@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 
 import { Header } from "@/components/participant/header"
 import { StatusStrip } from "@/components/participant/status-strip"
@@ -10,7 +11,6 @@ import { TeamsList } from "@/components/participant/teams-list"
 import { QuestionPanel } from "@/components/participant/question-panel"
 import { Toaster } from "@/components/ui/toaster"
 import { useToast } from "@/hooks/use-toast"
-import { mockTeamStatus } from "@/lib/mock-data"
 
 /* ---------- TYPES ---------- */
 
@@ -39,14 +39,67 @@ export type GameStatus =
 /* ---------- COMPONENT ---------- */
 
 export default function ParticipantDashboard() {
-  const [teamData, setTeamData] = useState<TeamData>(mockTeamStatus)
+  const router = useRouter()
+  const [teamData, setTeamData] = useState<TeamData>({
+    teamId: "",
+    currentPosition: 1,
+    currentRoom: null,
+    canRollDice: true,
+    totalTimeSec: 0,
+  })
   const [gameStatus, setGameStatus] = useState<GameStatus>("IDLE")
   const [currentCheckpoint, setCurrentCheckpoint] = useState<any>(null)
   const [questionData, setQuestionData] = useState<any>(null)
   const [teams, setTeams] = useState<LeaderboardTeam[]>([])
+  const [loading, setLoading] = useState(true)
   const { toast } = useToast()
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+
+  // Fetch team's own data from backend
+  const fetchTeamData = async () => {
+    try {
+      const token = localStorage.getItem("token")
+      const username = localStorage.getItem("username")
+      
+      if (!token) {
+        router.push("/login")
+        return
+      }
+
+      // Set teamId from localStorage (username is the Team ID like "TEAM001")
+      setTeamData(prev => ({
+        ...prev,
+        teamId: username || localStorage.getItem("teamCode") || "",
+      }))
+
+      // Fetch team state from backend
+      const res = await fetch(`${API_URL}/participant/state`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      
+      if (res.ok) {
+        const data = await res.json()
+        if (data.data) {
+          setTeamData(prev => ({
+            ...prev,
+            currentPosition: data.data.currentPosition || 1,
+            currentRoom: data.data.currentRoom || null,
+            canRollDice: data.data.canRollDice ?? true,
+            totalTimeSec: data.data.totalTimeSec || 0,
+          }))
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching team data:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Fetch leaderboard teams from backend
   const fetchTeams = async () => {
     try {
       const token = localStorage.getItem("token")
@@ -58,9 +111,8 @@ export default function ParticipantDashboard() {
       if (res.ok) {
         const data = await res.json()
         if (data.data) {
-          // Map the API response to the format TeamsList expects
           setTeams(data.data.map((t: any) => ({
-            id: t.teamName || t.teamId || t.id,
+            id: t.teamId || t.teamName || t.id,
             position: t.currentPosition || 1,
           })))
         }
@@ -71,11 +123,19 @@ export default function ParticipantDashboard() {
   }
 
   useEffect(() => {
+    const userRole = localStorage.getItem("userRole")
+    if (userRole !== "participant" && userRole !== "PARTICIPANT") {
+      router.push("/login")
+      return
+    }
+    
+    fetchTeamData()
     fetchTeams()
+    
     // Refresh leaderboard every 30 seconds
     const interval = setInterval(fetchTeams, 30000)
     return () => clearInterval(interval)
-  }, [])
+  }, [router])
 
   /* ---------- TIMER ---------- */
   useEffect(() => {
@@ -160,6 +220,14 @@ export default function ParticipantDashboard() {
   }
 
   /* ---------- UI ---------- */
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-gray-600">Loading...</p>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen flex flex-col">

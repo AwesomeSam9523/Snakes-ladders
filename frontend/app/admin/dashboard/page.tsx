@@ -24,6 +24,7 @@ interface Team {
   id: string
   teamCode: string
   teamName: string
+  teamId?: string  // User's username like "TEAM001"
   members: Array<{ name: string }>
   currentPosition: number
   currentRoom: number
@@ -63,7 +64,10 @@ export default function AdminDashboard() {
       if (res.ok) {
         const data = await res.json()
         if (data.data) {
-          setTeams(data.data)
+          setTeams(data.data.map((t: any) => ({
+            ...t,
+            teamId: t.user?.username || t.teamCode,
+          })))
         }
       }
     } catch (error) {
@@ -202,9 +206,9 @@ export default function AdminDashboard() {
 
   const filteredTeams = teams.filter(
     (team) =>
-      team.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      team.teamCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      team.teamName.toLowerCase().includes(searchQuery.toLowerCase())
+      (team.teamId || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (team.teamCode || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (team.teamName || '').toLowerCase().includes(searchQuery.toLowerCase())
   )
 
   return (
@@ -234,12 +238,12 @@ export default function AdminDashboard() {
               <div key={team.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
                   <div>
-                    <p className="text-xs text-gray-600 uppercase">Team Name</p>
-                    <p className="font-bold text-gray-900">{team.teamName}</p>
+                    <p className="text-xs text-gray-600 uppercase">Team ID</p>
+                    <p className="font-bold text-gray-900">{team.teamId || team.teamCode || 'N/A'}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-600 uppercase">Team Code</p>
-                    <p className="font-bold text-gray-900">{team.teamCode}</p>
+                    <p className="text-xs text-gray-600 uppercase">Team Name</p>
+                    <p className="font-bold text-gray-900">{team.teamName}</p>
                   </div>
                   <div>
                     <p className="text-xs text-gray-600 uppercase">Position</p>
@@ -364,7 +368,7 @@ export default function AdminDashboard() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4" style={{ zIndex: 9999 }}>
           <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
             <h3 className="text-lg font-bold text-gray-900 mb-4">
-              Assign Question to {selectedTeam.teamName} - Checkpoint #{selectedCheckpoint.checkpointNumber}
+              Assign Question to {selectedTeam.teamId || selectedTeam.teamName} - Checkpoint #{selectedCheckpoint.checkpointNumber}
             </h3>
 
             <div className="space-y-4">

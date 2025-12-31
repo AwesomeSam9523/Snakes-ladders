@@ -1,6 +1,6 @@
 const participantService = require('./participant.service');
 const { processDiceRoll } = require('../game/dice.service');
-const { getLeaderboard } = require('../leaderboard/leaderboard.service');
+const { getGlobalLeaderboard } = require('../leaderboard/leaderboard.service');
 const { sendSuccess, sendError, sendBadRequest } = require('../../utils/response.util');
 const { MESSAGES } = require('../../config/constants');
 
@@ -67,7 +67,7 @@ const getBoard = async (req, res, next) => {
 
 const getLeaderboardData = async (req, res, next) => {
   try {
-    const leaderboard = await getLeaderboard();
+    const leaderboard = await getGlobalLeaderboard();
     return sendSuccess(res, leaderboard, 'Leaderboard loaded');
   } catch (error) {
     next(error);

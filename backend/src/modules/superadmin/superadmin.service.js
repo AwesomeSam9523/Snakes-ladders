@@ -190,6 +190,11 @@ const getAllTeamsWithDetails = async () => {
   return await prisma.team.findMany({
     include: {
       members: true,
+      user: {
+        select: {
+          username: true,
+        },
+      },
       checkpoints: {
         orderBy: { checkpointNumber: 'desc' },
         include: {

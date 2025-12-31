@@ -8,6 +8,7 @@ interface Team {
   id: string
   teamCode?: string
   teamName?: string
+  teamId?: string  
   members: string[]
   currentPosition: number
   currentRoom: number
@@ -135,6 +136,7 @@ export default function SuperAdminDashboard() {
             id: t.id,
             teamCode: t.teamCode,
             teamName: t.teamName,
+            teamId: t.user?.username || t.teamCode, // Use username as TEAM ID (e.g., "TEAM001")
             members: t.members?.map((m: any) => m.name) || [],
             currentPosition: t.currentPosition || 1,
             currentRoom: t.currentRoom || 1,
@@ -202,10 +204,12 @@ export default function SuperAdminDashboard() {
       ...teams,
       {
         id: newTeamId,
+        teamId: newTeamId,
         members: newTeamMembers.split(",").map((m) => m.trim()),
         currentPosition: 1,
         currentRoom: 0,
         totalTime: 0,
+        points: 0,
         disqualified: false,
         checkpoints: [],
       },
@@ -351,7 +355,7 @@ export default function SuperAdminDashboard() {
                   {leaderboard.map((team, idx) => (
                     <tr key={team.id} className="hover:bg-gray-50">
                       <td className="px-4 py-3 text-sm text-gray-900 font-bold">{idx + 1}</td>
-                      <td className="px-4 py-3 text-sm text-gray-900">{team.teamName || team.teamCode || team.id}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900">{team.teamId || team.teamCode || team.teamName || 'Unknown'}</td>
                       <td className="px-4 py-3 text-sm text-gray-900">{team.currentPosition}</td>
                       <td className="px-4 py-3 text-sm text-gray-900">{team.points}</td>
                       <td className="px-4 py-3 text-sm text-gray-900">{team.totalTime}</td>
@@ -389,7 +393,11 @@ export default function SuperAdminDashboard() {
 
             <div className="space-y-3">
               {teams
-                .filter((team) => team.id.toLowerCase().includes(searchQuery.toLowerCase()))
+                .filter((team) => 
+                  (team.teamId || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                  (team.teamCode || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                  (team.teamName || '').toLowerCase().includes(searchQuery.toLowerCase())
+                )
                 .map((team) => (
                 <div
                   key={team.id}
@@ -399,8 +407,8 @@ export default function SuperAdminDashboard() {
                 >
                   <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-3">
                     <div>
-                      <p className="text-xs text-gray-600 uppercase">Team Code</p>
-                      <p className="font-bold text-gray-900">{team.teamCode || team.id}</p>
+                      <p className="text-xs text-gray-600 uppercase">Team ID</p>
+                      <p className="font-bold text-gray-900">{team.teamId || team.teamCode || 'N/A'}</p>
                     </div>
                     <div>
                       <p className="text-xs text-gray-600 uppercase">Team Name</p>
@@ -488,7 +496,7 @@ export default function SuperAdminDashboard() {
                     <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded">
                       <p className="text-sm text-green-800 mb-1">
                         <span className="font-medium">Login Username:</span>{" "}
-                        <span className="font-mono font-bold">{team.teamCode || team.id}</span>
+                        <span className="font-mono font-bold">{team.teamId || team.teamCode || 'N/A'}</span>
                       </p>
                       <p className="text-sm text-green-800 flex justify-between items-center">
                         <span>

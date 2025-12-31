@@ -10,7 +10,7 @@ import { TeamsList } from "@/components/participant/teams-list"
 import { QuestionPanel } from "@/components/participant/question-panel"
 import { Toaster } from "@/components/ui/toaster"
 import { useToast } from "@/hooks/use-toast"
-import { mockTeamStatus, mockTeams } from "@/lib/mock-data"
+import { mockTeamStatus } from "@/lib/mock-data"
 
 /* ---------- TYPES ---------- */
 
@@ -20,6 +20,11 @@ interface TeamData {
   currentRoom: number | null
   canRollDice: boolean
   totalTimeSec: number
+}
+
+interface LeaderboardTeam {
+  id: string
+  position: number
 }
 
 export type GameStatus =
@@ -38,7 +43,39 @@ export default function ParticipantDashboard() {
   const [gameStatus, setGameStatus] = useState<GameStatus>("IDLE")
   const [currentCheckpoint, setCurrentCheckpoint] = useState<any>(null)
   const [questionData, setQuestionData] = useState<any>(null)
+  const [teams, setTeams] = useState<LeaderboardTeam[]>([])
   const { toast } = useToast()
+
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+  const fetchTeams = async () => {
+    try {
+      const token = localStorage.getItem("token")
+      const res = await fetch(`${API_URL}/participant/leaderboard`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      if (res.ok) {
+        const data = await res.json()
+        if (data.data) {
+          // Map the API response to the format TeamsList expects
+          setTeams(data.data.map((t: any) => ({
+            id: t.teamName || t.teamId || t.id,
+            position: t.currentPosition || 1,
+          })))
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching teams:", error)
+    }
+  }
+
+  useEffect(() => {
+    fetchTeams()
+    // Refresh leaderboard every 30 seconds
+    const interval = setInterval(fetchTeams, 30000)
+    return () => clearInterval(interval)
+  }, [])
 
   /* ---------- TIMER ---------- */
   useEffect(() => {
@@ -151,7 +188,7 @@ export default function ParticipantDashboard() {
               teamId={teamData.teamId}
             />
 
-            <TeamsList teams={mockTeams} />
+            <TeamsList teams={teams} />
           </div>
 
           {/* Right column */}

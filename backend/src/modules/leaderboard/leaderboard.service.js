@@ -5,15 +5,21 @@ const { GAME_CONFIG } = require('../../config/constants');
 const getGlobalLeaderboard = async () => {
   const teams = await prisma.team.findMany({
     where: {
-      isDisqualified: false,
+      status: { not: 'DISQUALIFIED' },
     },
     select: {
       id: true,
+      teamCode: true,
       teamName: true,
       currentPosition: true,
-      totalTimeTaken: true,
-      roomNumber: true,
+      totalTimeSec: true,
+      currentRoom: true,
       members: true,
+      user: {
+        select: {
+          username: true,
+        },
+      },
       checkpoints: {
         where: { status: 'APPROVED' },
         select: { id: true },
@@ -21,17 +27,18 @@ const getGlobalLeaderboard = async () => {
     },
     orderBy: [
       { currentPosition: 'desc' },
-      { totalTimeTaken: 'asc' },
+      { totalTimeSec: 'asc' },
     ],
   });
 
   return teams.map((team, index) => ({
     rank: index + 1,
     id: team.id,
+    teamId: team.user?.username || team.teamCode,
     teamName: team.teamName,
     currentPosition: team.currentPosition,
-    totalTimeTaken: team.totalTimeTaken,
-    roomNumber: team.roomNumber,
+    totalTimeSec: team.totalTimeSec,
+    currentRoom: team.currentRoom,
     membersCount: team.members.length,
     checkpointsCompleted: team.checkpoints.length,
     progress: Math.round((team.currentPosition / GAME_CONFIG.BOARD_SIZE) * 100),
@@ -42,15 +49,21 @@ const getGlobalLeaderboard = async () => {
 const getRoomLeaderboard = async (roomNumber) => {
   const teams = await prisma.team.findMany({
     where: {
-      roomNumber,
-      isDisqualified: false,
+      currentRoom: roomNumber,
+      status: { not: 'DISQUALIFIED' },
     },
     select: {
       id: true,
+      teamCode: true,
       teamName: true,
       currentPosition: true,
-      totalTimeTaken: true,
+      totalTimeSec: true,
       members: true,
+      user: {
+        select: {
+          username: true,
+        },
+      },
       checkpoints: {
         where: { status: 'APPROVED' },
         select: { id: true },
@@ -58,16 +71,17 @@ const getRoomLeaderboard = async (roomNumber) => {
     },
     orderBy: [
       { currentPosition: 'desc' },
-      { totalTimeTaken: 'asc' },
+      { totalTimeSec: 'asc' },
     ],
   });
 
   return teams.map((team, index) => ({
     rank: index + 1,
     id: team.id,
+    teamId: team.user?.username || team.teamCode,
     teamName: team.teamName,
     currentPosition: team.currentPosition,
-    totalTimeTaken: team.totalTimeTaken,
+    totalTimeSec: team.totalTimeSec,
     membersCount: team.members.length,
     checkpointsCompleted: team.checkpoints.length,
     progress: Math.round((team.currentPosition / GAME_CONFIG.BOARD_SIZE) * 100),

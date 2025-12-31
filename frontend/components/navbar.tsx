@@ -12,13 +12,16 @@ export function Navbar({ role }: NavbarProps) {
   const [userName, setUserName] = useState("")
 
   useEffect(() => {
-    const userId = localStorage.getItem("userId")
-    setUserName(userId || "")
+    // Use username (like "TEAM001" or "admin1") instead of userId (UUID)
+    const username = localStorage.getItem("username")
+    setUserName(username || "")
   }, [])
 
   const handleLogout = () => {
     localStorage.removeItem("userRole")
     localStorage.removeItem("userId")
+    localStorage.removeItem("username")
+    localStorage.removeItem("token")
     router.push("/login")
   }
 

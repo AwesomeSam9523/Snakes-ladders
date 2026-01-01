@@ -41,111 +41,181 @@ const AUDIT_ACTIONS = {
   GAME_ENDED: 'GAME_ENDED',
 };
 
+// Map action to user-friendly description
+const getActionDescription = (action, details) => {
+  const detailsObj = typeof details === 'string' ? JSON.parse(details || '{}') : (details || {});
+  
+  switch (action) {
+    case AUDIT_ACTIONS.LOGIN:
+      return 'Login';
+    case AUDIT_ACTIONS.LOGOUT:
+      return 'Logout';
+    case AUDIT_ACTIONS.LOGIN_FAILED:
+      return 'Login Failed';
+    case AUDIT_ACTIONS.TEAM_CREATED:
+      return 'Create';
+    case AUDIT_ACTIONS.TEAM_DISQUALIFIED:
+      return 'Update';
+    case AUDIT_ACTIONS.TEAM_REINSTATED:
+      return 'Update';
+    case AUDIT_ACTIONS.CHECKPOINT_APPROVED:
+      return 'Update';
+    case AUDIT_ACTIONS.QUESTION_ASSIGNED:
+      return 'Update';
+    case AUDIT_ACTIONS.DICE_ROLLED:
+      return 'Update';
+    default:
+      return action;
+  }
+};
+
 // Log an audit event
 const logAudit = async ({
   action,
-  userId = null,
-  teamId = null,
-  targetId = null,
-  targetType = null,
+  actor,
+  actorRole = 'participant',
+  target = '',
   details = {},
-  ipAddress = null,
-  userAgent = null,
 }) => {
   try {
-    // For now, just log to console since we don't have an AuditLog table
-    const auditEntry = {
-      timestamp: new Date().toISOString(),
-      action,
-      userId,
-      teamId,
-      targetId,
-      targetType,
-      details,
-      ipAddress,
-      userAgent,
-    };
+    const detailsStr = typeof details === 'object' ? JSON.stringify(details) : details;
     
-    console.log('[AUDIT]', JSON.stringify(auditEntry));
+    const auditEntry = await prisma.auditLog.create({
+      data: {
+        actor,
+        action,
+        target,
+        details: detailsStr,
+      },
+    });
+    
+    console.log('[AUDIT]', action, actor, target);
     return auditEntry;
   } catch (error) {
     console.error('Failed to log audit event:', error);
     return null;
   }
 };
-const logLogin = async (userId, role, ipAddress, userAgent, success = true) => {
+const logLogin = async (actor, role, success = true) => {
   return logAudit({
     action: success ? AUDIT_ACTIONS.LOGIN : AUDIT_ACTIONS.LOGIN_FAILED,
-    userId,
-    details: { role, success },
-    ipAddress,
-    userAgent,
+    actor,
+    actorRole: role,
+    target: '',
+    details: { role, success, message: success ? `${role} logged in` : `${role} login failed` },
   });
 };
-const logLogout = async (userId, ipAddress) => {
+
+const logLogout = async (actor, role) => {
   return logAudit({
     action: AUDIT_ACTIONS.LOGOUT,
-    userId,
-    ipAddress,
+    actor,
+    actorRole: role,
+    target: '',
+    details: { role, message: `${role} logged out` },
   });
 };
 
 // Log dice roll
-const logDiceRoll = async (teamId, diceValue, fromPosition, toPosition) => {
+const logDiceRoll = async (actor, teamName, diceValue, fromPosition, toPosition) => {
   return logAudit({
     action: AUDIT_ACTIONS.DICE_ROLLED,
-    teamId,
-    details: { diceValue, fromPosition, toPosition },
+    actor,
+    actorRole: 'participant',
+    target: teamName,
+    details: { diceValue, fromPosition, toPosition, message: `Team ${teamName} rolled ${diceValue}, moved from ${fromPosition} to ${toPosition}` },
   });
 };
 
 // Log checkpoint event
-const logCheckpoint = async (teamId, checkpointId, action, details = {}) => {
+const logCheckpoint = async (actor, actorRole, teamName, checkpointPos, action) => {
   return logAudit({
     action,
-    teamId,
-    targetId: checkpointId,
-    targetType: 'CHECKPOINT',
-    details,
+    actor,
+    actorRole,
+    target: teamName,
+    details: { checkpointPos, message: `Checkpoint at position ${checkpointPos} for ${teamName}` },
   });
 };
 
 // Log question event
-const logQuestionEvent = async (teamId, questionId, action, details = {}) => {
+const logQuestionEvent = async (actor, actorRole, teamName, questionId, action) => {
   return logAudit({
     action,
-    teamId,
-    targetId: questionId,
-    targetType: 'QUESTION',
+    actor,
+    actorRole,
+    target: teamName,
+    details: { questionId, message: `Question ${questionId} for ${teamName}` },
+  });
+};
+
+const logAdminAction = async (actor, actorRole, action, target, details = {}) => {
+  return logAudit({
+    action,
+    actor,
+    actorRole,
+    target,
     details,
   });
 };
-const logAdminAction = async (adminId, action, targetId, targetType, details = {}) => {
+
+// Log team creation
+const logTeamCreated = async (actor, teamName) => {
   return logAudit({
-    action,
-    userId: adminId,
-    targetId,
-    targetType,
-    details,
+    action: AUDIT_ACTIONS.TEAM_CREATED,
+    actor,
+    actorRole: 'superadmin',
+    target: teamName,
+    details: { message: `Created new team ${teamName}` },
   });
 };
 
 // Get audit logs for a team
-const getTeamAuditLogs = async (teamId, limit = 50) => {
-  console.log(`Fetching audit logs for team: ${teamId}`);
-  return [];
+const getTeamAuditLogs = async (teamName, limit = 50) => {
+  const logs = await prisma.auditLog.findMany({
+    where: {
+      OR: [
+        { actor: teamName },
+        { target: teamName },
+      ],
+    },
+    orderBy: { createdAt: 'desc' },
+    take: limit,
+  });
+  return logs;
 };
 
 // Get audit logs for a user
-const getUserAuditLogs = async (userId, limit = 50) => {
-  console.log(`Fetching audit logs for user: ${userId}`);
-  return [];
+const getUserAuditLogs = async (username, limit = 50) => {
+  const logs = await prisma.auditLog.findMany({
+    where: { actor: username },
+    orderBy: { createdAt: 'desc' },
+    take: limit,
+  });
+  return logs;
 };
 
 // Get all audit logs (for superadmin)
-const getAllAuditLogs = async (filters = {}, limit = 100) => {
-  console.log('Fetching all audit logs with filters:', filters);
-  return [];
+const getAllAuditLogs = async (limit = 100) => {
+  const logs = await prisma.auditLog.findMany({
+    orderBy: { createdAt: 'desc' },
+    take: limit,
+  });
+  
+  // Transform logs to match frontend expected format
+  return logs.map(log => {
+    const details = log.details ? (typeof log.details === 'string' ? JSON.parse(log.details) : log.details) : {};
+    const role = details.role || 'participant';
+    
+    return {
+      id: log.id,
+      userId: log.actor,
+      userRole: role,
+      action: getActionDescription(log.action, details),
+      details: details.message || log.target || log.action,
+      timestamp: log.createdAt.toISOString().replace('T', ' ').substring(0, 19),
+    };
+  });
 };
 
 module.exports = {
@@ -157,7 +227,9 @@ module.exports = {
   logCheckpoint,
   logQuestionEvent,
   logAdminAction,
+  logTeamCreated,
   getTeamAuditLogs,
   getUserAuditLogs,
   getAllAuditLogs,
+  getActionDescription,
 };

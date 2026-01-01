@@ -53,5 +53,8 @@ router.post('/board/snakes', superadminController.addSnake);
 // Remove snake
 router.delete('/board/snakes/:snakeId', superadminController.removeSnake);
 
+// Get audit logs
+router.get('/audit-logs', superadminController.getAuditLogs);
+
 module.exports = router;
 

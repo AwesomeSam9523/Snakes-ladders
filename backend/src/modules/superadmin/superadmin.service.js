@@ -2,6 +2,7 @@ const prisma = require('../../prisma/client');
 const { hashPassword } = require('../../utils/password.util');
 const { generateTeamCode } = require('../../utils/random.util');
 const { GAME_CONFIG, ROOMS } = require('../../config/constants');
+const { logTeamCreated } = require('../audit/audit.service');
 
 // Create team with User entry for login
 const createTeam = async (teamName, members, password) => {
@@ -33,6 +34,9 @@ const createTeam = async (teamName, members, password) => {
       teamId: team.id,
     },
   });
+
+  // Log team creation
+  await logTeamCreated('superadmin', teamName);
 
   return { 
     ...team, 

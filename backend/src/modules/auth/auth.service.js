@@ -2,6 +2,7 @@ const prisma = require('../../prisma/client');
 const { hashPassword, comparePassword } = require('../../utils/password.util');
 const { generateToken } = require('../../middlewares/session.middleware');
 const { ROLES } = require('../../config/constants');
+const { logLogin } = require('../audit/audit.service');
 
 // login for all user types (only database users)
 const login = async (username, password) => {
@@ -23,6 +24,8 @@ const login = async (username, password) => {
 
   const isValidPassword = await comparePassword(password, user.password);
   if (!isValidPassword) {
+    // Log failed login attempt
+    await logLogin(username, 'unknown', false);
     throw new Error('Invalid credentials');
   }
 
@@ -30,6 +33,9 @@ const login = async (username, password) => {
   if (user.role === 'PARTICIPANT' && user.team?.status === 'DISQUALIFIED') {
     throw new Error('Team has been disqualified');
   }
+
+  // Log successful login
+  await logLogin(user.username, user.role.toLowerCase(), true);
 
   const tokenPayload = {
     userId: user.id,

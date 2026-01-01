@@ -58,64 +58,7 @@ export default function SuperAdminDashboard() {
   const [selectedTeamForEdit, setSelectedTeamForEdit] = useState<string | null>(null)
   const [newRoom, setNewRoom] = useState("")
   const [searchQuery, setSearchQuery] = useState("")
-  const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([
-    {
-      id: "LOG001",
-      userId: "SUPER001",
-      userRole: "superadmin",
-      action: "Login",
-      details: "SuperAdmin logged in",
-      timestamp: "2025-12-17 10:30:00",
-    },
-    {
-      id: "LOG002",
-      userId: "ADMIN001",
-      userRole: "admin",
-      action: "Login",
-      details: "Admin logged in",
-      timestamp: "2025-12-17 10:35:00",
-    },
-    {
-      id: "LOG003",
-      userId: "ADMIN001",
-      userRole: "admin",
-      action: "Update",
-      details: "Approved checkpoint for TEAM001",
-      timestamp: "2025-12-17 10:40:00",
-    },
-    {
-      id: "LOG004",
-      userId: "SUPER001",
-      userRole: "superadmin",
-      action: "Create",
-      details: "Created new team TEAM003",
-      timestamp: "2025-12-17 10:45:00",
-    },
-    {
-      id: "LOG005",
-      userId: "TEAM001",
-      userRole: "participant",
-      action: "Login",
-      details: "Participant TEAM001 logged in",
-      timestamp: "2025-12-17 11:00:00",
-    },
-    {
-      id: "LOG006",
-      userId: "ADMIN001",
-      userRole: "admin",
-      action: "Update",
-      details: "Assigned question Q002 to TEAM002",
-      timestamp: "2025-12-17 11:15:00",
-    },
-    {
-      id: "LOG007",
-      userId: "SUPER001",
-      userRole: "superadmin",
-      action: "Update",
-      details: "Changed room for TEAM001 to Room 3",
-      timestamp: "2025-12-17 11:20:00",
-    },
-  ])
+  const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([])
   const [generatedPasswords, setGeneratedPasswords] = useState<Record<string, string>>({})
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
@@ -152,12 +95,33 @@ export default function SuperAdminDashboard() {
     }
   }
 
+  // Fetch activity logs from backend
+  const fetchActivityLogs = async () => {
+    try {
+      const token = localStorage.getItem("token")
+      const res = await fetch(`${API_URL}/superadmin/audit-logs`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      if (res.ok) {
+        const data = await res.json()
+        if (data.data) {
+          setActivityLogs(data.data)
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching activity logs:", error)
+    }
+  }
+
   useEffect(() => {
     const userRole = localStorage.getItem("userRole")
     if (userRole !== "superadmin") {
       router.push("/login")
     } else {
       fetchTeams()
+      fetchActivityLogs()
     }
   }, [router])
 
@@ -218,8 +182,9 @@ export default function SuperAdminDashboard() {
 
       if (res.ok) {
         const data = await res.json()
-        // Refresh teams list from database
+        // Refresh teams list and activity logs from database
         fetchTeams()
+        fetchActivityLogs()
         
         // Show the generated credentials
         if (data.data) {
@@ -343,7 +308,10 @@ export default function SuperAdminDashboard() {
             Questions
           </button>
           <button
-            onClick={() => setActiveTab("activity")}
+            onClick={() => {
+              setActiveTab("activity")
+              fetchActivityLogs()
+            }}
             className={`px-4 py-2 font-medium transition-colors ${
               activeTab === "activity"
                 ? "text-gray-900 border-b-2 border-gray-900"
@@ -680,8 +648,19 @@ export default function SuperAdminDashboard() {
           <div>
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-bold text-gray-900">Activity Log</h2>
+              <button
+                onClick={fetchActivityLogs}
+                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
+              >
+                Refresh
+              </button>
             </div>
 
+            {activityLogs.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-gray-500">No activity logs yet. Activity will appear here as users interact with the system.</p>
+              </div>
+            ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-100">
@@ -732,6 +711,7 @@ export default function SuperAdminDashboard() {
                 </tbody>
               </table>
             </div>
+            )}
           </div>
         )}
       </main>

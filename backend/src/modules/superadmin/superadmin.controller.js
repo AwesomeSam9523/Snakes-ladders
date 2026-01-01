@@ -1,4 +1,5 @@
 const superadminService = require('./superadmin.service');
+const auditService = require('../audit/audit.service');
 const { sendSuccess, sendError, sendNotFound, sendBadRequest, sendCreated } = require('../../utils/response.util');
 const { MESSAGES } = require('../../config/constants');
 const { generateRandomPassword } = require('../../utils/password.util');
@@ -206,6 +207,16 @@ const getBoardRules = async (req, res, next) => {
   }
 };
 
+const getAuditLogs = async (req, res, next) => {
+  try {
+    const limit = parseInt(req.query.limit) || 100;
+    const logs = await auditService.getAllAuditLogs(limit);
+    return sendSuccess(res, logs, 'Audit logs fetched successfully');
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createTeam,
   updateTeamPassword,
@@ -222,5 +233,6 @@ module.exports = {
   addSnake,
   removeSnake,
   getBoardRules,
+  getAuditLogs,
 };
 

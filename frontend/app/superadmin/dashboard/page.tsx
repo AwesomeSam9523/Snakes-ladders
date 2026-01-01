@@ -197,28 +197,48 @@ export default function SuperAdminDashboard() {
     }
   }
 
-  const handleCreateTeam = () => {
-    if (!newTeamId || !newTeamMembers || !newTeamPassword) return
+  const handleCreateTeam = async () => {
+    if (!newTeamId || !newTeamMembers) return
 
-    setTeams([
-      ...teams,
-      {
-        id: newTeamId,
-        teamId: newTeamId,
-        members: newTeamMembers.split(",").map((m) => m.trim()),
-        currentPosition: 1,
-        currentRoom: 0,
-        totalTime: 0,
-        points: 0,
-        disqualified: false,
-        checkpoints: [],
-      },
-    ])
+    try {
+      const token = localStorage.getItem("token")
+      const members = newTeamMembers.split(",").map((m) => m.trim()).filter(m => m)
+      
+      const res = await fetch(`${API_URL}/superadmin/teams`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          teamName: newTeamId,
+          members: members,
+        }),
+      })
 
-    setNewTeamId("")
-    setNewTeamMembers("")
-    setNewTeamPassword("")
-    setShowNewTeamModal(false)
+      if (res.ok) {
+        const data = await res.json()
+        // Refresh teams list from database
+        fetchTeams()
+        
+        // Show the generated credentials
+        if (data.data) {
+          const team = data.data
+          alert(`Team created successfully!\n\nLogin Username: ${team.loginUsername || team.teamCode}\nPassword: ${team.generatedPassword}\n\nPlease save these credentials!`)
+        }
+        
+        setNewTeamId("")
+        setNewTeamMembers("")
+        setNewTeamPassword("")
+        setShowNewTeamModal(false)
+      } else {
+        const error = await res.json()
+        alert(`Failed to create team: ${error.message || 'Unknown error'}`)
+      }
+    } catch (error) {
+      console.error("Error creating team:", error)
+      alert("Failed to create team. Check if backend is running.")
+    }
   }
 
   const handleAddQuestion = () => {
@@ -724,12 +744,12 @@ export default function SuperAdminDashboard() {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Team ID</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Team Name</label>
                 <input
                   type="text"
                   value={newTeamId}
                   onChange={(e) => setNewTeamId(e.target.value)}
-                  placeholder="TEAM001"
+                  placeholder="Team Alpha"
                   className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-gray-600 focus:ring-1 focus:ring-gray-600"
                 />
               </div>
@@ -740,21 +760,14 @@ export default function SuperAdminDashboard() {
                   type="text"
                   value={newTeamMembers}
                   onChange={(e) => setNewTeamMembers(e.target.value)}
-                  placeholder="Member1, Member2"
+                  placeholder="John Doe, Jane Smith"
                   className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-gray-600 focus:ring-1 focus:ring-gray-600"
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
-                <input
-                  type="password"
-                  value={newTeamPassword}
-                  onChange={(e) => setNewTeamPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-gray-600 focus:ring-1 focus:ring-gray-600"
-                />
-              </div>
+              <p className="text-xs text-gray-500">
+                * A login username and password will be auto-generated and shown after creation.
+              </p>
             </div>
 
             <div className="flex gap-3 mt-6">

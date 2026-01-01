@@ -1,6 +1,4 @@
-// Audit utility functions
 
-// Format audit log entry for display
 const formatAuditEntry = (entry) => {
   return {
     id: entry.id,
@@ -12,8 +10,6 @@ const formatAuditEntry = (entry) => {
     formattedTime: new Date(entry.timestamp).toLocaleString(),
   };
 };
-
-// Get human-readable action description
 const getActionDescription = (action, details = {}) => {
   const descriptions = {
     LOGIN: 'User logged in',

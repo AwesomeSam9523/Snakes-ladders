@@ -1,4 +1,7 @@
+"use client"
+
 import { LogOut } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 
 interface HeaderProps {
@@ -6,6 +9,19 @@ interface HeaderProps {
 }
 
 export function Header({ teamId }: HeaderProps) {
+  const router = useRouter()
+
+  const handleLogout = () => {
+    localStorage.removeItem("token")
+    localStorage.removeItem("userRole")
+    localStorage.removeItem("userId")
+    localStorage.removeItem("username")
+    localStorage.removeItem("teamId")
+    localStorage.removeItem("teamCode")
+    localStorage.removeItem("teamName")
+    router.push("/login")
+  }
+
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-lg">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
@@ -22,7 +38,7 @@ export function Header({ teamId }: HeaderProps) {
             <span className="font-mono font-semibold">{teamId}</span>
           </div>
 
-          <Button variant="ghost" size="sm">
+          <Button variant="ghost" size="sm" onClick={handleLogout}>
             <LogOut className="w-4 h-4 mr-2" />
             Logout
           </Button>

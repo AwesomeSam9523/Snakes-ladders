@@ -54,7 +54,6 @@ const logAudit = async ({
 }) => {
   try {
     // For now, just log to console since we don't have an AuditLog table
-    // In production, you'd save this to a database table
     const auditEntry = {
       timestamp: new Date().toISOString(),
       action,
@@ -68,19 +67,12 @@ const logAudit = async ({
     };
     
     console.log('[AUDIT]', JSON.stringify(auditEntry));
-    
-    // TODO: Save to database when AuditLog table is added
-    // await prisma.auditLog.create({ data: auditEntry });
-    
     return auditEntry;
   } catch (error) {
     console.error('Failed to log audit event:', error);
-    // Don't throw - audit logging should not break the main flow
     return null;
   }
 };
-
-// Log login event
 const logLogin = async (userId, role, ipAddress, userAgent, success = true) => {
   return logAudit({
     action: success ? AUDIT_ACTIONS.LOGIN : AUDIT_ACTIONS.LOGIN_FAILED,
@@ -90,8 +82,6 @@ const logLogin = async (userId, role, ipAddress, userAgent, success = true) => {
     userAgent,
   });
 };
-
-// Log logout event
 const logLogout = async (userId, ipAddress) => {
   return logAudit({
     action: AUDIT_ACTIONS.LOGOUT,
@@ -130,8 +120,6 @@ const logQuestionEvent = async (teamId, questionId, action, details = {}) => {
     details,
   });
 };
-
-// Log admin action
 const logAdminAction = async (adminId, action, targetId, targetType, details = {}) => {
   return logAudit({
     action,
@@ -144,21 +132,18 @@ const logAdminAction = async (adminId, action, targetId, targetType, details = {
 
 // Get audit logs for a team
 const getTeamAuditLogs = async (teamId, limit = 50) => {
-  // TODO: Implement when AuditLog table exists
   console.log(`Fetching audit logs for team: ${teamId}`);
   return [];
 };
 
 // Get audit logs for a user
 const getUserAuditLogs = async (userId, limit = 50) => {
-  // TODO: Implement when AuditLog table exists
   console.log(`Fetching audit logs for user: ${userId}`);
   return [];
 };
 
 // Get all audit logs (for superadmin)
 const getAllAuditLogs = async (filters = {}, limit = 100) => {
-  // TODO: Implement when AuditLog table exists
   console.log('Fetching all audit logs with filters:', filters);
   return [];
 };

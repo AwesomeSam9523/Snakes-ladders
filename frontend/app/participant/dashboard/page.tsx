@@ -95,10 +95,12 @@ export default function ParticipantDashboard() {
           }))
           
           // Update game status based on canRollDice
-          // If canRollDice is true and we were waiting for approval, set to IDLE
-          if (teamState.canRollDice && gameStatus === "PENDING_APPROVAL") {
-            setGameStatus("IDLE")
-            setCurrentCheckpoint(null)
+          // If canRollDice is true, allow rolling again
+          if (teamState.canRollDice) {
+            if (gameStatus === "PENDING_APPROVAL" || gameStatus === "LOCKED") {
+              setGameStatus("IDLE")
+              setCurrentCheckpoint(null)
+            }
           }
         }
       }

@@ -2,7 +2,7 @@ const prisma = require('../../prisma/client');
 const { rollDice, calculateNewPosition, getRandomRoom, hasReachedGoal } = require('./game.utils');
 const { checkSnakeAtPosition } = require('./board.service');
 const { GAME_CONFIG } = require('../../config/constants');
-const { logDiceRoll } = require('../audit/audit.service');
+const { logDiceRoll, logCheckpointReached } = require('../audit/audit.service');
 
 const processDiceRoll = async (teamId) => {
   // Get current team state
@@ -80,6 +80,9 @@ const processDiceRoll = async (teamId) => {
 
   // Log the dice roll to audit
   await logDiceRoll(team.teamCode, team.teamName, diceValue, positionBefore, positionAfter);
+
+  // Log checkpoint reached to audit
+  await logCheckpointReached(team.teamCode, team.teamName, checkpointCount + 1, positionAfter, newRoom, isSnakePosition);
 
   return {
     diceValue,

@@ -60,6 +60,8 @@ const getActionDescription = (action, details) => {
       return 'Update';
     case AUDIT_ACTIONS.CHECKPOINT_APPROVED:
       return 'Update';
+    case AUDIT_ACTIONS.CHECKPOINT_REACHED:
+      return 'Checkpoint';
     case AUDIT_ACTIONS.QUESTION_ASSIGNED:
       return 'Update';
     case AUDIT_ACTIONS.DICE_ROLLED:
@@ -170,6 +172,25 @@ const logTeamCreated = async (actor, teamName) => {
   });
 };
 
+// Log checkpoint reached (when team lands on a position after dice roll)
+const logCheckpointReached = async (teamCode, teamName, checkpointNumber, position, room, isSnakePosition) => {
+  const snakeInfo = isSnakePosition ? ' (Snake position!)' : '';
+  return logAudit({
+    action: AUDIT_ACTIONS.CHECKPOINT_REACHED,
+    actor: teamCode,
+    actorRole: 'participant',
+    target: teamName,
+    details: { 
+      role: 'participant',
+      checkpointNumber, 
+      position, 
+      room,
+      isSnakePosition,
+      message: `${teamName} reached checkpoint #${checkpointNumber} at position ${position}, room ${room}${snakeInfo}` 
+    },
+  });
+};
+
 // Get audit logs for a team
 const getTeamAuditLogs = async (teamName, limit = 50) => {
   const logs = await prisma.auditLog.findMany({
@@ -225,6 +246,7 @@ module.exports = {
   logLogout,
   logDiceRoll,
   logCheckpoint,
+  logCheckpointReached,
   logQuestionEvent,
   logAdminAction,
   logTeamCreated,

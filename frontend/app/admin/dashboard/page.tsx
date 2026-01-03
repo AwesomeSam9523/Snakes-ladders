@@ -7,8 +7,12 @@ import { Navbar } from "@/components/navbar"
 interface Checkpoint {
   id: string
   checkpointNumber: number
-  position: number
+  positionBefore?: number
+  positionAfter?: number
+  position?: number
+  roomNumber?: number
   status: "PENDING" | "APPROVED" | "REJECTED"
+  isSnakePosition?: boolean
   questionAssign?: {
     id: string
     questionId: string
@@ -104,6 +108,10 @@ export default function AdminDashboard() {
     } else {
       fetchTeams()
       fetchQuestions()
+      
+      // Auto-refresh teams every 10 seconds to see position updates
+      const interval = setInterval(fetchTeams, 10000)
+      return () => clearInterval(interval)
     }
   }, [router])
 
@@ -279,7 +287,7 @@ export default function AdminDashboard() {
                         >
                           <div className="flex justify-between items-center mb-2">
                             <span className="text-sm font-medium text-gray-700">
-                              Checkpoint #{checkpoint.checkpointNumber} (Position {checkpoint.position})
+                              Checkpoint #{checkpoint.checkpointNumber} (Position {checkpoint.positionAfter || checkpoint.position})
                             </span>
                             
                             {/* Step 1: Checkpoint Approval Status */}

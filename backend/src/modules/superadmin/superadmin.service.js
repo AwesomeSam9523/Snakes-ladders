@@ -2,7 +2,7 @@ const prisma = require('../../prisma/client');
 const { hashPassword } = require('../../utils/password.util');
 const { generateTeamCode } = require('../../utils/random.util');
 const { GAME_CONFIG, ROOMS } = require('../../config/constants');
-const { logTeamCreated } = require('../audit/audit.service');
+const { logTeamCreated, logAdminAction, AUDIT_ACTIONS } = require('../audit/audit.service');
 
 // Create team with User entry for login
 const createTeam = async (teamName, members, password) => {
@@ -183,10 +183,26 @@ const undoCheckpoint = async (checkpointId) => {
     },
   });
 
+  // Log the checkpoint undo to audit
+  await logAdminAction(
+    'superadmin',
+    'superadmin',
+    AUDIT_ACTIONS.CHECKPOINT_UNDONE,
+    checkpoint.team.teamName,
+    {
+      checkpointId,
+      checkpointNumber: checkpoint.checkpointNumber,
+      previousPosition: checkpoint.positionAfter,
+      newPosition,
+      message: `Undid checkpoint #${checkpoint.checkpointNumber} for ${checkpoint.team.teamName}, position restored to ${newPosition}`
+    }
+  );
+
   return {
     message: 'Checkpoint undone successfully',
     newPosition,
     teamId: checkpoint.teamId,
+    teamName: checkpoint.team.teamName,
   };
 };
 

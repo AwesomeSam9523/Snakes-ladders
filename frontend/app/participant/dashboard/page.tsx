@@ -52,6 +52,7 @@ export default function ParticipantDashboard() {
   const [questionData, setQuestionData] = useState<any>(null)
   const [teams, setTeams] = useState<LeaderboardTeam[]>([])
   const [loading, setLoading] = useState(true)
+  const [lastDiceValue, setLastDiceValue] = useState<number>(6)
   const { toast } = useToast()
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
@@ -83,13 +84,22 @@ export default function ParticipantDashboard() {
       if (res.ok) {
         const data = await res.json()
         if (data.data) {
+          const teamState = data.data
+          
           setTeamData(prev => ({
             ...prev,
-            currentPosition: data.data.currentPosition || 1,
-            currentRoom: data.data.currentRoom || null,
-            canRollDice: data.data.canRollDice ?? true,
-            totalTimeSec: data.data.totalTimeSec || 0,
+            currentPosition: teamState.currentPosition || 1,
+            currentRoom: teamState.currentRoom || null,
+            canRollDice: teamState.canRollDice ?? true,
+            totalTimeSec: teamState.totalTimeSec || 0,
           }))
+          
+          // Update game status based on canRollDice
+          // If canRollDice is true and we were waiting for approval, set to IDLE
+          if (teamState.canRollDice && gameStatus === "PENDING_APPROVAL") {
+            setGameStatus("IDLE")
+            setCurrentCheckpoint(null)
+          }
         }
       }
     } catch (error) {
@@ -132,9 +142,14 @@ export default function ParticipantDashboard() {
     fetchTeamData()
     fetchTeams()
     
-    // Refresh leaderboard every 30 seconds
-    const interval = setInterval(fetchTeams, 30000)
-    return () => clearInterval(interval)
+    // Refresh team state and leaderboard every 5 seconds
+    const teamInterval = setInterval(fetchTeamData, 5000)
+    const leaderboardInterval = setInterval(fetchTeams, 10000)
+    
+    return () => {
+      clearInterval(teamInterval)
+      clearInterval(leaderboardInterval)
+    }
   }, [router])
 
   /* ---------- TIMER ---------- */
@@ -151,35 +166,71 @@ export default function ParticipantDashboard() {
 
   /* ---------- HANDLERS ---------- */
 
-  const handleRoll = () => {
+  const handleRoll = async () => {
     setGameStatus("ROLLING")
 
-    setTimeout(() => {
-      const diceValue = Math.floor(Math.random() * 6) + 1
-      const newPosition = Math.min(teamData.currentPosition + diceValue, 100)
-      const roomNumber = Math.floor(Math.random() * 20) + 1
-
-      setTeamData((prev) => ({
-        ...prev,
-        currentPosition: newPosition,
-        currentRoom: roomNumber,
-        canRollDice: false,
-      }))
-
-      setCurrentCheckpoint({
-        id: `cp_${Date.now()}`,
-        roomNumber,
-        status: "PENDING",
-        isSnakePosition: newPosition % 13 === 0,
+    try {
+      const token = localStorage.getItem("token")
+      const res = await fetch(`${API_URL}/participant/dice/roll`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
       })
 
-      setGameStatus("PENDING_APPROVAL")
+      // Wait for animation
+      await new Promise(resolve => setTimeout(resolve, 2000))
 
+      if (res.ok) {
+        const data = await res.json()
+        const result = data.data
+
+        // Set the dice value from API
+        setLastDiceValue(result.diceValue)
+
+        // Update team data with results from backend
+        setTeamData((prev) => ({
+          ...prev,
+          currentPosition: result.positionAfter,
+          currentRoom: result.roomAssigned,
+          canRollDice: false,
+        }))
+
+        setCurrentCheckpoint({
+          id: result.checkpoint?.id || `cp_${Date.now()}`,
+          roomNumber: result.roomAssigned,
+          status: "PENDING",
+          isSnakePosition: result.isSnakePosition,
+        })
+
+        setGameStatus("PENDING_APPROVAL")
+
+        toast({
+          title: `Rolled ${result.diceValue}!`,
+          description: `Go to Room ${result.roomAssigned}`,
+        })
+
+        // Refresh teams list to update leaderboard
+        fetchTeams()
+      } else {
+        const error = await res.json()
+        toast({
+          title: "Cannot roll dice",
+          description: error.message || "Failed to roll dice",
+          variant: "destructive",
+        })
+        setGameStatus("IDLE")
+      }
+    } catch (error) {
+      console.error("Error rolling dice:", error)
       toast({
-        title: `Rolled ${diceValue}!`,
-        description: `Go to Room ${roomNumber}`,
+        title: "Error",
+        description: "Failed to connect to server",
+        variant: "destructive",
       })
-    }, 2000)
+      setGameStatus("IDLE")
+    }
   }
 
   const handleViewQuestion = () => {
@@ -249,6 +300,7 @@ export default function ParticipantDashboard() {
               onRoll={handleRoll}
               canRoll={teamData.canRollDice && gameStatus === "IDLE"}
               isRolling={gameStatus === "ROLLING"}
+              lastValue={lastDiceValue}
             />
 
             <Board

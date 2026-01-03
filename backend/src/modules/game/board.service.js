@@ -99,6 +99,18 @@ const getSnakeEndPositionForTeam = async (teamId, position) => {
   return snake ? snake.endPos : null;
 };
 
+// Check any snake at a position (global check)
+const checkSnakeAtPosition = async (position) => {
+  const snake = await prisma.boardRule.findFirst({
+    where: {
+      type: 'SNAKE',
+      startPos: position,
+    },
+  });
+
+  return snake;
+};
+
 // ==================== TEAM MAP ASSIGNMENT ====================
 
 const assignMapToTeam = async (teamId, mapId) => {
@@ -197,6 +209,7 @@ module.exports = {
   // Team-specific operations
   checkSnakeForTeam,
   getSnakeEndPositionForTeam,
+  checkSnakeAtPosition,
   assignMapToTeam,
   getTeamMap,
   getBoardStateForTeam,

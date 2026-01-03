@@ -1,4 +1,5 @@
 const prisma = require('../../prisma/client');
+const { logAdminAction, AUDIT_ACTIONS } = require('../audit/audit.service');
 
 const getAllTeams = async () => {
   return await prisma.team.findMany({
@@ -86,7 +87,7 @@ const getCheckpointById = async (checkpointId) => {
 };
 
 
-const assignQuestionToCheckpoint = async (checkpointId, questionId) => {
+const assignQuestionToCheckpoint = async (checkpointId, questionId, adminUsername = 'admin') => {
   // Check if question is already assigned to another pending checkpoint
   const existingAssignment = await prisma.questionAssignment.findFirst({
     where: {
@@ -99,20 +100,37 @@ const assignQuestionToCheckpoint = async (checkpointId, questionId) => {
     throw new Error('Question is already assigned to another team');
   }
 
-  return await prisma.questionAssignment.create({
+  const assignment = await prisma.questionAssignment.create({
     data: {
       checkpointId,
       questionId,
     },
     include: {
       question: true,
-      checkpoint: true,
+      checkpoint: {
+        include: { team: true }
+      },
     },
   });
+
+  // Log question assignment to audit
+  await logAdminAction(
+    adminUsername,
+    'admin',
+    AUDIT_ACTIONS.QUESTION_ASSIGNED,
+    assignment.checkpoint.team.teamName,
+    {
+      checkpointId,
+      questionId,
+      message: `Assigned question to ${assignment.checkpoint.team.teamName}`
+    }
+  );
+
+  return assignment;
 };
 
 
-const markQuestionAnswer = async (assignmentId, isCorrect) => {
+const markQuestionAnswer = async (assignmentId, isCorrect, adminUsername = 'admin') => {
   const assignment = await prisma.questionAssignment.findUnique({
     where: { id: assignmentId },
     include: {
@@ -146,6 +164,20 @@ const markQuestionAnswer = async (assignmentId, isCorrect) => {
     where: { id: assignment.checkpoint.teamId },
     data: { canRollDice: true },
   });
+
+  // Log the answer marking to audit
+  await logAdminAction(
+    adminUsername,
+    'admin',
+    isCorrect ? AUDIT_ACTIONS.ANSWER_MARKED_CORRECT : AUDIT_ACTIONS.ANSWER_MARKED_INCORRECT,
+    assignment.checkpoint.team.teamName,
+    {
+      assignmentId,
+      checkpointId: assignment.checkpointId,
+      isCorrect,
+      message: `Marked answer as ${isCorrect ? 'correct' : 'incorrect'} for ${assignment.checkpoint.team.teamName}`
+    }
+  );
 
   return updatedAssignment;
 };
@@ -186,8 +218,8 @@ const getTeamProgress = async (teamId) => {
 };
 
 // Approve a checkpoint (team has physically reached the checkpoint)
-const approveCheckpoint = async (checkpointId) => {
-  return await prisma.checkpoint.update({
+const approveCheckpoint = async (checkpointId, adminUsername = 'admin') => {
+  const checkpoint = await prisma.checkpoint.update({
     where: { id: checkpointId },
     data: { status: 'APPROVED' },
     include: {
@@ -195,6 +227,28 @@ const approveCheckpoint = async (checkpointId) => {
       questionAssign: true,
     },
   });
+
+  // Unlock dice for the team so they can roll again
+  await prisma.team.update({
+    where: { id: checkpoint.teamId },
+    data: { canRollDice: true },
+  });
+
+  // Log the checkpoint approval to audit
+  await logAdminAction(
+    adminUsername,
+    'admin',
+    AUDIT_ACTIONS.CHECKPOINT_APPROVED,
+    checkpoint.team.teamName,
+    { 
+      checkpointId,
+      checkpointNumber: checkpoint.checkpointNumber,
+      position: checkpoint.positionAfter,
+      message: `Approved checkpoint #${checkpoint.checkpointNumber} for ${checkpoint.team.teamName} at position ${checkpoint.positionAfter}`
+    }
+  );
+
+  return checkpoint;
 };
 
 module.exports = {

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Dice1Icon as DiceIcon } from "lucide-react"
@@ -9,22 +9,30 @@ interface DiceProps {
   onRoll: () => void
   canRoll: boolean
   isRolling: boolean
+  lastValue?: number
 }
 
-export function Dice({ onRoll, canRoll, isRolling }: DiceProps) {
-  const [lastRoll, setLastRoll] = useState(6)
+export function Dice({ onRoll, canRoll, isRolling, lastValue }: DiceProps) {
+  const [displayValue, setDisplayValue] = useState(lastValue || 6)
+
+  // Update display value when lastValue changes (from API)
+  useEffect(() => {
+    if (lastValue) {
+      setDisplayValue(lastValue)
+    }
+  }, [lastValue])
 
   const handleRoll = () => {
     onRoll()
-    // Animate through random numbers
+    // Animate through random numbers while rolling
     const interval = setInterval(() => {
-      setLastRoll(Math.floor(Math.random() * 6) + 1)
+      setDisplayValue(Math.floor(Math.random() * 6) + 1)
     }, 100)
 
     setTimeout(() => {
       clearInterval(interval)
-      setLastRoll(Math.floor(Math.random() * 6) + 1)
-    }, 2000)
+      // Final value will be set by lastValue prop from API
+    }, 1800)
   }
 
   return (
@@ -34,7 +42,7 @@ export function Dice({ onRoll, canRoll, isRolling }: DiceProps) {
         transition={{ duration: 2, ease: "linear" }}
         className="relative w-32 h-32 rounded-2xl bg-gradient-to-br from-primary to-accent shadow-2xl flex items-center justify-center"
       >
-        <span className="text-6xl font-bold text-primary-foreground">{lastRoll}</span>
+        <span className="text-6xl font-bold text-primary-foreground">{displayValue}</span>
       </motion.div>
 
       <Button onClick={handleRoll} disabled={!canRoll || isRolling} size="lg" className="w-full max-w-xs">

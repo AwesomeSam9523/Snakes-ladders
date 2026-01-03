@@ -16,11 +16,22 @@ interface Team {
   points: number
   disqualified: boolean
   checkpoints: Array<{
-    position: number
-    checkpointApproved: boolean
-    questionId: string | null
-    questionAssigned: boolean
-    answerStatus: "pending" | "correct" | "incorrect" | null
+    id: string
+    checkpointNumber: number
+    positionBefore: number
+    positionAfter: number
+    roomNumber: number
+    status: "PENDING" | "APPROVED" | "FAILED"
+    isSnakePosition: boolean
+    questionAssign?: {
+      id: string
+      questionId: string
+      status: "PENDING" | "CORRECT" | "INCORRECT"
+      question?: {
+        id: string
+        text: string
+      }
+    } | null
   }>
 }
 
@@ -122,6 +133,10 @@ export default function SuperAdminDashboard() {
     } else {
       fetchTeams()
       fetchActivityLogs()
+      
+      // Auto-refresh teams every 10 seconds to see position updates
+      const interval = setInterval(fetchTeams, 10000)
+      return () => clearInterval(interval)
     }
   }, [router])
 
@@ -234,38 +249,34 @@ export default function SuperAdminDashboard() {
     setQuestions((prev) => prev.filter((q) => q.id !== questionId))
   }
 
-  // Undo checkpoint approval
-  const handleUndoCheckpointApproval = (teamId: string, checkpointIndex: number) => {
-    setTeams((prev) =>
-      prev.map((team) =>
-        team.id === teamId
-          ? {
-              ...team,
-              checkpoints: team.checkpoints.map((checkpoint, idx) =>
-                idx === checkpointIndex
-                  ? { ...checkpoint, checkpointApproved: false, questionId: null, questionAssigned: false, answerStatus: null }
-                  : checkpoint,
-              ),
-            }
-          : team,
-      ),
-    )
-  }
+  // Undo checkpoint - calls backend API
+  const handleUndoCheckpoint = async (checkpointId: string) => {
+    if (!confirm("Are you sure you want to undo this checkpoint? This will restore the team's previous position.")) {
+      return
+    }
 
-  // Undo question answer (reset to pending)
-  const handleUndoQuestionAnswer = (teamId: string, checkpointIndex: number) => {
-    setTeams((prev) =>
-      prev.map((team) =>
-        team.id === teamId
-          ? {
-              ...team,
-              checkpoints: team.checkpoints.map((checkpoint, idx) =>
-                idx === checkpointIndex ? { ...checkpoint, answerStatus: "pending" } : checkpoint,
-              ),
-            }
-          : team,
-      ),
-    )
+    try {
+      const token = localStorage.getItem("token")
+      const res = await fetch(`${API_URL}/superadmin/checkpoints/${checkpointId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (res.ok) {
+        // Refresh teams and activity logs
+        fetchTeams()
+        fetchActivityLogs()
+        alert("Checkpoint undone successfully!")
+      } else {
+        const error = await res.json()
+        alert(`Error: ${error.message || 'Failed to undo checkpoint'}`)
+      }
+    } catch (error) {
+      console.error("Error undoing checkpoint:", error)
+      alert("Failed to undo checkpoint. Check if backend is running.")
+    }
   }
 
   // Calculate leaderboard
@@ -508,83 +519,71 @@ export default function SuperAdminDashboard() {
                   {/* Checkpoints Section */}
                   {team.checkpoints && team.checkpoints.length > 0 && (
                     <div className="mt-4 bg-gray-50 p-3 rounded">
-                      <p className="text-sm font-semibold text-gray-700 mb-3">Checkpoints History</p>
+                      <p className="text-sm font-semibold text-gray-700 mb-3">Checkpoints History ({team.checkpoints.length})</p>
                       <div className="space-y-2">
-                        {team.checkpoints.map((checkpoint, idx) => (
+                        {team.checkpoints.map((checkpoint) => (
                           <div
-                            key={idx}
+                            key={checkpoint.id}
                             className="bg-white p-3 rounded border border-gray-200"
                           >
                             <div className="flex justify-between items-center">
                               <span className="text-sm font-medium text-gray-700">
-                                Checkpoint {checkpoint.position}
+                                Checkpoint #{checkpoint.checkpointNumber} → Position {checkpoint.positionAfter}
+                                {checkpoint.isSnakePosition && (
+                                  <span className="ml-2 text-xs text-red-600">🐍 Snake!</span>
+                                )}
                               </span>
                               
                               {/* Checkpoint Status */}
                               <div className="flex items-center gap-2">
-                                {checkpoint.checkpointApproved ? (
+                                {checkpoint.status === "APPROVED" ? (
                                   <>
                                     <span className="text-xs text-green-600 font-medium">✓ Approved</span>
                                     <button
                                       type="button"
-                                      onClick={() => handleUndoCheckpointApproval(team.id, idx)}
-                                      className="px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition-colors"
+                                      onClick={() => handleUndoCheckpoint(checkpoint.id)}
+                                      className="px-2 py-0.5 text-xs bg-red-100 text-red-600 rounded hover:bg-red-200 transition-colors"
                                     >
                                       Undo
                                     </button>
                                   </>
+                                ) : checkpoint.status === "FAILED" ? (
+                                  <span className="text-xs text-red-600 font-medium">✗ Failed</span>
                                 ) : (
-                                  <span className="text-xs text-yellow-600 font-medium">⏳ Pending Approval</span>
+                                  <span className="text-xs text-yellow-600 font-medium">⏳ Pending</span>
                                 )}
                               </div>
                             </div>
 
-                            {/* Question Info (if checkpoint is approved) */}
-                            {checkpoint.checkpointApproved && checkpoint.questionAssigned && (
+                            {/* Question Info (if assigned) */}
+                            {checkpoint.questionAssign && (
                               <div className="mt-2 pt-2 border-t border-gray-100">
                                 <div className="flex justify-between items-center">
                                   <span className="text-xs text-gray-600">
-                                    Question: <span className="font-medium text-gray-800">{checkpoint.questionId}</span>
+                                    Question: <span className="font-medium text-gray-800">
+                                      {checkpoint.questionAssign.question?.text?.substring(0, 40) || checkpoint.questionAssign.questionId}
+                                      {(checkpoint.questionAssign.question?.text?.length || 0) > 40 ? "..." : ""}
+                                    </span>
                                   </span>
 
                                   {/* Answer Status */}
                                   <div className="flex items-center gap-2">
-                                    {checkpoint.answerStatus === "correct" ? (
-                                      <>
-                                        <span className="text-xs text-green-600 font-medium">✓ Correct</span>
-                                        <button
-                                          type="button"
-                                          onClick={() => handleUndoQuestionAnswer(team.id, idx)}
-                                          className="px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition-colors"
-                                        >
-                                          Undo
-                                        </button>
-                                      </>
-                                    ) : checkpoint.answerStatus === "incorrect" ? (
-                                      <>
-                                        <span className="text-xs text-red-600 font-medium">✗ Incorrect</span>
-                                        <button
-                                          type="button"
-                                          onClick={() => handleUndoQuestionAnswer(team.id, idx)}
-                                          className="px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition-colors"
-                                        >
-                                          Undo
-                                        </button>
-                                      </>
+                                    {checkpoint.questionAssign.status === "CORRECT" ? (
+                                      <span className="text-xs text-green-600 font-medium">✓ Correct</span>
+                                    ) : checkpoint.questionAssign.status === "INCORRECT" ? (
+                                      <span className="text-xs text-red-600 font-medium">✗ Incorrect</span>
                                     ) : (
-                                      <span className="text-xs text-yellow-600 font-medium">⏳ Pending Answer</span>
+                                      <span className="text-xs text-yellow-600 font-medium">⏳ Pending</span>
                                     )}
                                   </div>
                                 </div>
                               </div>
                             )}
 
-                            {/* No question assigned yet */}
-                            {checkpoint.checkpointApproved && !checkpoint.questionAssigned && (
-                              <div className="mt-2 pt-2 border-t border-gray-100">
-                                <span className="text-xs text-gray-500">No question assigned yet</span>
-                              </div>
-                            )}
+                            {/* Room info */}
+                            <div className="mt-1 text-xs text-gray-500">
+                              Room: {checkpoint.roomNumber} | From: {checkpoint.positionBefore} → {checkpoint.positionAfter}
+                            </div>
                           </div>
                         ))}
                       </div>

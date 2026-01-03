@@ -41,6 +41,7 @@ const assignQuestion = async (req, res, next) => {
   try {
     const { checkpointId } = req.params;
     const { questionId } = req.body;
+    const adminUsername = req.user?.username || 'admin';
 
     if (!questionId) {
       return sendBadRequest(res, 'Question ID is required');
@@ -55,7 +56,7 @@ const assignQuestion = async (req, res, next) => {
       return sendBadRequest(res, 'Question already assigned to this checkpoint');
     }
 
-    const assignment = await adminService.assignQuestionToCheckpoint(checkpointId, questionId);
+    const assignment = await adminService.assignQuestionToCheckpoint(checkpointId, questionId, adminUsername);
     return sendSuccess(res, assignment, MESSAGES.QUESTION_ASSIGNED);
   } catch (error) {
     if (error.message === 'Question is already assigned to another team') {
@@ -69,6 +70,7 @@ const markQuestion = async (req, res, next) => {
   try {
     const { checkpointId } = req.params;
     const { isCorrect } = req.body;
+    const adminUsername = req.user?.username || 'admin';
 
     if (typeof isCorrect !== 'boolean') {
       return sendBadRequest(res, 'isCorrect must be a boolean');
@@ -87,7 +89,7 @@ const markQuestion = async (req, res, next) => {
       return sendBadRequest(res, 'Question already marked');
     }
 
-    const result = await adminService.markQuestionAnswer(checkpoint.questionAssign.id, isCorrect);
+    const result = await adminService.markQuestionAnswer(checkpoint.questionAssign.id, isCorrect, adminUsername);
     return sendSuccess(res, result, MESSAGES.QUESTION_MARKED);
   } catch (error) {
     next(error);
@@ -119,6 +121,7 @@ const getTeamProgress = async (req, res, next) => {
 const approveCheckpoint = async (req, res, next) => {
   try {
     const { checkpointId } = req.params;
+    const adminUsername = req.user?.username || 'admin';
 
     const checkpoint = await adminService.getCheckpointById(checkpointId);
     if (!checkpoint) {
@@ -129,7 +132,7 @@ const approveCheckpoint = async (req, res, next) => {
       return sendBadRequest(res, 'Checkpoint already approved');
     }
 
-    const result = await adminService.approveCheckpoint(checkpointId);
+    const result = await adminService.approveCheckpoint(checkpointId, adminUsername);
     return sendSuccess(res, result, 'Checkpoint approved successfully');
   } catch (error) {
     next(error);

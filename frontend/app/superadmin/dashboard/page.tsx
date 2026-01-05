@@ -86,8 +86,8 @@ export default function SuperAdminDashboard() {
           setQuestions(data.data.map((q: any, index: number) => ({
             id: q.id,
             questionNumber: `Q${String(index + 1).padStart(3, "0")}`,
-            text: q.content,
-            difficulty: q.difficulty?.toLowerCase() || "medium",
+            text: q.content || q.text,
+            difficulty: q.difficultyLabel || (q.difficulty === 1 ? "easy" : q.difficulty === 2 ? "medium" : q.difficulty === 3 ? "hard" : "medium"),
           })))
         }
       }
@@ -840,8 +840,8 @@ export default function SuperAdminDashboard() {
 
       {/* Add Question Modal */}
       {showNewQuestionModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4" style={{ zIndex: 9999 }}>
-          <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6 relative z-50">
             <h3 className="text-lg font-bold text-gray-900 mb-4">Add New Question</h3>
 
             <div className="space-y-4">
@@ -851,7 +851,8 @@ export default function SuperAdminDashboard() {
                   value={newQuestion}
                   onChange={(e) => setNewQuestion(e.target.value)}
                   placeholder="Enter question..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-gray-600 focus:ring-1 focus:ring-gray-600 h-24"
+                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-gray-600 focus:ring-1 focus:ring-gray-600 h-24 text-gray-900"
+                  autoFocus
                 />
               </div>
 
@@ -860,7 +861,7 @@ export default function SuperAdminDashboard() {
                 <select
                   value={newQuestionDifficulty}
                   onChange={(e) => setNewQuestionDifficulty(e.target.value as "easy" | "medium" | "hard")}
-                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-gray-600 focus:ring-1 focus:ring-gray-600"
+                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-gray-600 focus:ring-1 focus:ring-gray-600 text-gray-900"
                 >
                   <option value="easy">Easy</option>
                   <option value="medium">Medium</option>

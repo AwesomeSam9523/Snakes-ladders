@@ -3,29 +3,18 @@ const { sendSuccess, sendError, sendNotFound, sendBadRequest, sendCreated } = re
 
 const createQuestion = async (req, res, next) => {
   try {
-    const { content, options, correctAnswer, difficulty, category, points } = req.body;
+    const { content, text, difficulty, type } = req.body;
 
-    if (!content) {
-      return sendBadRequest(res, 'Question content is required');
-    }
-
-    // If options are provided, validate them
-    if (options && Array.isArray(options) && options.length > 0) {
-      if (options.length < 2) {
-        return sendBadRequest(res, 'Options must have at least 2 choices');
-      }
-      if (correctAnswer && !options.includes(correctAnswer)) {
-        return sendBadRequest(res, 'Correct answer must be one of the options');
-      }
+    const questionText = text || content;
+    
+    if (!questionText) {
+      return sendBadRequest(res, 'Question text is required');
     }
 
     const question = await questionService.createQuestion({
-      content,
-      options: options || [],
-      correctAnswer: correctAnswer || '',
+      text: questionText,
       difficulty,
-      category,
-      points,
+      type,
     });
 
     return sendCreated(res, question, 'Question created successfully');

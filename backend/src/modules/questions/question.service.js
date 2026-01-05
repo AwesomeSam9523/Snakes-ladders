@@ -1,18 +1,33 @@
 const prisma = require('../../prisma/client');
 const { CHECKPOINT_STATUS } = require('../../config/constants');
 
+// Map difficulty string to number
+const difficultyMap = {
+  'EASY': 1,
+  'MEDIUM': 2,
+  'HARD': 3,
+  'easy': 1,
+  'medium': 2,
+  'hard': 3,
+};
 
 const createQuestion = async (questionData) => {
-  const { content, options, correctAnswer, difficulty, category, points } = questionData;
+  const { content, text, difficulty, type } = questionData;
+
+  // Use text or content (frontend sends content)
+  const questionText = text || content;
+  
+  // Convert difficulty string to number
+  const difficultyLevel = typeof difficulty === 'number' 
+    ? difficulty 
+    : (difficultyMap[difficulty] || 2);
 
   return prisma.question.create({
     data: {
-      content,
-      options,
-      correctAnswer,
-      difficulty: difficulty || 'MEDIUM',
-      category: category || 'GENERAL',
-      points: points || 10,
+      text: questionText,
+      difficulty: difficultyLevel,
+      type: type || 'NORMAL',
+      isActive: true,
     },
   });
 };
@@ -37,18 +52,23 @@ const getAllQuestions = async (filters = {}) => {
     where.difficulty = filters.difficulty;
   }
 
-  if (filters.category) {
-    where.category = filters.category;
-  }
-
   if (filters.isActive !== undefined) {
     where.isActive = filters.isActive;
   }
 
-  return prisma.question.findMany({
+  const questions = await prisma.question.findMany({
     where,
     orderBy: { createdAt: 'desc' },
   });
+
+  // Map difficulty number back to string for frontend
+  const difficultyLabels = { 1: 'easy', 2: 'medium', 3: 'hard' };
+  
+  return questions.map(q => ({
+    ...q,
+    content: q.text, // Frontend expects 'content'
+    difficultyLabel: difficultyLabels[q.difficulty] || 'medium',
+  }));
 };
 
 const getQuestionById = async (questionId) => {

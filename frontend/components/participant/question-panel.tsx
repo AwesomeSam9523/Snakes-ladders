@@ -50,27 +50,48 @@ export function QuestionPanel({
     )
   }
 
-  if (gameStatus === "PENDING_APPROVAL" || gameStatus === "AWAITING_QUESTION") {
+  if (gameStatus === "PENDING_APPROVAL") {
     return (
       <div className="rounded-2xl bg-card border border-border p-6 h-full flex items-center justify-center">
         <div className="text-center space-y-3">
           <div className="w-16 h-16 mx-auto rounded-full bg-warning/20 flex items-center justify-center animate-pulse">
             <AlertTriangle className="w-8 h-8 text-warning" />
           </div>
-          <p className="font-semibold">Waiting for Admin Approval</p>
-          <p className="text-sm text-muted-foreground">Go to Room {checkpoint?.roomNumber} and wait for verification</p>
+          <p className="font-semibold">Checkpoint Reached!</p>
+          <p className="text-sm text-muted-foreground">Go to Room {checkpoint?.roomNumber} and wait for admin approval</p>
         </div>
       </div>
     )
   }
 
-  if (gameStatus === "QUESTION_ASSIGNED" && !questionData) {
+  if (gameStatus === "AWAITING_QUESTION") {
     return (
       <div className="rounded-2xl bg-card border border-border p-6 h-full flex items-center justify-center">
-        <Button onClick={onViewQuestion} size="lg" className="w-full">
-          <FileText className="w-5 h-5 mr-2" />
-          View Question
-        </Button>
+        <div className="text-center space-y-3">
+          <div className="w-16 h-16 mx-auto rounded-full bg-blue-500/20 flex items-center justify-center animate-pulse">
+            <FileText className="w-8 h-8 text-blue-500" />
+          </div>
+          <p className="font-semibold">Checkpoint Approved!</p>
+          <p className="text-sm text-muted-foreground">Waiting for admin to assign a question...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (gameStatus === "QUESTION_ASSIGNED") {
+    return (
+      <div className="rounded-2xl bg-card border border-border p-6 h-full flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="w-16 h-16 mx-auto rounded-full bg-green-500/20 flex items-center justify-center">
+            <FileText className="w-8 h-8 text-green-500" />
+          </div>
+          <p className="font-semibold">Question Assigned!</p>
+          <p className="text-sm text-muted-foreground">Click below to view and solve the question</p>
+          <Button onClick={onViewQuestion} size="lg" className="w-full">
+            <FileText className="w-5 h-5 mr-2" />
+            View Question
+          </Button>
+        </div>
       </div>
     )
   }

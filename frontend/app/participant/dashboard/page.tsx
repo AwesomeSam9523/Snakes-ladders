@@ -119,8 +119,9 @@ export default function ParticipantDashboard() {
           const checkpoint = checkpointData.data
           setCurrentCheckpoint(checkpoint)
           
-          // Check if question is assigned
+          // Check game status based on checkpoint and question assignment
           if (checkpoint.questionAssign?.question) {
+            // Question is assigned
             setQuestionData({
               assignmentId: checkpoint.questionAssign.id,
               question: {
@@ -134,11 +135,24 @@ export default function ParticipantDashboard() {
             })
             
             if (checkpoint.questionAssign.status === "PENDING") {
-              setGameStatus("QUESTION_ASSIGNED")
+              // Question assigned but not yet answered
+              if (gameStatus !== "SOLVING") {
+                setGameStatus("QUESTION_ASSIGNED")
+              }
             }
-          } else if (checkpoint.status === "PENDING") {
-            // No question assigned yet
+          } else if (checkpoint.status === "APPROVED") {
+            // Checkpoint approved, waiting for admin to assign question
             setGameStatus("AWAITING_QUESTION")
+          } else if (checkpoint.status === "PENDING") {
+            // Checkpoint not yet approved - waiting for admin approval
+            setGameStatus("PENDING_APPROVAL")
+          }
+        } else {
+          // No pending checkpoint - can roll dice
+          if (teamData.canRollDice && gameStatus !== "ROLLING") {
+            setGameStatus("IDLE")
+            setCurrentCheckpoint(null)
+            setQuestionData(null)
           }
         }
       }

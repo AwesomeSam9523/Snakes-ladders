@@ -199,10 +199,16 @@ const getAvailableQuestions = async (type = null) => {
     whereClause.type = type;
   }
 
-  return await prisma.question.findMany({
+  const questions = await prisma.question.findMany({
     where: whereClause,
     orderBy: { createdAt: 'asc' },
   });
+
+  // Map text to content for frontend compatibility
+  return questions.map(q => ({
+    ...q,
+    content: q.text,
+  }));
 };
 
 const getTeamProgress = async (teamId) => {
@@ -218,6 +224,7 @@ const getTeamProgress = async (teamId) => {
 };
 
 // Approve a checkpoint (team has physically reached the checkpoint)
+// NOTE: Dice is NOT unlocked here - it will be unlocked only after question is marked
 const approveCheckpoint = async (checkpointId, adminUsername = 'admin') => {
   const checkpoint = await prisma.checkpoint.update({
     where: { id: checkpointId },
@@ -228,11 +235,8 @@ const approveCheckpoint = async (checkpointId, adminUsername = 'admin') => {
     },
   });
 
-  // Unlock dice for the team so they can roll again
-  await prisma.team.update({
-    where: { id: checkpoint.teamId },
-    data: { canRollDice: true },
-  });
+  // NOTE: Dice roll is NOT unlocked here anymore
+  // The flow is: roll dice → checkpoint created → admin approves → admin assigns question → participant answers → admin marks → dice unlocked
 
   // Log the checkpoint approval to audit
   await logAdminAction(

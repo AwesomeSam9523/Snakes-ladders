@@ -43,11 +43,9 @@ const approveCheckpoint = async (checkpointId) => {
     },
   });
 
-  // Enable dice roll for the team
-  await prisma.team.update({
-    where: { id: checkpoint.teamId },
-    data: { canRollDice: true },
-  });
+  // NOTE: Dice roll is NOT unlocked here anymore
+  // Dice will be unlocked only after question is marked (correct or incorrect)
+  // This ensures the participant must answer the question before rolling again
 
   return checkpoint;
 };

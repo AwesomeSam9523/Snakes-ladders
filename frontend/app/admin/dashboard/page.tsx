@@ -93,7 +93,11 @@ export default function AdminDashboard() {
       if (res.ok) {
         const data = await res.json()
         if (data.data) {
-          setQuestions(data.data)
+          // Add question numbers (Q1, Q2, etc.)
+          setQuestions(data.data.map((q: any, index: number) => ({
+            ...q,
+            questionNumber: `Q${index + 1}`,
+          })))
         }
       }
     } catch (error) {
@@ -324,8 +328,7 @@ export default function AdminDashboard() {
                                 <div className="flex flex-col gap-2">
                                   <span className="text-xs text-gray-600">
                                     Question: <span className="font-medium text-gray-800">
-                                      {checkpoint.questionAssign.question?.content?.substring(0, 50) || checkpoint.questionAssign.questionId}
-                                      {(checkpoint.questionAssign.question?.content?.length || 0) > 50 ? "..." : ""}
+                                      {checkpoint.questionAssign.question?.questionNumber || `Q${checkpoint.questionAssign.questionId?.substring(0, 4)}`}
                                     </span>
                                   </span>
 
@@ -390,7 +393,7 @@ export default function AdminDashboard() {
                   <option value="">Choose a question</option>
                   {questions.map((q) => (
                     <option key={q.id} value={q.id}>
-                      {q.content.substring(0, 60)}{q.content.length > 60 ? "..." : ""}
+                      {q.questionNumber || `Q${questions.indexOf(q) + 1}`}
                     </option>
                   ))}
                 </select>

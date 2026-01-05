@@ -94,9 +94,57 @@ const getBoard = async () => {
   return await getBoardState();
 };
 
-// Get pending checkpoint with assigned question
+// Get current checkpoint (pending approval OR approved but waiting for question/answer)
 const getPendingCheckpoint = async (teamId) => {
-  const checkpoint = await prisma.checkpoint.findFirst({
+  // First check if there's an unanswered question assignment
+  const checkpointWithQuestion = await prisma.checkpoint.findFirst({
+    where: {
+      teamId,
+      questionAssign: {
+        status: 'PENDING', // Question assigned but not answered
+      },
+    },
+    include: {
+      questionAssign: {
+        include: {
+          question: true,
+        },
+      },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  if (checkpointWithQuestion) {
+    // Map question text to content for frontend
+    if (checkpointWithQuestion.questionAssign?.question) {
+      checkpointWithQuestion.questionAssign.question.content = checkpointWithQuestion.questionAssign.question.text;
+    }
+    return checkpointWithQuestion;
+  }
+
+  // Then check for approved checkpoint without question (waiting for admin to assign)
+  const approvedWithoutQuestion = await prisma.checkpoint.findFirst({
+    where: {
+      teamId,
+      status: 'APPROVED',
+      questionAssign: null,
+    },
+    include: {
+      questionAssign: {
+        include: {
+          question: true,
+        },
+      },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  if (approvedWithoutQuestion) {
+    return approvedWithoutQuestion;
+  }
+
+  // Finally check for pending checkpoint (waiting for admin approval)
+  const pendingCheckpoint = await prisma.checkpoint.findFirst({
     where: {
       teamId,
       status: 'PENDING',
@@ -104,22 +152,14 @@ const getPendingCheckpoint = async (teamId) => {
     include: {
       questionAssign: {
         include: {
-          question: {
-            select: {
-              id: true,
-              content: true,
-              difficulty: true,
-              category: true,
-              points: true,
-            },
-          },
+          question: true,
         },
       },
     },
     orderBy: { createdAt: 'desc' },
   });
 
-  return checkpoint;
+  return pendingCheckpoint;
 };
 
  //Check if team can roll dice

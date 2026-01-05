@@ -97,10 +97,48 @@ export default function ParticipantDashboard() {
           // Update game status based on canRollDice
           // If canRollDice is true, allow rolling again
           if (teamState.canRollDice) {
-            if (gameStatus === "PENDING_APPROVAL" || gameStatus === "LOCKED") {
+            if (gameStatus === "PENDING_APPROVAL" || gameStatus === "LOCKED" || gameStatus === "AWAITING_QUESTION" || gameStatus === "QUESTION_ASSIGNED") {
               setGameStatus("IDLE")
               setCurrentCheckpoint(null)
+              setQuestionData(null)
             }
+          }
+        }
+      }
+
+      // Fetch pending checkpoint to check for assigned questions
+      const checkpointRes = await fetch(`${API_URL}/participant/checkpoints/pending`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      
+      if (checkpointRes.ok) {
+        const checkpointData = await checkpointRes.json()
+        if (checkpointData.data) {
+          const checkpoint = checkpointData.data
+          setCurrentCheckpoint(checkpoint)
+          
+          // Check if question is assigned
+          if (checkpoint.questionAssign?.question) {
+            setQuestionData({
+              assignmentId: checkpoint.questionAssign.id,
+              question: {
+                id: checkpoint.questionAssign.question.id,
+                text: checkpoint.questionAssign.question.content || checkpoint.questionAssign.question.text,
+                difficulty: checkpoint.questionAssign.question.difficulty || "MEDIUM",
+                type: checkpoint.questionAssign.question.type || "TEXT",
+              },
+              isSnakeDodge: checkpoint.isSnakePosition,
+              status: checkpoint.questionAssign.status,
+            })
+            
+            if (checkpoint.questionAssign.status === "PENDING") {
+              setGameStatus("QUESTION_ASSIGNED")
+            }
+          } else if (checkpoint.status === "PENDING") {
+            // No question assigned yet
+            setGameStatus("AWAITING_QUESTION")
           }
         }
       }
@@ -236,18 +274,16 @@ export default function ParticipantDashboard() {
   }
 
   const handleViewQuestion = () => {
-    setQuestionData({
-      assignmentId: "qa_123",
-      question: {
-        id: "q_456",
-        text: "What is the time complexity of binary search?",
-        difficulty: "MEDIUM",
-        type: "TEXT",
-      },
-      isSnakeDodge: currentCheckpoint?.isSnakePosition,
-    })
-
-    setGameStatus("SOLVING")
+    // Use actual question data if available
+    if (questionData) {
+      setGameStatus("SOLVING")
+    } else {
+      toast({
+        title: "No Question",
+        description: "Please wait for the admin to assign a question",
+        variant: "destructive",
+      })
+    }
   }
 
   const handleSubmitAnswer = async (_answer: string, _file?: File) => {

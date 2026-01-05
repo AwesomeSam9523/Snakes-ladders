@@ -94,6 +94,34 @@ const getBoard = async () => {
   return await getBoardState();
 };
 
+// Get pending checkpoint with assigned question
+const getPendingCheckpoint = async (teamId) => {
+  const checkpoint = await prisma.checkpoint.findFirst({
+    where: {
+      teamId,
+      status: 'PENDING',
+    },
+    include: {
+      questionAssign: {
+        include: {
+          question: {
+            select: {
+              id: true,
+              content: true,
+              difficulty: true,
+              category: true,
+              points: true,
+            },
+          },
+        },
+      },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  return checkpoint;
+};
+
  //Check if team can roll dice
 
 const canRollDice = async (teamId) => {
@@ -128,6 +156,7 @@ module.exports = {
   getDashboard,
   getTeamState,
   getCheckpoints,
+  getPendingCheckpoint,
   getBoard,
   canRollDice,
 };

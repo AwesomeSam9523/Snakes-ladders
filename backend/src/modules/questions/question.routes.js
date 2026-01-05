@@ -2,12 +2,12 @@ const express = require('express');
 const router = express.Router();
 const questionController = require('./question.controller');
 const { verifyToken } = require('../../middlewares/session.middleware');
-const { adminOnly, superadminOnly } = require('../../middlewares/role.middleware');
+const { adminOnly, superadminOnly, adminOrSuperadmin } = require('../../middlewares/role.middleware');
 
 // Apply authentication to all routes
 router.use(verifyToken);
-// Get all questions (admin can view)
-router.get('/', adminOnly, questionController.getAllQuestions);
+// Get all questions (admin and superadmin can view)
+router.get('/', adminOrSuperadmin, questionController.getAllQuestions);
 
 // Get question by ID (admin can view)
 router.get('/:questionId', adminOnly, questionController.getQuestionById);

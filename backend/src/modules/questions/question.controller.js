@@ -5,22 +5,24 @@ const createQuestion = async (req, res, next) => {
   try {
     const { content, options, correctAnswer, difficulty, category, points } = req.body;
 
-    if (!content || !options || !correctAnswer) {
-      return sendBadRequest(res, 'Content, options, and correct answer are required');
+    if (!content) {
+      return sendBadRequest(res, 'Question content is required');
     }
 
-    if (!Array.isArray(options) || options.length < 2) {
-      return sendBadRequest(res, 'Options must be an array with at least 2 choices');
-    }
-
-    if (!options.includes(correctAnswer)) {
-      return sendBadRequest(res, 'Correct answer must be one of the options');
+    // If options are provided, validate them
+    if (options && Array.isArray(options) && options.length > 0) {
+      if (options.length < 2) {
+        return sendBadRequest(res, 'Options must have at least 2 choices');
+      }
+      if (correctAnswer && !options.includes(correctAnswer)) {
+        return sendBadRequest(res, 'Correct answer must be one of the options');
+      }
     }
 
     const question = await questionService.createQuestion({
       content,
-      options,
-      correctAnswer,
+      options: options || [],
+      correctAnswer: correctAnswer || '',
       difficulty,
       category,
       points,

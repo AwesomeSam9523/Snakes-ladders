@@ -37,6 +37,7 @@ interface Team {
 
 interface Question {
   id: string
+  questionNumber?: string
   text: string
   difficulty: "easy" | "medium" | "hard"
 }
@@ -54,11 +55,7 @@ export default function SuperAdminDashboard() {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState("leaderboard")
   const [teams, setTeams] = useState<Team[]>([])
-  const [questions, setQuestions] = useState<Question[]>([
-    { id: "Q001", text: "What is a closure in JavaScript?", difficulty: "medium" },
-    { id: "Q002", text: "Explain async/await", difficulty: "hard" },
-    { id: "Q003", text: "What is React Hooks?", difficulty: "medium" },
-  ])
+  const [questions, setQuestions] = useState<Question[]>([])
   const [showNewTeamModal, setShowNewTeamModal] = useState(false)
   const [showNewQuestionModal, setShowNewQuestionModal] = useState(false)
   const [newTeamId, setNewTeamId] = useState("")
@@ -73,6 +70,31 @@ export default function SuperAdminDashboard() {
   const [generatedPasswords, setGeneratedPasswords] = useState<Record<string, string>>({})
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+
+  // Fetch questions from backend
+  const fetchQuestions = async () => {
+    try {
+      const token = localStorage.getItem("token")
+      const res = await fetch(`${API_URL}/questions`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      if (res.ok) {
+        const data = await res.json()
+        if (data.data) {
+          setQuestions(data.data.map((q: any, index: number) => ({
+            id: q.id,
+            questionNumber: `Q${String(index + 1).padStart(3, "0")}`,
+            text: q.content,
+            difficulty: q.difficulty?.toLowerCase() || "medium",
+          })))
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching questions:", error)
+    }
+  }
 
   // Fetch teams from backend
   const fetchTeams = async () => {
@@ -133,6 +155,7 @@ export default function SuperAdminDashboard() {
     } else {
       fetchTeams()
       fetchActivityLogs()
+      fetchQuestions()
       
       // Auto-refresh teams every 10 seconds to see position updates
       const interval = setInterval(fetchTeams, 10000)
@@ -221,11 +244,36 @@ export default function SuperAdminDashboard() {
     }
   }
 
-  const handleAddQuestion = () => {
+  const handleAddQuestion = async () => {
     if (!newQuestion) return
 
-    const newId = `Q${String(questions.length + 1).padStart(3, "0")}`
-    setQuestions([...questions, { id: newId, text: newQuestion, difficulty: newQuestionDifficulty }])
+    try {
+      const token = localStorage.getItem("token")
+      const res = await fetch(`${API_URL}/questions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          content: newQuestion,
+          difficulty: newQuestionDifficulty.toUpperCase(),
+          category: "GENERAL",
+          points: newQuestionDifficulty === "easy" ? 5 : newQuestionDifficulty === "medium" ? 10 : 15,
+        }),
+      })
+
+      if (res.ok) {
+        fetchQuestions() // Refresh questions from DB
+        alert("Question created successfully!")
+      } else {
+        const error = await res.json()
+        alert(`Error: ${error.message || 'Failed to create question'}`)
+      }
+    } catch (error) {
+      console.error("Error creating question:", error)
+      alert("Failed to create question. Check if backend is running.")
+    }
 
     setNewQuestion("")
     setNewQuestionDifficulty("medium")
@@ -245,8 +293,31 @@ export default function SuperAdminDashboard() {
     setNewRoom("")
   }
 
-  const handleRemoveQuestion = (questionId: string) => {
-    setQuestions((prev) => prev.filter((q) => q.id !== questionId))
+  const handleRemoveQuestion = async (questionId: string) => {
+    if (!confirm("Are you sure you want to delete this question?")) {
+      return
+    }
+
+    try {
+      const token = localStorage.getItem("token")
+      const res = await fetch(`${API_URL}/questions/${questionId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (res.ok) {
+        fetchQuestions() // Refresh questions from DB
+        alert("Question deleted successfully!")
+      } else {
+        const error = await res.json()
+        alert(`Error: ${error.message || 'Failed to delete question'}`)
+      }
+    } catch (error) {
+      console.error("Error deleting question:", error)
+      alert("Failed to delete question. Check if backend is running.")
+    }
   }
 
   // Undo checkpoint - calls backend API
@@ -609,13 +680,13 @@ export default function SuperAdminDashboard() {
             </div>
 
             <div className="space-y-2">
-              {questions.map((question) => (
+              {questions.map((question, index) => (
                 <div
                   key={question.id}
                   className="flex justify-between items-start p-3 border border-gray-200 rounded hover:bg-gray-50"
                 >
                   <div className="flex-1">
-                    <p className="font-semibold text-gray-900 text-sm">{question.id}</p>
+                    <p className="font-semibold text-gray-900 text-sm">{question.questionNumber || `Q${String(index + 1).padStart(3, "0")}`}</p>
                     <p className="text-gray-700 text-sm mt-1">{question.text}</p>
                     <div className="mt-2">
                       <span

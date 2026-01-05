@@ -56,6 +56,16 @@ const getCheckpoints = async (req, res, next) => {
   }
 };
 
+const getPendingCheckpoint = async (req, res, next) => {
+  try {
+    const teamId = req.user.teamId;
+    const checkpoint = await participantService.getPendingCheckpoint(teamId);
+    return sendSuccess(res, checkpoint, 'Pending checkpoint loaded');
+  } catch (error) {
+    next(error);
+  }
+};
+
 const getBoard = async (req, res, next) => {
   try {
     const board = await participantService.getBoard();
@@ -89,6 +99,7 @@ module.exports = {
   getTeamState,
   rollDice,
   getCheckpoints,
+  getPendingCheckpoint,
   getBoard,
   getLeaderboardData,
   checkCanRollDice,

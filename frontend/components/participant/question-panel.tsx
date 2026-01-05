@@ -78,19 +78,44 @@ export function QuestionPanel({
     )
   }
 
-  if (gameStatus === "QUESTION_ASSIGNED") {
+  if (gameStatus === "QUESTION_ASSIGNED" && questionData) {
     return (
-      <div className="rounded-2xl bg-card border border-border p-6 h-full flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="w-16 h-16 mx-auto rounded-full bg-green-500/20 flex items-center justify-center">
-            <FileText className="w-8 h-8 text-green-500" />
+      <div className="rounded-2xl bg-card border border-border p-6 space-y-6">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold">Question</h3>
+            <div className="flex items-center gap-2">
+              {questionData.isSnakeDodge && (
+                <Badge variant="destructive" className="gap-1">
+                  <AlertTriangle className="w-3 h-3" />
+                  Snake Dodge
+                </Badge>
+              )}
+              <Badge variant="outline">{questionData.question.difficulty === 1 ? "Easy" : questionData.question.difficulty === 2 ? "Medium" : questionData.question.difficulty === 3 ? "Hard" : questionData.question.difficulty}</Badge>
+            </div>
           </div>
-          <p className="font-semibold">Question Assigned!</p>
-          <p className="text-sm text-muted-foreground">Click below to view and solve the question</p>
-          <Button onClick={onViewQuestion} size="lg" className="w-full">
-            <FileText className="w-5 h-5 mr-2" />
-            View Question
-          </Button>
+
+          <p className="text-sm leading-relaxed">{questionData.question.text}</p>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="answer">Your Answer</Label>
+            <Textarea
+              id="answer"
+              value={answer}
+              onChange={(e) => setAnswer(e.target.value)}
+              placeholder="Type your answer here..."
+              className="mt-2 min-h-32"
+            />
+          </div>
+
+          <div className="flex gap-2">
+            <Button onClick={handleSubmit} disabled={!answer.trim()} className="flex-1">
+              <Upload className="w-4 h-4 mr-2" />
+              Submit Answer
+            </Button>
+          </div>
         </div>
       </div>
     )
@@ -109,47 +134,17 @@ export function QuestionPanel({
                   Snake Dodge
                 </Badge>
               )}
-              <Badge variant="outline">{questionData.question.difficulty}</Badge>
+              <Badge variant="outline">{questionData.question.difficulty === 1 ? "Easy" : questionData.question.difficulty === 2 ? "Medium" : questionData.question.difficulty === 3 ? "Hard" : questionData.question.difficulty}</Badge>
             </div>
           </div>
 
           <p className="text-sm leading-relaxed">{questionData.question.text}</p>
         </div>
 
-        {gameStatus === "SOLVING" ? (
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="answer">Your Answer</Label>
-              <Textarea
-                id="answer"
-                value={answer}
-                onChange={(e) => setAnswer(e.target.value)}
-                placeholder="Type your answer here..."
-                className="mt-2 min-h-32"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="file">Attach File (Optional)</Label>
-              <Input id="file" type="file" onChange={(e) => setFile(e.target.files?.[0] || null)} className="mt-2" />
-            </div>
-
-            <div className="flex gap-2">
-              <Button onClick={handleSubmit} disabled={!answer.trim()} className="flex-1">
-                <Upload className="w-4 h-4 mr-2" />
-                Submit Answer
-              </Button>
-              <Button onClick={onHint} variant="outline">
-                <HelpCircle className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="p-4 rounded-lg bg-secondary text-center">
-            <p className="text-sm font-semibold">Answer submitted</p>
-            <p className="text-xs text-muted-foreground mt-1">Waiting for admin evaluation...</p>
-          </div>
-        )}
+        <div className="p-4 rounded-lg bg-secondary text-center">
+          <p className="text-sm font-semibold">✓ Answer Submitted</p>
+          <p className="text-xs text-muted-foreground mt-1">Waiting for admin to evaluate your answer...</p>
+        </div>
       </div>
     )
   }

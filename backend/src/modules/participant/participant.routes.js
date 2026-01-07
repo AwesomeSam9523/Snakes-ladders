@@ -26,6 +26,9 @@ router.get('/checkpoints/pending', participantController.getPendingCheckpoint);
 // Submit answer
 router.post('/answer/submit', participantController.submitAnswer);
 
+// Use hint (adds 60 second penalty)
+router.post('/hint/use', participantController.useHint);
+
 // Board
 router.get('/board', participantController.getBoard);
 

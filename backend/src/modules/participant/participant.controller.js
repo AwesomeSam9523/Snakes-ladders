@@ -120,6 +120,27 @@ const submitAnswer = async (req, res, next) => {
   }
 };
 
+// Use hint - adds 60 second penalty
+const useHint = async (req, res, next) => {
+  try {
+    const teamId = req.user.teamId;
+    const { assignmentId } = req.body;
+
+    if (!assignmentId) {
+      return sendBadRequest(res, 'Assignment ID is required');
+    }
+
+    const result = await participantService.useHint(teamId, assignmentId);
+    return sendSuccess(res, result, result.message);
+  } catch (error) {
+    if (error.message.includes('not found') || 
+        error.message.includes('does not belong')) {
+      return sendBadRequest(res, error.message);
+    }
+    next(error);
+  }
+};
+
 module.exports = {
   getDashboard,
   getTeamState,
@@ -130,5 +151,6 @@ module.exports = {
   getLeaderboardData,
   checkCanRollDice,
   submitAnswer,
+  useHint,
 };
 

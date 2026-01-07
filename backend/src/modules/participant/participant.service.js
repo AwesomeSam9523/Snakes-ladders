@@ -266,6 +266,48 @@ const submitAnswer = async (teamId, assignmentId, answer) => {
   };
 };
 
+// Use hint - adds 60 second penalty
+const useHint = async (teamId, assignmentId) => {
+  // Get the question assignment to verify it belongs to this team
+  const assignment = await prisma.questionAssignment.findUnique({
+    where: { id: assignmentId },
+    include: {
+      checkpoint: true,
+      question: {
+        select: {
+          hint: true,
+        },
+      },
+    },
+  });
+
+  if (!assignment) {
+    throw new Error('Question assignment not found');
+  }
+
+  // Verify the assignment belongs to this team
+  if (assignment.checkpoint.teamId !== teamId) {
+    throw new Error('This question assignment does not belong to your team');
+  }
+
+  // Add 60 seconds penalty to team's total time
+  const team = await prisma.team.update({
+    where: { id: teamId },
+    data: {
+      totalTimeSec: {
+        increment: 60,
+      },
+    },
+  });
+
+  return {
+    hint: assignment.question.hint,
+    penalty: 60,
+    newTotalTime: team.totalTimeSec,
+    message: '+60 seconds penalty added',
+  };
+};
+
 module.exports = {
   getDashboard,
   getTeamState,
@@ -274,5 +316,6 @@ module.exports = {
   getBoard,
   canRollDice,
   submitAnswer,
+  useHint,
 };
 

@@ -373,7 +373,54 @@ export default function ParticipantDashboard() {
     }
   }
 
+  const handleUseHint = async (assignmentId: string): Promise<void> => {
+    try {
+      const token = localStorage.getItem("token")
+      const res = await fetch(`${API_URL}/participant/hint/use`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          assignmentId,
+        }),
+      })
+
+      const data = await res.json()
+
+      if (res.ok) {
+        // Update the timer with the new total time
+        if (data.data?.newTotalTime !== undefined) {
+          setTeamData(prev => ({ ...prev, totalTimeSec: data.data.newTotalTime }))
+        }
+        
+        toast({
+          title: "Hint Used",
+          description: "+60 seconds penalty added to your time",
+          variant: "default",
+        })
+      } else {
+        toast({
+          title: "Error",
+          description: data.message || "Failed to use hint",
+          variant: "destructive",
+        })
+        throw new Error(data.message || "Failed to use hint")
+      }
+    } catch (error) {
+      console.error("Error using hint:", error)
+      toast({
+        title: "Error",
+        description: "Failed to use hint. Check your connection.",
+        variant: "destructive",
+      })
+      throw error
+    }
+  }
+
   const handleHint = () => {
+    // This function is no longer used but kept for compatibility
     setTeamData((prev) => ({
       ...prev,
       totalTimeSec: prev.totalTimeSec + 60,
@@ -405,7 +452,6 @@ export default function ParticipantDashboard() {
         roomNumber={teamData.currentRoom || 0}
         status={gameStatus}
         totalTimeSec={teamData.totalTimeSec}
-        onHint={handleHint}
       />
 
       <main className="flex-1 container mx-auto p-4 lg:p-6">
@@ -435,7 +481,7 @@ export default function ParticipantDashboard() {
               questionData={questionData}
               onViewQuestion={handleViewQuestion}
               onSubmitAnswer={handleSubmitAnswer}
-              onHint={handleHint}
+              onUseHint={handleUseHint}
             />
           </div>
         </div>

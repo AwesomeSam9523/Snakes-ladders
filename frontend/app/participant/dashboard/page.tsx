@@ -123,13 +123,18 @@ export default function ParticipantDashboard() {
           if (checkpoint.questionAssign?.question) {
             // Question is assigned
             setQuestionData({
+              id: checkpoint.questionAssign.id,
               assignmentId: checkpoint.questionAssign.id,
               question: {
                 id: checkpoint.questionAssign.question.id,
                 text: checkpoint.questionAssign.question.content || checkpoint.questionAssign.question.text,
+                hint: checkpoint.questionAssign.question.hint || "",
                 difficulty: checkpoint.questionAssign.question.difficulty || "MEDIUM",
                 type: checkpoint.questionAssign.question.type || "TEXT",
+                options: checkpoint.questionAssign.question.options || [],
+                correctAnswer: checkpoint.questionAssign.question.correctAnswer || "",
               },
+              participantAnswer: checkpoint.questionAssign.participantAnswer,
               isSnakeDodge: checkpoint.isSnakePosition,
               status: checkpoint.questionAssign.status,
             })

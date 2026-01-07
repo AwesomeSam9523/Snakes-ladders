@@ -3,12 +3,16 @@ const { sendSuccess, sendError, sendNotFound, sendBadRequest, sendCreated } = re
 
 const createQuestion = async (req, res, next) => {
   try {
-    const { content, text, difficulty, type, options, correctAnswer } = req.body;
+    const { content, text, difficulty, type, options, correctAnswer, hint } = req.body;
 
     const questionText = text || content;
     
     if (!questionText) {
       return sendBadRequest(res, 'Question text is required');
+    }
+
+    if (!hint || hint.trim() === '') {
+      return sendBadRequest(res, 'Hint is required');
     }
 
     // Validate MCQ has options
@@ -28,6 +32,7 @@ const createQuestion = async (req, res, next) => {
 
     const question = await questionService.createQuestion({
       text: questionText,
+      hint,
       difficulty,
       type,
       options: options || [],
@@ -43,7 +48,7 @@ const createQuestion = async (req, res, next) => {
 const updateQuestion = async (req, res, next) => {
   try {
     const { questionId } = req.params;
-    const { content, text, difficulty, type, options, correctAnswer, isActive } = req.body;
+    const { content, text, difficulty, type, options, correctAnswer, isActive, hint } = req.body;
 
     // Validate MCQ has options
     if (type === 'MCQ' && options && options.length < 2) {
@@ -63,6 +68,7 @@ const updateQuestion = async (req, res, next) => {
       options,
       correctAnswer,
       isActive,
+      hint,
     });
     
     return sendSuccess(res, question, 'Question updated successfully');

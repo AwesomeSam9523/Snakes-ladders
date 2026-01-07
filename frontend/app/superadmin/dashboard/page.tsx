@@ -39,6 +39,7 @@ interface Question {
   id: string
   questionNumber?: string
   text: string
+  hint: string
   difficulty: "easy" | "medium" | "hard"
   type: "CODING" | "NUMERICAL" | "MCQ" | "PHYSICAL"
   options?: string[]
@@ -69,6 +70,7 @@ export default function SuperAdminDashboard() {
   const [newQuestionType, setNewQuestionType] = useState<"CODING" | "NUMERICAL" | "MCQ" | "PHYSICAL">("CODING")
   const [newQuestionOptions, setNewQuestionOptions] = useState("")
   const [newQuestionCorrectAnswer, setNewQuestionCorrectAnswer] = useState("")
+  const [newQuestionHint, setNewQuestionHint] = useState("")
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null)
   const [selectedTeamForEdit, setSelectedTeamForEdit] = useState<string | null>(null)
   const [newRoom, setNewRoom] = useState("")
@@ -94,6 +96,7 @@ export default function SuperAdminDashboard() {
             id: q.id,
             questionNumber: `Q${String(index + 1).padStart(3, "0")}`,
             text: q.content || q.text,
+            hint: q.hint || "",
             difficulty: q.difficultyLabel || (q.difficulty === 1 ? "easy" : q.difficulty === 2 ? "medium" : q.difficulty === 3 ? "hard" : "medium"),
             type: q.type || "CODING",
             options: q.options || [],
@@ -257,6 +260,11 @@ export default function SuperAdminDashboard() {
   const handleAddQuestion = async () => {
     if (!newQuestion) return
 
+    if (!newQuestionHint || newQuestionHint.trim() === "") {
+      alert("Hint is required")
+      return
+    }
+
     // Validate MCQ and NUMERICAL types
     if (newQuestionType === "MCQ") {
       const options = newQuestionOptions.split(",").map(o => o.trim()).filter(o => o)
@@ -279,6 +287,7 @@ export default function SuperAdminDashboard() {
       const token = localStorage.getItem("token")
       const payload: any = {
         content: newQuestion,
+        hint: newQuestionHint,
         difficulty: newQuestionDifficulty.toUpperCase(),
         category: "GENERAL",
         points: newQuestionDifficulty === "easy" ? 5 : newQuestionDifficulty === "medium" ? 10 : 15,
@@ -318,6 +327,7 @@ export default function SuperAdminDashboard() {
     setNewQuestionType("CODING")
     setNewQuestionOptions("")
     setNewQuestionCorrectAnswer("")
+    setNewQuestionHint("")
     setShowNewQuestionModal(false)
   }
 
@@ -386,6 +396,7 @@ export default function SuperAdminDashboard() {
       const token = localStorage.getItem("token")
       const payload: any = {
         content: editingQuestion.text,
+        hint: editingQuestion.hint,
         difficulty: editingQuestion.difficulty.toUpperCase(),
         type: editingQuestion.type,
       }
@@ -990,6 +1001,16 @@ export default function SuperAdminDashboard() {
               </div>
 
               <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Hint <span className="text-red-500">*</span></label>
+                <textarea
+                  value={newQuestionHint}
+                  onChange={(e) => setNewQuestionHint(e.target.value)}
+                  placeholder="Enter hint for this question (required)..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-gray-600 focus:ring-1 focus:ring-gray-600 h-20 text-gray-900"
+                />
+              </div>
+
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Question Type</label>
                 <select
                   value={newQuestionType}
@@ -1051,6 +1072,7 @@ export default function SuperAdminDashboard() {
                   setNewQuestionType("CODING")
                   setNewQuestionOptions("")
                   setNewQuestionCorrectAnswer("")
+                  setNewQuestionHint("")
                 }}
                 className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded font-medium text-sm hover:bg-gray-300 transition-colors"
               >
@@ -1080,6 +1102,15 @@ export default function SuperAdminDashboard() {
                   value={editingQuestion.text}
                   onChange={(e) => setEditingQuestion({ ...editingQuestion, text: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-gray-600 focus:ring-1 focus:ring-gray-600 h-24 text-gray-900"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Hint <span className="text-red-500">*</span></label>
+                <textarea
+                  value={editingQuestion.hint}
+                  onChange={(e) => setEditingQuestion({ ...editingQuestion, hint: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-gray-600 focus:ring-1 focus:ring-gray-600 h-20 text-gray-900"
                 />
               </div>
 

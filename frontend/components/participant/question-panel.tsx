@@ -30,6 +30,7 @@ export function QuestionPanel({
   const [answer, setAnswer] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const [submitResult, setSubmitResult] = useState<{ autoMarked?: boolean; isCorrect?: boolean; message?: string } | null>(null)
+  const [showHint, setShowHint] = useState(false)
 
   const handleSubmit = async () => {
     if (answer.trim() && questionData?.id) {
@@ -217,7 +218,28 @@ export function QuestionPanel({
               </div>
             )}
 
+            {/* Hint Display - Shows above buttons when revealed */}
+            {showHint && questionData.question.hint && (
+              <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+                <div className="flex items-start gap-2">
+                  <HelpCircle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-xs font-semibold text-amber-900 dark:text-amber-200 mb-1">Hint:</p>
+                    <p className="text-sm text-amber-800 dark:text-amber-300">{questionData.question.hint}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="flex gap-2">
+              <Button 
+                onClick={() => setShowHint(!showHint)} 
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <HelpCircle className="w-4 h-4" />
+                {showHint ? "Hide Hint" : "Show Hint"}
+              </Button>
               <Button onClick={handleSubmit} disabled={!answer.trim() || submitting} className="flex-1">
                 <Upload className="w-4 h-4 mr-2" />
                 {submitting ? "Submitting..." : "Submit Answer"}

@@ -1,7 +1,6 @@
 "use client"
 
-import { Clock, HelpCircle, MapPin } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Clock, MapPin } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import type { GameStatus } from "@/app/page"
 
@@ -10,7 +9,6 @@ interface StatusStripProps {
   roomNumber: number
   status: GameStatus
   totalTimeSec: number
-  onHint: () => void
 }
 
 const statusLabels: Record<GameStatus, string> = {
@@ -23,7 +21,7 @@ const statusLabels: Record<GameStatus, string> = {
   LOCKED: "Answer submitted",
 }
 
-export function StatusStrip({ currentPosition, roomNumber, status, totalTimeSec, onHint }: StatusStripProps) {
+export function StatusStrip({ currentPosition, roomNumber, status, totalTimeSec }: StatusStripProps) {
   const formatTime = (seconds: number) => {
     const h = Math.floor(seconds / 3600)
     const m = Math.floor((seconds % 3600) / 60)
@@ -64,11 +62,6 @@ export function StatusStrip({ currentPosition, roomNumber, status, totalTimeSec,
               <Clock className="w-4 h-4 text-warning" />
               <span className="font-mono text-lg font-semibold">{formatTime(totalTimeSec)}</span>
             </div>
-
-            <Button onClick={onHint} variant="outline" size="sm">
-              <HelpCircle className="w-4 h-4 mr-2" />
-              Hint
-            </Button>
           </div>
         </div>
       </div>

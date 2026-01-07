@@ -15,7 +15,7 @@ const difficultyMap = {
 const validQuestionTypes = ['CODING', 'NUMERICAL', 'MCQ', 'PHYSICAL'];
 
 const createQuestion = async (questionData) => {
-  const { content, text, difficulty, type, options, correctAnswer } = questionData;
+  const { content, text, difficulty, type, options, correctAnswer, hint } = questionData;
 
   // Use text or content (frontend sends content)
   const questionText = text || content;
@@ -31,6 +31,7 @@ const createQuestion = async (questionData) => {
   return prisma.question.create({
     data: {
       text: questionText,
+      hint: hint || '',
       difficulty: difficultyLevel,
       type: questionType,
       options: options || [],
@@ -41,12 +42,16 @@ const createQuestion = async (questionData) => {
 };
 
 const updateQuestion = async (questionId, questionData) => {
-  const { content, text, difficulty, type, options, correctAnswer, isActive } = questionData;
+  const { content, text, difficulty, type, options, correctAnswer, isActive, hint } = questionData;
   
   const updateData = {};
   
   if (text || content) {
     updateData.text = text || content;
+  }
+  
+  if (hint !== undefined) {
+    updateData.hint = hint;
   }
   
   if (difficulty !== undefined) {

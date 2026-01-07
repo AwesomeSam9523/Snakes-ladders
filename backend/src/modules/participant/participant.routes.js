@@ -23,6 +23,9 @@ router.get('/dice/can-roll', participantController.checkCanRollDice);
 router.get('/checkpoints', participantController.getCheckpoints);
 router.get('/checkpoints/pending', participantController.getPendingCheckpoint);
 
+// Submit answer
+router.post('/answer/submit', participantController.submitAnswer);
+
 // Board
 router.get('/board', participantController.getBoard);
 

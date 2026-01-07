@@ -22,8 +22,10 @@ enum CheckpointStatus {
 }
 
 enum QuestionType {
-  NORMAL
-  SNAKE_DODGE
+  CODING
+  NUMERICAL
+  MCQ
+  PHYSICAL
 }
 
 enum QuestionStatus {
@@ -126,11 +128,13 @@ model Checkpoint {
 // QUESTION ENGINE
 
 model Question {
-  id          String       @id @default(uuid())
-  text        String
-  difficulty  Int          @default(1)
-  type        QuestionType @default(NORMAL)
-  isActive    Boolean      @default(true)
+  id            String       @id @default(uuid())
+  text          String
+  difficulty    Int          @default(1)
+  type          QuestionType @default(CODING)
+  options       String[]     @default([])
+  correctAnswer String?
+  isActive      Boolean      @default(true)
 
   assignments QuestionAssignment[]
   
@@ -139,10 +143,12 @@ model Question {
 }
 
 model QuestionAssignment {
-  id           String         @id @default(uuid())
-  checkpointId String         @unique
-  questionId   String
-  status       QuestionStatus @default(PENDING)
+  id             String         @id @default(uuid())
+  checkpointId   String         @unique
+  questionId     String
+  status         QuestionStatus @default(PENDING)
+  participantAnswer String?
+  submittedAt    DateTime?
   assignedAt   DateTime       @default(now())
   answeredAt   DateTime?
 

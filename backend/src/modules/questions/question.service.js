@@ -11,8 +11,11 @@ const difficultyMap = {
   'hard': 3,
 };
 
+// Valid question types
+const validQuestionTypes = ['CODING', 'NUMERICAL', 'MCQ', 'PHYSICAL'];
+
 const createQuestion = async (questionData) => {
-  const { content, text, difficulty, type } = questionData;
+  const { content, text, difficulty, type, options, correctAnswer } = questionData;
 
   // Use text or content (frontend sends content)
   const questionText = text || content;
@@ -22,20 +25,55 @@ const createQuestion = async (questionData) => {
     ? difficulty 
     : (difficultyMap[difficulty] || 2);
 
+  // Validate question type
+  const questionType = validQuestionTypes.includes(type) ? type : 'CODING';
+
   return prisma.question.create({
     data: {
       text: questionText,
       difficulty: difficultyLevel,
-      type: type || 'NORMAL',
+      type: questionType,
+      options: options || [],
+      correctAnswer: correctAnswer || null,
       isActive: true,
     },
   });
 };
 
 const updateQuestion = async (questionId, questionData) => {
+  const { content, text, difficulty, type, options, correctAnswer, isActive } = questionData;
+  
+  const updateData = {};
+  
+  if (text || content) {
+    updateData.text = text || content;
+  }
+  
+  if (difficulty !== undefined) {
+    updateData.difficulty = typeof difficulty === 'number' 
+      ? difficulty 
+      : (difficultyMap[difficulty] || 2);
+  }
+  
+  if (type && validQuestionTypes.includes(type)) {
+    updateData.type = type;
+  }
+  
+  if (options !== undefined) {
+    updateData.options = options;
+  }
+  
+  if (correctAnswer !== undefined) {
+    updateData.correctAnswer = correctAnswer;
+  }
+  
+  if (isActive !== undefined) {
+    updateData.isActive = isActive;
+  }
+
   return prisma.question.update({
     where: { id: questionId },
-    data: questionData,
+    data: updateData,
   });
 };
 

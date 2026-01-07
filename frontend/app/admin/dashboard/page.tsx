@@ -17,9 +17,14 @@ interface Checkpoint {
     id: string
     questionId: string
     status: "PENDING" | "CORRECT" | "INCORRECT"
+    participantAnswer?: string
+    submittedAt?: string
     question?: {
       id: string
       content: string
+      type?: "CODING" | "NUMERICAL" | "MCQ" | "PHYSICAL"
+      options?: string[]
+      correctAnswer?: string
     }
   } | null
 }
@@ -41,6 +46,7 @@ interface Question {
   id: string
   content: string
   type?: string
+  questionNumber?: string
 }
 
 export default function AdminDashboard() {
@@ -328,25 +334,58 @@ export default function AdminDashboard() {
                                 <div className="flex flex-col gap-2">
                                   <span className="text-xs text-gray-600">
                                     Question: <span className="font-medium text-gray-800">
-                                      {checkpoint.questionAssign.question?.questionNumber || `Q${checkpoint.questionAssign.questionId?.substring(0, 4)}`}
+                                      {`Q${checkpoint.questionAssign.questionId?.substring(0, 4)}`}
                                     </span>
+                                    {checkpoint.questionAssign.question?.type && (
+                                      <span className={`ml-2 px-1.5 py-0.5 rounded text-[10px] ${
+                                        checkpoint.questionAssign.question.type === "CODING" ? "bg-purple-100 text-purple-700" :
+                                        checkpoint.questionAssign.question.type === "NUMERICAL" ? "bg-blue-100 text-blue-700" :
+                                        checkpoint.questionAssign.question.type === "MCQ" ? "bg-cyan-100 text-cyan-700" :
+                                        "bg-orange-100 text-orange-700"
+                                      }`}>
+                                        {checkpoint.questionAssign.question.type}
+                                      </span>
+                                    )}
                                   </span>
+
+                                  {/* Show participant's submitted answer */}
+                                  {checkpoint.questionAssign.participantAnswer && (
+                                    <div className="bg-gray-50 p-2 rounded text-xs">
+                                      <p className="text-gray-500 mb-1">Answer:</p>
+                                      <p className="text-gray-800 font-mono whitespace-pre-wrap">{checkpoint.questionAssign.participantAnswer}</p>
+                                    </div>
+                                  )}
+
+                                  {/* Show correct answer for auto-check types */}
+                                  {(checkpoint.questionAssign.question?.type === "MCQ" || checkpoint.questionAssign.question?.type === "NUMERICAL") && 
+                                   checkpoint.questionAssign.question?.correctAnswer && (
+                                    <p className="text-xs text-gray-500">
+                                      Correct answer: <span className="font-medium text-gray-700">{checkpoint.questionAssign.question.correctAnswer}</span>
+                                    </p>
+                                  )}
 
                                   {/* Step 3: Mark Answer (only show if question is assigned) */}
                                   {checkpoint.questionAssign.status === "PENDING" ? (
-                                    <div className="flex gap-2">
-                                      <button
-                                        onClick={() => handleMarkAnswer(checkpoint.id, true)}
-                                        className="px-3 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors font-medium"
-                                      >
-                                        ✓ Correct
-                                      </button>
-                                      <button
-                                        onClick={() => handleMarkAnswer(checkpoint.id, false)}
-                                        className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors font-medium"
-                                      >
-                                        ✗ Incorrect
-                                      </button>
+                                    <div className="flex flex-col gap-2">
+                                      {!checkpoint.questionAssign.participantAnswer && (
+                                        <p className="text-xs text-amber-600">⏳ Waiting for participant to submit answer...</p>
+                                      )}
+                                      {checkpoint.questionAssign.participantAnswer && (
+                                        <div className="flex gap-2">
+                                          <button
+                                            onClick={() => handleMarkAnswer(checkpoint.id, true)}
+                                            className="px-3 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors font-medium"
+                                          >
+                                            ✓ Correct
+                                          </button>
+                                          <button
+                                            onClick={() => handleMarkAnswer(checkpoint.id, false)}
+                                            className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors font-medium"
+                                          >
+                                            ✗ Incorrect
+                                          </button>
+                                        </div>
+                                      )}
                                     </div>
                                   ) : (
                                     <span

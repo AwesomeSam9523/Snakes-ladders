@@ -94,6 +94,32 @@ const checkCanRollDice = async (req, res, next) => {
   }
 };
 
+// Submit answer for a question
+const submitAnswer = async (req, res, next) => {
+  try {
+    const teamId = req.user.teamId;
+    const { assignmentId, answer } = req.body;
+
+    if (!assignmentId) {
+      return sendBadRequest(res, 'Assignment ID is required');
+    }
+
+    if (!answer || answer.trim() === '') {
+      return sendBadRequest(res, 'Answer is required');
+    }
+
+    const result = await participantService.submitAnswer(teamId, assignmentId, answer.trim());
+    return sendSuccess(res, result, result.message);
+  } catch (error) {
+    if (error.message.includes('already submitted') || 
+        error.message.includes('not found') || 
+        error.message.includes('does not belong')) {
+      return sendBadRequest(res, error.message);
+    }
+    next(error);
+  }
+};
+
 module.exports = {
   getDashboard,
   getTeamState,
@@ -103,5 +129,6 @@ module.exports = {
   getBoard,
   getLeaderboardData,
   checkCanRollDice,
+  submitAnswer,
 };
 

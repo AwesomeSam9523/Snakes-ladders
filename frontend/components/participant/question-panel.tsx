@@ -6,7 +6,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { FileText, Upload, AlertTriangle, HelpCircle } from "lucide-react"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { FileText, Upload, AlertTriangle, HelpCircle, Code, Calculator, List, Dumbbell, CheckCircle, XCircle } from "lucide-react"
 import type { GameStatus } from "@/app/page"
 
 interface QuestionPanelProps {
@@ -14,7 +15,7 @@ interface QuestionPanelProps {
   checkpoint: any
   questionData: any
   onViewQuestion: () => void
-  onSubmitAnswer: (answer: string, file?: File) => void
+  onSubmitAnswer: (answer: string, assignmentId: string) => Promise<{ autoMarked?: boolean; isCorrect?: boolean; message?: string }>
   onHint: () => void
 }
 
@@ -27,13 +28,50 @@ export function QuestionPanel({
   onHint,
 }: QuestionPanelProps) {
   const [answer, setAnswer] = useState("")
-  const [file, setFile] = useState<File | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+  const [submitResult, setSubmitResult] = useState<{ autoMarked?: boolean; isCorrect?: boolean; message?: string } | null>(null)
 
-  const handleSubmit = () => {
-    if (answer.trim()) {
-      onSubmitAnswer(answer, file || undefined)
-      setAnswer("")
-      setFile(null)
+  const handleSubmit = async () => {
+    if (answer.trim() && questionData?.id) {
+      setSubmitting(true)
+      try {
+        const result = await onSubmitAnswer(answer, questionData.id)
+        setSubmitResult(result)
+        setAnswer("")
+      } catch (error) {
+        console.error("Error submitting answer:", error)
+      }
+      setSubmitting(false)
+    }
+  }
+
+  const getQuestionTypeIcon = (type: string) => {
+    switch (type) {
+      case "CODING":
+        return <Code className="w-4 h-4" />
+      case "NUMERICAL":
+        return <Calculator className="w-4 h-4" />
+      case "MCQ":
+        return <List className="w-4 h-4" />
+      case "PHYSICAL":
+        return <Dumbbell className="w-4 h-4" />
+      default:
+        return <FileText className="w-4 h-4" />
+    }
+  }
+
+  const getQuestionTypeLabel = (type: string) => {
+    switch (type) {
+      case "CODING":
+        return "Coding"
+      case "NUMERICAL":
+        return "Numerical"
+      case "MCQ":
+        return "Multiple Choice"
+      case "PHYSICAL":
+        return "Physical Task"
+      default:
+        return type
     }
   }
 
@@ -79,71 +117,170 @@ export function QuestionPanel({
   }
 
   if (gameStatus === "QUESTION_ASSIGNED" && questionData) {
+    const questionType = questionData.question?.type || "CODING"
+    const options = questionData.question?.options || []
+
     return (
       <div className="rounded-2xl bg-card border border-border p-6 space-y-6">
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold">Question</h3>
             <div className="flex items-center gap-2">
-              {questionData.isSnakeDodge && (
-                <Badge variant="destructive" className="gap-1">
-                  <AlertTriangle className="w-3 h-3" />
-                  Snake Dodge
-                </Badge>
-              )}
+              <Badge variant="secondary" className="gap-1">
+                {getQuestionTypeIcon(questionType)}
+                {getQuestionTypeLabel(questionType)}
+              </Badge>
               <Badge variant="outline">{questionData.question.difficulty === 1 ? "Easy" : questionData.question.difficulty === 2 ? "Medium" : questionData.question.difficulty === 3 ? "Hard" : questionData.question.difficulty}</Badge>
             </div>
           </div>
 
-          <p className="text-sm leading-relaxed">{questionData.question.text}</p>
+          <p className="text-sm leading-relaxed whitespace-pre-wrap">{questionData.question.text}</p>
         </div>
 
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="answer">Your Answer</Label>
-            <Textarea
-              id="answer"
-              value={answer}
-              onChange={(e) => setAnswer(e.target.value)}
-              placeholder="Type your answer here..."
-              className="mt-2 min-h-32"
-            />
+        {submitResult && (
+          <div className={`p-4 rounded-lg ${submitResult.isCorrect ? 'bg-green-100 dark:bg-green-900/30' : submitResult.autoMarked ? 'bg-red-100 dark:bg-red-900/30' : 'bg-blue-100 dark:bg-blue-900/30'}`}>
+            <div className="flex items-center gap-2">
+              {submitResult.autoMarked ? (
+                submitResult.isCorrect ? (
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                ) : (
+                  <XCircle className="w-5 h-5 text-red-600" />
+                )
+              ) : (
+                <AlertTriangle className="w-5 h-5 text-blue-600" />
+              )}
+              <p className="text-sm font-semibold">{submitResult.message}</p>
+            </div>
           </div>
+        )}
 
-          <div className="flex gap-2">
-            <Button onClick={handleSubmit} disabled={!answer.trim()} className="flex-1">
-              <Upload className="w-4 h-4 mr-2" />
-              Submit Answer
-            </Button>
+        {!submitResult && (
+          <div className="space-y-4">
+            {/* MCQ Type - Radio Buttons */}
+            {questionType === "MCQ" && options.length > 0 && (
+              <div className="space-y-3">
+                <Label>Select your answer:</Label>
+                <RadioGroup value={answer} onValueChange={setAnswer} className="space-y-2">
+                  {options.map((option: string, index: number) => (
+                    <div key={index} className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-secondary/50 cursor-pointer">
+                      <RadioGroupItem value={option} id={`option-${index}`} />
+                      <Label htmlFor={`option-${index}`} className="cursor-pointer flex-1">{option}</Label>
+                    </div>
+                  ))}
+                </RadioGroup>
+              </div>
+            )}
+
+            {/* NUMERICAL Type - Number Input */}
+            {questionType === "NUMERICAL" && (
+              <div>
+                <Label htmlFor="answer">Your Answer (Number)</Label>
+                <Input
+                  id="answer"
+                  type="text"
+                  value={answer}
+                  onChange={(e) => setAnswer(e.target.value)}
+                  placeholder="Enter your numerical answer..."
+                  className="mt-2"
+                />
+              </div>
+            )}
+
+            {/* CODING Type - Code Textarea */}
+            {questionType === "CODING" && (
+              <div>
+                <Label htmlFor="answer">Your Code</Label>
+                <Textarea
+                  id="answer"
+                  value={answer}
+                  onChange={(e) => setAnswer(e.target.value)}
+                  placeholder="Write your code here..."
+                  className="mt-2 min-h-40 font-mono text-sm"
+                />
+              </div>
+            )}
+
+            {/* PHYSICAL Type - Text Description */}
+            {questionType === "PHYSICAL" && (
+              <div>
+                <Label htmlFor="answer">Describe your completed task</Label>
+                <Textarea
+                  id="answer"
+                  value={answer}
+                  onChange={(e) => setAnswer(e.target.value)}
+                  placeholder="Describe how you completed the physical task..."
+                  className="mt-2 min-h-32"
+                />
+                <p className="text-xs text-muted-foreground mt-2">
+                  Note: The admin will verify your physical task completion.
+                </p>
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <Button onClick={handleSubmit} disabled={!answer.trim() || submitting} className="flex-1">
+                <Upload className="w-4 h-4 mr-2" />
+                {submitting ? "Submitting..." : "Submit Answer"}
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     )
   }
 
   if ((gameStatus === "SOLVING" || gameStatus === "LOCKED") && questionData) {
+    const questionType = questionData.question?.type || "CODING"
+    const participantAnswer = questionData.participantAnswer
+    const status = questionData.status
+
     return (
       <div className="rounded-2xl bg-card border border-border p-6 space-y-6">
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold">Question</h3>
             <div className="flex items-center gap-2">
-              {questionData.isSnakeDodge && (
-                <Badge variant="destructive" className="gap-1">
-                  <AlertTriangle className="w-3 h-3" />
-                  Snake Dodge
-                </Badge>
-              )}
+              <Badge variant="secondary" className="gap-1">
+                {getQuestionTypeIcon(questionType)}
+                {getQuestionTypeLabel(questionType)}
+              </Badge>
               <Badge variant="outline">{questionData.question.difficulty === 1 ? "Easy" : questionData.question.difficulty === 2 ? "Medium" : questionData.question.difficulty === 3 ? "Hard" : questionData.question.difficulty}</Badge>
             </div>
           </div>
 
-          <p className="text-sm leading-relaxed">{questionData.question.text}</p>
+          <p className="text-sm leading-relaxed whitespace-pre-wrap">{questionData.question.text}</p>
         </div>
 
-        <div className="p-4 rounded-lg bg-secondary text-center">
-          <p className="text-sm font-semibold">✓ Answer Submitted</p>
-          <p className="text-xs text-muted-foreground mt-1">Waiting for admin to evaluate your answer...</p>
+        {participantAnswer && (
+          <div className="p-3 rounded-lg bg-secondary/50">
+            <p className="text-xs text-muted-foreground mb-1">Your submitted answer:</p>
+            <p className="text-sm font-mono whitespace-pre-wrap">{participantAnswer}</p>
+          </div>
+        )}
+
+        <div className={`p-4 rounded-lg text-center ${
+          status === 'CORRECT' ? 'bg-green-100 dark:bg-green-900/30' :
+          status === 'INCORRECT' ? 'bg-red-100 dark:bg-red-900/30' :
+          'bg-secondary'
+        }`}>
+          {status === 'CORRECT' ? (
+            <>
+              <CheckCircle className="w-6 h-6 mx-auto text-green-600 mb-2" />
+              <p className="text-sm font-semibold text-green-700 dark:text-green-400">✓ Correct!</p>
+              <p className="text-xs text-muted-foreground mt-1">You can now roll the dice again.</p>
+            </>
+          ) : status === 'INCORRECT' ? (
+            <>
+              <XCircle className="w-6 h-6 mx-auto text-red-600 mb-2" />
+              <p className="text-sm font-semibold text-red-700 dark:text-red-400">✗ Incorrect</p>
+              <p className="text-xs text-muted-foreground mt-1">Waiting for admin review...</p>
+            </>
+          ) : (
+            <>
+              <p className="text-sm font-semibold">✓ Answer Submitted</p>
+              <p className="text-xs text-muted-foreground mt-1">Waiting for admin to evaluate your answer...</p>
+            </>
+          )}
         </div>
       </div>
     )

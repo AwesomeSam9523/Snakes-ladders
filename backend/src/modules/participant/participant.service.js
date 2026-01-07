@@ -192,6 +192,80 @@ const canRollDice = async (teamId) => {
   return { canRoll: true, reason: null };
 };
 
+// Submit answer for a question assignment
+const submitAnswer = async (teamId, assignmentId, answer) => {
+  // Get the question assignment with question details
+  const assignment = await prisma.questionAssignment.findUnique({
+    where: { id: assignmentId },
+    include: {
+      question: true,
+      checkpoint: true,
+    },
+  });
+
+  if (!assignment) {
+    throw new Error('Question assignment not found');
+  }
+
+  // Verify the assignment belongs to this team
+  if (assignment.checkpoint.teamId !== teamId) {
+    throw new Error('This question assignment does not belong to your team');
+  }
+
+  // Check if answer already submitted
+  if (assignment.participantAnswer) {
+    throw new Error('Answer already submitted. You cannot re-submit.');
+  }
+
+  const question = assignment.question;
+  let isAutoMarked = false;
+  let isCorrect = false;
+  let newStatus = 'PENDING'; // Default - waiting for admin to mark
+
+  // Auto-check for NUMERICAL and MCQ types
+  if (question.type === 'NUMERICAL' || question.type === 'MCQ') {
+    isAutoMarked = true;
+    
+    // Normalize answers for comparison
+    const submittedAnswer = answer.trim().toLowerCase();
+    const correctAnswer = question.correctAnswer?.trim().toLowerCase();
+    
+    isCorrect = submittedAnswer === correctAnswer;
+    newStatus = isCorrect ? 'CORRECT' : 'INCORRECT';
+  }
+
+  // Update the question assignment with the answer
+  const updatedAssignment = await prisma.questionAssignment.update({
+    where: { id: assignmentId },
+    data: {
+      participantAnswer: answer,
+      submittedAt: new Date(),
+      status: newStatus,
+    },
+    include: {
+      question: true,
+      checkpoint: true,
+    },
+  });
+
+  // If auto-marked and correct, unlock dice
+  if (isAutoMarked && isCorrect) {
+    await prisma.team.update({
+      where: { id: teamId },
+      data: { canRollDice: true },
+    });
+  }
+
+  return {
+    assignment: updatedAssignment,
+    autoMarked: isAutoMarked,
+    isCorrect: isAutoMarked ? isCorrect : null,
+    message: isAutoMarked 
+      ? (isCorrect ? 'Correct! You can now roll the dice.' : 'Incorrect answer. Please wait for admin review.')
+      : 'Answer submitted. Waiting for admin to mark.',
+  };
+};
+
 module.exports = {
   getDashboard,
   getTeamState,
@@ -199,5 +273,6 @@ module.exports = {
   getPendingCheckpoint,
   getBoard,
   canRollDice,
+  submitAnswer,
 };
 

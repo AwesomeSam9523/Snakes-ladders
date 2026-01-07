@@ -3,7 +3,7 @@ const { sendSuccess, sendError, sendNotFound, sendBadRequest, sendCreated } = re
 
 const createQuestion = async (req, res, next) => {
   try {
-    const { content, text, difficulty, type } = req.body;
+    const { content, text, difficulty, type, options, correctAnswer } = req.body;
 
     const questionText = text || content;
     
@@ -11,10 +11,27 @@ const createQuestion = async (req, res, next) => {
       return sendBadRequest(res, 'Question text is required');
     }
 
+    // Validate MCQ has options
+    if (type === 'MCQ' && (!options || options.length < 2)) {
+      return sendBadRequest(res, 'MCQ questions must have at least 2 options');
+    }
+
+    // Validate MCQ correct answer is in options
+    if (type === 'MCQ' && correctAnswer && !options.includes(correctAnswer)) {
+      return sendBadRequest(res, 'Correct answer must be one of the options');
+    }
+
+    // Validate NUMERICAL has correct answer
+    if (type === 'NUMERICAL' && !correctAnswer) {
+      return sendBadRequest(res, 'Numerical questions must have a correct answer');
+    }
+
     const question = await questionService.createQuestion({
       text: questionText,
       difficulty,
       type,
+      options: options || [],
+      correctAnswer: correctAnswer || null,
     });
 
     return sendCreated(res, question, 'Question created successfully');
@@ -26,15 +43,28 @@ const createQuestion = async (req, res, next) => {
 const updateQuestion = async (req, res, next) => {
   try {
     const { questionId } = req.params;
-    const updateData = req.body;
+    const { content, text, difficulty, type, options, correctAnswer, isActive } = req.body;
 
-    if (updateData.options && updateData.correctAnswer) {
-      if (!updateData.options.includes(updateData.correctAnswer)) {
-        return sendBadRequest(res, 'Correct answer must be one of the options');
-      }
+    // Validate MCQ has options
+    if (type === 'MCQ' && options && options.length < 2) {
+      return sendBadRequest(res, 'MCQ questions must have at least 2 options');
     }
 
-    const question = await questionService.updateQuestion(questionId, updateData);
+    // Validate MCQ correct answer is in options
+    if (type === 'MCQ' && correctAnswer && options && !options.includes(correctAnswer)) {
+      return sendBadRequest(res, 'Correct answer must be one of the options');
+    }
+
+    const question = await questionService.updateQuestion(questionId, {
+      content,
+      text,
+      difficulty,
+      type,
+      options,
+      correctAnswer,
+      isActive,
+    });
+    
     return sendSuccess(res, question, 'Question updated successfully');
   } catch (error) {
     if (error.code === 'P2025') {

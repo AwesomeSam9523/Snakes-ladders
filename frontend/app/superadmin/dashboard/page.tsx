@@ -40,6 +40,9 @@ interface Question {
   questionNumber?: string
   text: string
   difficulty: "easy" | "medium" | "hard"
+  type: "CODING" | "NUMERICAL" | "MCQ" | "PHYSICAL"
+  options?: string[]
+  correctAnswer?: string
 }
 
 interface ActivityLog {
@@ -63,6 +66,10 @@ export default function SuperAdminDashboard() {
   const [newTeamPassword, setNewTeamPassword] = useState("")
   const [newQuestion, setNewQuestion] = useState("")
   const [newQuestionDifficulty, setNewQuestionDifficulty] = useState<"easy" | "medium" | "hard">("medium")
+  const [newQuestionType, setNewQuestionType] = useState<"CODING" | "NUMERICAL" | "MCQ" | "PHYSICAL">("CODING")
+  const [newQuestionOptions, setNewQuestionOptions] = useState("")
+  const [newQuestionCorrectAnswer, setNewQuestionCorrectAnswer] = useState("")
+  const [editingQuestion, setEditingQuestion] = useState<Question | null>(null)
   const [selectedTeamForEdit, setSelectedTeamForEdit] = useState<string | null>(null)
   const [newRoom, setNewRoom] = useState("")
   const [searchQuery, setSearchQuery] = useState("")
@@ -88,6 +95,9 @@ export default function SuperAdminDashboard() {
             questionNumber: `Q${String(index + 1).padStart(3, "0")}`,
             text: q.content || q.text,
             difficulty: q.difficultyLabel || (q.difficulty === 1 ? "easy" : q.difficulty === 2 ? "medium" : q.difficulty === 3 ? "hard" : "medium"),
+            type: q.type || "CODING",
+            options: q.options || [],
+            correctAnswer: q.correctAnswer || "",
           })))
         }
       }
@@ -247,20 +257,48 @@ export default function SuperAdminDashboard() {
   const handleAddQuestion = async () => {
     if (!newQuestion) return
 
+    // Validate MCQ and NUMERICAL types
+    if (newQuestionType === "MCQ") {
+      const options = newQuestionOptions.split(",").map(o => o.trim()).filter(o => o)
+      if (options.length < 2) {
+        alert("MCQ questions must have at least 2 options (comma-separated)")
+        return
+      }
+      if (!newQuestionCorrectAnswer || !options.includes(newQuestionCorrectAnswer.trim())) {
+        alert("Correct answer must be one of the options")
+        return
+      }
+    }
+
+    if (newQuestionType === "NUMERICAL" && !newQuestionCorrectAnswer) {
+      alert("NUMERICAL questions must have a correct answer")
+      return
+    }
+
     try {
       const token = localStorage.getItem("token")
+      const payload: any = {
+        content: newQuestion,
+        difficulty: newQuestionDifficulty.toUpperCase(),
+        category: "GENERAL",
+        points: newQuestionDifficulty === "easy" ? 5 : newQuestionDifficulty === "medium" ? 10 : 15,
+        type: newQuestionType,
+      }
+
+      if (newQuestionType === "MCQ") {
+        payload.options = newQuestionOptions.split(",").map(o => o.trim()).filter(o => o)
+        payload.correctAnswer = newQuestionCorrectAnswer.trim()
+      } else if (newQuestionType === "NUMERICAL") {
+        payload.correctAnswer = newQuestionCorrectAnswer.trim()
+      }
+
       const res = await fetch(`${API_URL}/questions`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          content: newQuestion,
-          difficulty: newQuestionDifficulty.toUpperCase(),
-          category: "GENERAL",
-          points: newQuestionDifficulty === "easy" ? 5 : newQuestionDifficulty === "medium" ? 10 : 15,
-        }),
+        body: JSON.stringify(payload),
       })
 
       if (res.ok) {
@@ -277,6 +315,9 @@ export default function SuperAdminDashboard() {
 
     setNewQuestion("")
     setNewQuestionDifficulty("medium")
+    setNewQuestionType("CODING")
+    setNewQuestionOptions("")
+    setNewQuestionCorrectAnswer("")
     setShowNewQuestionModal(false)
   }
 
@@ -318,6 +359,66 @@ export default function SuperAdminDashboard() {
       console.error("Error deleting question:", error)
       alert("Failed to delete question. Check if backend is running.")
     }
+  }
+
+  const handleEditQuestion = async () => {
+    if (!editingQuestion) return
+
+    // Validate MCQ and NUMERICAL types
+    if (editingQuestion.type === "MCQ") {
+      const options = editingQuestion.options || []
+      if (options.length < 2) {
+        alert("MCQ questions must have at least 2 options")
+        return
+      }
+      if (!editingQuestion.correctAnswer || !options.includes(editingQuestion.correctAnswer.trim())) {
+        alert("Correct answer must be one of the options")
+        return
+      }
+    }
+
+    if (editingQuestion.type === "NUMERICAL" && !editingQuestion.correctAnswer) {
+      alert("NUMERICAL questions must have a correct answer")
+      return
+    }
+
+    try {
+      const token = localStorage.getItem("token")
+      const payload: any = {
+        content: editingQuestion.text,
+        difficulty: editingQuestion.difficulty.toUpperCase(),
+        type: editingQuestion.type,
+      }
+
+      if (editingQuestion.type === "MCQ") {
+        payload.options = editingQuestion.options
+        payload.correctAnswer = editingQuestion.correctAnswer?.trim()
+      } else if (editingQuestion.type === "NUMERICAL") {
+        payload.correctAnswer = editingQuestion.correctAnswer?.trim()
+      }
+
+      const res = await fetch(`${API_URL}/questions/${editingQuestion.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      })
+
+      if (res.ok) {
+        fetchQuestions()
+        alert("Question updated successfully!")
+      } else {
+        const error = await res.json()
+        alert(`Error: ${error.message || 'Failed to update question'}`)
+      }
+    } catch (error) {
+      console.error("Error updating question:", error)
+      alert("Failed to update question. Check if backend is running.")
+    }
+
+    setEditingQuestion(null)
   }
 
   // Undo checkpoint - calls backend API
@@ -688,7 +789,7 @@ export default function SuperAdminDashboard() {
                   <div className="flex-1">
                     <p className="font-semibold text-gray-900 text-sm">{question.questionNumber || `Q${String(index + 1).padStart(3, "0")}`}</p>
                     <p className="text-gray-700 text-sm mt-1">{question.text}</p>
-                    <div className="mt-2">
+                    <div className="mt-2 flex gap-2 flex-wrap">
                       <span
                         className={`text-xs px-2 py-1 rounded ${
                           question.difficulty === "easy"
@@ -700,14 +801,46 @@ export default function SuperAdminDashboard() {
                       >
                         {question.difficulty.charAt(0).toUpperCase() + question.difficulty.slice(1)}
                       </span>
+                      <span
+                        className={`text-xs px-2 py-1 rounded ${
+                          question.type === "CODING"
+                            ? "bg-purple-100 text-purple-700"
+                            : question.type === "NUMERICAL"
+                              ? "bg-blue-100 text-blue-700"
+                              : question.type === "MCQ"
+                                ? "bg-cyan-100 text-cyan-700"
+                                : "bg-orange-100 text-orange-700"
+                        }`}
+                      >
+                        {question.type}
+                      </span>
+                      {(question.type === "MCQ" || question.type === "NUMERICAL") && (
+                        <span className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-600">
+                          Auto-Check
+                        </span>
+                      )}
                     </div>
+                    {question.type === "MCQ" && question.options && question.options.length > 0 && (
+                      <p className="text-xs text-gray-500 mt-1">Options: {question.options.join(", ")}</p>
+                    )}
+                    {(question.type === "MCQ" || question.type === "NUMERICAL") && question.correctAnswer && (
+                      <p className="text-xs text-gray-500 mt-1">Answer: {question.correctAnswer}</p>
+                    )}
                   </div>
-                  <button
-                    onClick={() => handleRemoveQuestion(question.id)}
-                    className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors font-medium"
-                  >
-                    Remove
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setEditingQuestion(question)}
+                      className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors font-medium"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleRemoveQuestion(question.id)}
+                      className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors font-medium"
+                    >
+                      Remove
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -841,7 +974,7 @@ export default function SuperAdminDashboard() {
       {/* Add Question Modal */}
       {showNewQuestionModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6 relative z-50">
+          <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6 relative z-50 max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-bold text-gray-900 mb-4">Add New Question</h3>
 
             <div className="space-y-4">
@@ -855,6 +988,46 @@ export default function SuperAdminDashboard() {
                   autoFocus
                 />
               </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Question Type</label>
+                <select
+                  value={newQuestionType}
+                  onChange={(e) => setNewQuestionType(e.target.value as "CODING" | "NUMERICAL" | "MCQ" | "PHYSICAL")}
+                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-gray-600 focus:ring-1 focus:ring-gray-600 text-gray-900"
+                >
+                  <option value="CODING">Coding (Manual Marking)</option>
+                  <option value="PHYSICAL">Physical Task (Manual Marking)</option>
+                  <option value="NUMERICAL">Numerical (Auto-Check)</option>
+                  <option value="MCQ">MCQ (Auto-Check)</option>
+                </select>
+              </div>
+
+              {newQuestionType === "MCQ" && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Options (comma-separated)</label>
+                  <input
+                    type="text"
+                    value={newQuestionOptions}
+                    onChange={(e) => setNewQuestionOptions(e.target.value)}
+                    placeholder="Option 1, Option 2, Option 3, Option 4"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-gray-600 focus:ring-1 focus:ring-gray-600 text-gray-900"
+                  />
+                </div>
+              )}
+
+              {(newQuestionType === "MCQ" || newQuestionType === "NUMERICAL") && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Correct Answer</label>
+                  <input
+                    type="text"
+                    value={newQuestionCorrectAnswer}
+                    onChange={(e) => setNewQuestionCorrectAnswer(e.target.value)}
+                    placeholder={newQuestionType === "MCQ" ? "Must match one of the options" : "Enter the exact numerical answer"}
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-gray-600 focus:ring-1 focus:ring-gray-600 text-gray-900"
+                  />
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Difficulty</label>
@@ -872,7 +1045,13 @@ export default function SuperAdminDashboard() {
 
             <div className="flex gap-3 mt-6">
               <button
-                onClick={() => setShowNewQuestionModal(false)}
+                onClick={() => {
+                  setShowNewQuestionModal(false)
+                  setNewQuestion("")
+                  setNewQuestionType("CODING")
+                  setNewQuestionOptions("")
+                  setNewQuestionCorrectAnswer("")
+                }}
                 className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded font-medium text-sm hover:bg-gray-300 transition-colors"
               >
                 Cancel
@@ -882,6 +1061,94 @@ export default function SuperAdminDashboard() {
                 className="flex-1 px-4 py-2 bg-gray-800 text-white rounded font-medium text-sm hover:bg-gray-700 transition-colors"
               >
                 Add
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Question Modal */}
+      {editingQuestion && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6 relative z-50 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Edit Question</h3>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Question Text</label>
+                <textarea
+                  value={editingQuestion.text}
+                  onChange={(e) => setEditingQuestion({ ...editingQuestion, text: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-gray-600 focus:ring-1 focus:ring-gray-600 h-24 text-gray-900"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Question Type</label>
+                <select
+                  value={editingQuestion.type}
+                  onChange={(e) => setEditingQuestion({ ...editingQuestion, type: e.target.value as "CODING" | "NUMERICAL" | "MCQ" | "PHYSICAL" })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-gray-600 focus:ring-1 focus:ring-gray-600 text-gray-900"
+                >
+                  <option value="CODING">Coding (Manual Marking)</option>
+                  <option value="PHYSICAL">Physical Task (Manual Marking)</option>
+                  <option value="NUMERICAL">Numerical (Auto-Check)</option>
+                  <option value="MCQ">MCQ (Auto-Check)</option>
+                </select>
+              </div>
+
+              {editingQuestion.type === "MCQ" && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Options (comma-separated)</label>
+                  <input
+                    type="text"
+                    value={editingQuestion.options?.join(", ") || ""}
+                    onChange={(e) => setEditingQuestion({ ...editingQuestion, options: e.target.value.split(",").map(o => o.trim()) })}
+                    placeholder="Option 1, Option 2, Option 3, Option 4"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-gray-600 focus:ring-1 focus:ring-gray-600 text-gray-900"
+                  />
+                </div>
+              )}
+
+              {(editingQuestion.type === "MCQ" || editingQuestion.type === "NUMERICAL") && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Correct Answer</label>
+                  <input
+                    type="text"
+                    value={editingQuestion.correctAnswer || ""}
+                    onChange={(e) => setEditingQuestion({ ...editingQuestion, correctAnswer: e.target.value })}
+                    placeholder={editingQuestion.type === "MCQ" ? "Must match one of the options" : "Enter the exact numerical answer"}
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-gray-600 focus:ring-1 focus:ring-gray-600 text-gray-900"
+                  />
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Difficulty</label>
+                <select
+                  value={editingQuestion.difficulty}
+                  onChange={(e) => setEditingQuestion({ ...editingQuestion, difficulty: e.target.value as "easy" | "medium" | "hard" })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-gray-600 focus:ring-1 focus:ring-gray-600 text-gray-900"
+                >
+                  <option value="easy">Easy</option>
+                  <option value="medium">Medium</option>
+                  <option value="hard">Hard</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setEditingQuestion(null)}
+                className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded font-medium text-sm hover:bg-gray-300 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleEditQuestion}
+                className="flex-1 px-4 py-2 bg-gray-800 text-white rounded font-medium text-sm hover:bg-gray-700 transition-colors"
+              >
+                Save
               </button>
             </div>
           </div>

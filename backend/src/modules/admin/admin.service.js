@@ -137,11 +137,21 @@ const markQuestionAnswer = async (assignmentId, isCorrect, adminUsername = 'admi
       checkpoint: {
         include: { team: true },
       },
+      question: true,
     },
   });
 
   if (!assignment) {
     throw new Error('Question assignment not found');
+  }
+
+  // Check if already marked (for auto-marked types, admin can override)
+  const questionType = assignment.question.type;
+  const isAutoMarkType = questionType === 'NUMERICAL' || questionType === 'MCQ';
+  
+  // If it's a CODING or PHYSICAL type and no answer submitted yet
+  if (!isAutoMarkType && !assignment.participantAnswer) {
+    throw new Error('No answer submitted yet');
   }
 
   // Update question status

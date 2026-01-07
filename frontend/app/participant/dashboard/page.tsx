@@ -300,13 +300,72 @@ export default function ParticipantDashboard() {
     }
   }
 
-  const handleSubmitAnswer = async (_answer: string, _file?: File) => {
-    setGameStatus("LOCKED")
+  const handleSubmitAnswer = async (answer: string, assignmentId: string): Promise<{ autoMarked?: boolean; isCorrect?: boolean; message?: string }> => {
+    try {
+      const token = localStorage.getItem("token")
+      const res = await fetch(`${API_URL}/participant/answer/submit`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          assignmentId,
+          answer,
+        }),
+      })
 
-    toast({
-      title: "Answer submitted",
-      description: "Waiting for admin evaluation...",
-    })
+      const data = await res.json()
+
+      if (res.ok) {
+        // If auto-marked and correct, update dice status
+        if (data.data?.autoMarked && data.data?.isCorrect) {
+          setTeamData(prev => ({ ...prev, canRollDice: true }))
+          setGameStatus("IDLE")
+          toast({
+            title: "Correct!",
+            description: "You can now roll the dice again.",
+          })
+        } else if (data.data?.autoMarked && !data.data?.isCorrect) {
+          setGameStatus("LOCKED")
+          toast({
+            title: "Incorrect",
+            description: "Your answer was incorrect. Waiting for admin review.",
+            variant: "destructive",
+          })
+        } else {
+          setGameStatus("LOCKED")
+          toast({
+            title: "Answer submitted",
+            description: "Waiting for admin evaluation...",
+          })
+        }
+
+        // Refresh data
+        fetchTeamData()
+        
+        return {
+          autoMarked: data.data?.autoMarked,
+          isCorrect: data.data?.isCorrect,
+          message: data.data?.message || data.message,
+        }
+      } else {
+        toast({
+          title: "Error",
+          description: data.message || "Failed to submit answer",
+          variant: "destructive",
+        })
+        return { message: data.message || "Failed to submit answer" }
+      }
+    } catch (error) {
+      console.error("Error submitting answer:", error)
+      toast({
+        title: "Error",
+        description: "Failed to submit answer. Check your connection.",
+        variant: "destructive",
+      })
+      return { message: "Failed to submit answer" }
+    }
   }
 
   const handleHint = () => {

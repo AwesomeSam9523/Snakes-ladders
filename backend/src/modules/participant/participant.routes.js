@@ -29,6 +29,9 @@ router.post('/answer/submit', participantController.submitAnswer);
 // Use hint (adds 60 second penalty)
 router.post('/hint/use', participantController.useHint);
 
+// Sync timer with database
+router.post('/timer/sync', participantController.syncTimer);
+
 // Board
 router.get('/board', participantController.getBoard);
 

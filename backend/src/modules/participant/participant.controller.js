@@ -141,6 +141,20 @@ const useHint = async (req, res, next) => {
   }
 };
 
+// Sync timer with database
+const syncTimer = async (req, res, next) => {
+  try {
+    const teamId = req.user.teamId;
+    const { elapsedSeconds } = req.body;
+
+    const elapsed = parseInt(elapsedSeconds) || 0;
+    const result = await participantService.syncTimer(teamId, elapsed);
+    return sendSuccess(res, result, 'Timer synced');
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getDashboard,
   getTeamState,
@@ -152,5 +166,6 @@ module.exports = {
   checkCanRollDice,
   submitAnswer,
   useHint,
+  syncTimer,
 };
 

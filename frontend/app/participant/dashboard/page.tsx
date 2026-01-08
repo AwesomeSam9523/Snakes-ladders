@@ -212,16 +212,54 @@ export default function ParticipantDashboard() {
   }, [router])
 
   /* ---------- TIMER ---------- */
+  // Client-side timer that increments locally and syncs with DB every 10 seconds
   useEffect(() => {
+    let lastSyncTime = Date.now()
+    let localElapsed = 0
+
     const interval = setInterval(() => {
       setTeamData((prev) => ({
         ...prev,
         totalTimeSec: prev.totalTimeSec + 1,
       }))
+      localElapsed += 1
     }, 1000)
 
-    return () => clearInterval(interval)
-  }, [])
+    // Sync with database every 10 seconds
+    const syncInterval = setInterval(async () => {
+      if (localElapsed > 0) {
+        try {
+          const token = localStorage.getItem("token")
+          const res = await fetch(`${API_URL}/participant/timer/sync`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ elapsedSeconds: localElapsed }),
+          })
+          
+          if (res.ok) {
+            const data = await res.json()
+            // Update with server time to ensure accuracy
+            setTeamData((prev) => ({
+              ...prev,
+              totalTimeSec: data.data.totalTimeSec,
+            }))
+            localElapsed = 0
+            lastSyncTime = Date.now()
+          }
+        } catch (error) {
+          console.error("Error syncing timer:", error)
+        }
+      }
+    }, 10000)
+
+    return () => {
+      clearInterval(interval)
+      clearInterval(syncInterval)
+    }
+  }, [API_URL])
 
   /* ---------- HANDLERS ---------- */
 

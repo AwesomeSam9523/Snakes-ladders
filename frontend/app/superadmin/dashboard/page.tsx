@@ -530,19 +530,28 @@ export default function SuperAdminDashboard() {
                     <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Team Name</th>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Position</th>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Points</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Time (sec)</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Time</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {leaderboard.map((team, idx) => (
-                    <tr key={team.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 text-sm text-gray-900 font-bold">{idx + 1}</td>
-                      <td className="px-4 py-3 text-sm text-gray-900">{team.teamId || team.teamCode || team.teamName || 'Unknown'}</td>
-                      <td className="px-4 py-3 text-sm text-gray-900">{team.currentPosition}</td>
-                      <td className="px-4 py-3 text-sm text-gray-900">{team.points}</td>
-                      <td className="px-4 py-3 text-sm text-gray-900">{team.totalTime}</td>
-                    </tr>
-                  ))}
+                  {leaderboard.map((team, idx) => {
+                    const formatTime = (seconds: number) => {
+                      const h = Math.floor(seconds / 3600)
+                      const m = Math.floor((seconds % 3600) / 60)
+                      const s = seconds % 60
+                      return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`
+                    }
+                    
+                    return (
+                      <tr key={team.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 text-sm text-gray-900 font-bold">{idx + 1}</td>
+                        <td className="px-4 py-3 text-sm text-gray-900">{team.teamId || team.teamCode || team.teamName || 'Unknown'}</td>
+                        <td className="px-4 py-3 text-sm text-gray-900">{team.currentPosition}</td>
+                        <td className="px-4 py-3 text-sm text-gray-900">{team.points}</td>
+                        <td className="px-4 py-3 text-sm font-mono text-gray-900">{formatTime(team.totalTime)}</td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>

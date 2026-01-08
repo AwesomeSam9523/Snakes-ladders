@@ -308,6 +308,31 @@ const useHint = async (teamId, assignmentId) => {
   };
 };
 
+// Sync timer with database - increments timer by elapsed seconds since last sync
+const syncTimer = async (teamId, elapsedSeconds) => {
+  if (elapsedSeconds <= 0) {
+    const team = await prisma.team.findUnique({
+      where: { id: teamId },
+      select: { totalTimeSec: true },
+    });
+    return { totalTimeSec: team.totalTimeSec };
+  }
+
+  const team = await prisma.team.update({
+    where: { id: teamId },
+    data: {
+      totalTimeSec: {
+        increment: elapsedSeconds,
+      },
+    },
+    select: {
+      totalTimeSec: true,
+    },
+  });
+
+  return { totalTimeSec: team.totalTimeSec };
+};
+
 module.exports = {
   getDashboard,
   getTeamState,
@@ -317,5 +342,6 @@ module.exports = {
   canRollDice,
   submitAnswer,
   useHint,
+  syncTimer,
 };
 

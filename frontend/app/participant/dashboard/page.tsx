@@ -370,28 +370,19 @@ export default function ParticipantDashboard() {
       const data = await res.json()
 
       if (res.ok) {
-        // If auto-marked and correct, update dice status
+        // Update dice status if correct (but don't tell user)
         if (data.data?.autoMarked && data.data?.isCorrect) {
           setTeamData(prev => ({ ...prev, canRollDice: true }))
           setGameStatus("IDLE")
-          toast({
-            title: "Correct!",
-            description: "You can now roll the dice again.",
-          })
-        } else if (data.data?.autoMarked && !data.data?.isCorrect) {
-          setGameStatus("LOCKED")
-          toast({
-            title: "Incorrect",
-            description: "Your answer was incorrect. Waiting for admin review.",
-            variant: "destructive",
-          })
         } else {
           setGameStatus("LOCKED")
-          toast({
-            title: "Answer submitted",
-            description: "Waiting for admin evaluation...",
-          })
         }
+
+        // Show generic success message for all submissions
+        toast({
+          title: "Answer Submitted",
+          description: "Your answer has been submitted successfully.",
+        })
 
         // Refresh data
         fetchTeamData()

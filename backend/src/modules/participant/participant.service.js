@@ -260,9 +260,7 @@ const submitAnswer = async (teamId, assignmentId, answer) => {
     assignment: updatedAssignment,
     autoMarked: isAutoMarked,
     isCorrect: isAutoMarked ? isCorrect : null,
-    message: isAutoMarked 
-      ? (isCorrect ? 'Correct! You can now roll the dice.' : 'Incorrect answer. Please wait for admin review.')
-      : 'Answer submitted. Waiting for admin to mark.',
+    message: 'Answer submitted successfully.',
   };
 };
 

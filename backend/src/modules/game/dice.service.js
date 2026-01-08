@@ -49,13 +49,18 @@ const processDiceRoll = async (teamId) => {
     },
   });
 
-  // Update team position and room, lock dice
+  // Check if team stayed at same position (roll would exceed 100)
+  const stayedAtSamePosition = positionBefore === positionAfter && positionBefore !== GAME_CONFIG.BOARD_SIZE;
+  
+  // Update team position and room
+  // If stayed at same position, allow re-roll (canRollDice = true)
+  // If reached goal, mark as COMPLETED
   await prisma.team.update({
     where: { id: teamId },
     data: {
       currentPosition: positionAfter,
       currentRoom: newRoom,
-      canRollDice: false,
+      canRollDice: stayedAtSamePosition, // Can roll again if stayed at same position
       status: hasReachedGoal(positionAfter) ? 'COMPLETED' : 'ACTIVE',
     },
   });

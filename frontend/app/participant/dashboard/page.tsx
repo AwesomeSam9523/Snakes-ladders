@@ -20,6 +20,7 @@ interface TeamData {
   currentRoom: number | null
   canRollDice: boolean
   totalTimeSec: number
+  status?: string
 }
 
 interface LeaderboardTeam {
@@ -46,6 +47,7 @@ export default function ParticipantDashboard() {
     currentRoom: null,
     canRollDice: true,
     totalTimeSec: 0,
+    status: "ACTIVE",
   })
   const [gameStatus, setGameStatus] = useState<GameStatus>("IDLE")
   const [currentCheckpoint, setCurrentCheckpoint] = useState<any>(null)
@@ -92,6 +94,7 @@ export default function ParticipantDashboard() {
             currentRoom: teamState.currentRoom || null,
             canRollDice: teamState.canRollDice ?? true,
             totalTimeSec: teamState.totalTimeSec || 0,
+            status: teamState.status || "ACTIVE",
           }))
           
           // Update game status based on canRollDice
@@ -214,6 +217,11 @@ export default function ParticipantDashboard() {
   /* ---------- TIMER ---------- */
   // Client-side timer that increments locally and syncs with DB every 10 seconds
   useEffect(() => {
+    // Don't run timer if game is completed
+    if (teamData.status === "COMPLETED") {
+      return
+    }
+
     let lastSyncTime = Date.now()
     let localElapsed = 0
 
@@ -245,6 +253,7 @@ export default function ParticipantDashboard() {
             setTeamData((prev) => ({
               ...prev,
               totalTimeSec: data.data.totalTimeSec,
+              status: data.data.status || prev.status,
             }))
             localElapsed = 0
             lastSyncTime = Date.now()
@@ -259,7 +268,7 @@ export default function ParticipantDashboard() {
       clearInterval(interval)
       clearInterval(syncInterval)
     }
-  }, [API_URL])
+  }, [API_URL, teamData.status])
 
   /* ---------- HANDLERS ---------- */
 
@@ -491,6 +500,15 @@ export default function ParticipantDashboard() {
         status={gameStatus}
         totalTimeSec={teamData.totalTimeSec}
       />
+
+      {/* Game Completed Banner */}
+      {teamData.status === "COMPLETED" && (
+        <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white py-8 px-4 text-center">
+          <h1 className="text-4xl font-bold mb-2">🎉 Congratulations! 🎉</h1>
+          <p className="text-xl">You have completed the game!</p>
+          <p className="text-lg mt-2">Final Time: {Math.floor(teamData.totalTimeSec / 3600).toString().padStart(2, "0")}:{Math.floor((teamData.totalTimeSec % 3600) / 60).toString().padStart(2, "0")}:{(teamData.totalTimeSec % 60).toString().padStart(2, "0")}</p>
+        </div>
+      )}
 
       <main className="flex-1 container mx-auto p-4 lg:p-6">
         <div className="grid lg:grid-cols-3 gap-6">

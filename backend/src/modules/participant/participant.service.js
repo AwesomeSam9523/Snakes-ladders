@@ -310,15 +310,22 @@ const useHint = async (teamId, assignmentId) => {
 
 // Sync timer with database - increments timer by elapsed seconds since last sync
 const syncTimer = async (teamId, elapsedSeconds) => {
+  // Get team status first
+  const team = await prisma.team.findUnique({
+    where: { id: teamId },
+    select: { totalTimeSec: true, status: true },
+  });
+  
+  // Don't increment timer if game is completed
+  if (team.status === 'COMPLETED') {
+    return { totalTimeSec: team.totalTimeSec, status: team.status };
+  }
+  
   if (elapsedSeconds <= 0) {
-    const team = await prisma.team.findUnique({
-      where: { id: teamId },
-      select: { totalTimeSec: true },
-    });
-    return { totalTimeSec: team.totalTimeSec };
+    return { totalTimeSec: team.totalTimeSec, status: team.status };
   }
 
-  const team = await prisma.team.update({
+  const updatedTeam = await prisma.team.update({
     where: { id: teamId },
     data: {
       totalTimeSec: {
@@ -327,10 +334,11 @@ const syncTimer = async (teamId, elapsedSeconds) => {
     },
     select: {
       totalTimeSec: true,
+      status: true,
     },
   });
 
-  return { totalTimeSec: team.totalTimeSec };
+  return { totalTimeSec: updatedTeam.totalTimeSec, status: updatedTeam.status };
 };
 
 module.exports = {

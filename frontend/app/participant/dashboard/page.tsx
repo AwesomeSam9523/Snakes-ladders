@@ -370,13 +370,9 @@ export default function ParticipantDashboard() {
       const data = await res.json()
 
       if (res.ok) {
-        // Update dice status if correct (but don't tell user)
-        if (data.data?.autoMarked && data.data?.isCorrect) {
-          setTeamData(prev => ({ ...prev, canRollDice: true }))
-          setGameStatus("IDLE")
-        } else {
-          setGameStatus("LOCKED")
-        }
+        // Always unlock dice after answer submission
+        setTeamData(prev => ({ ...prev, canRollDice: true }))
+        setGameStatus("IDLE")
 
         // Show generic success message for all submissions
         toast({

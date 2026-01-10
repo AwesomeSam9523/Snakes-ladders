@@ -332,21 +332,6 @@ export default function AdminDashboard() {
                                 </button>
                               ) : (
                                 <div className="flex flex-col gap-2">
-                                  <span className="text-xs text-gray-600">
-                                    Question: <span className="font-medium text-gray-800">
-                                      {`Q${checkpoint.questionAssign.questionId?.substring(0, 4)}`}
-                                    </span>
-                                    {checkpoint.questionAssign.question?.type && (
-                                      <span className={`ml-2 px-1.5 py-0.5 rounded text-[10px] ${
-                                        checkpoint.questionAssign.question.type === "CODING" ? "bg-purple-100 text-purple-700" :
-                                        checkpoint.questionAssign.question.type === "NUMERICAL" ? "bg-blue-100 text-blue-700" :
-                                        checkpoint.questionAssign.question.type === "MCQ" ? "bg-cyan-100 text-cyan-700" :
-                                        "bg-orange-100 text-orange-700"
-                                      }`}>
-                                        {checkpoint.questionAssign.question.type}
-                                      </span>
-                                    )}
-                                  </span>
 
                                   {/* Step 3: Mark Answer (only show if question is assigned) */}
                                   {checkpoint.questionAssign.status === "PENDING" ? (

@@ -248,13 +248,17 @@ const submitAnswer = async (teamId, assignmentId, answer) => {
     },
   });
 
-  // If auto-marked and correct, unlock dice
-  if (isAutoMarked && isCorrect) {
-    await prisma.team.update({
-      where: { id: teamId },
-      data: { canRollDice: true },
-    });
-  }
+  // Approve the checkpoint so team can move on
+  await prisma.checkpoint.update({
+    where: { id: assignment.checkpointId },
+    data: { status: 'APPROVED' },
+  });
+
+  // Always unlock dice after answer submission, regardless of correctness
+  await prisma.team.update({
+    where: { id: teamId },
+    data: { canRollDice: true },
+  });
 
   return {
     assignment: updatedAssignment,

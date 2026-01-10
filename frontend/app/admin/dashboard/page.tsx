@@ -348,22 +348,6 @@ export default function AdminDashboard() {
                                     )}
                                   </span>
 
-                                  {/* Show participant's submitted answer */}
-                                  {checkpoint.questionAssign.participantAnswer && (
-                                    <div className="bg-gray-50 p-2 rounded text-xs">
-                                      <p className="text-gray-500 mb-1">Answer:</p>
-                                      <p className="text-gray-800 font-mono whitespace-pre-wrap">{checkpoint.questionAssign.participantAnswer}</p>
-                                    </div>
-                                  )}
-
-                                  {/* Show correct answer for auto-check types */}
-                                  {(checkpoint.questionAssign.question?.type === "MCQ" || checkpoint.questionAssign.question?.type === "NUMERICAL") && 
-                                   checkpoint.questionAssign.question?.correctAnswer && (
-                                    <p className="text-xs text-gray-500">
-                                      Correct answer: <span className="font-medium text-gray-700">{checkpoint.questionAssign.question.correctAnswer}</span>
-                                    </p>
-                                  )}
-
                                   {/* Step 3: Mark Answer (only show if question is assigned) */}
                                   {checkpoint.questionAssign.status === "PENDING" ? (
                                     <div className="flex flex-col gap-2">
@@ -388,12 +372,8 @@ export default function AdminDashboard() {
                                       )}
                                     </div>
                                   ) : (
-                                    <span
-                                      className={`text-xs font-medium ${
-                                        checkpoint.questionAssign.status === "CORRECT" ? "text-green-600" : "text-red-600"
-                                      }`}
-                                    >
-                                      {checkpoint.questionAssign.status === "CORRECT" ? "✓ Correct" : "✗ Incorrect"}
+                                    <span className="text-xs font-medium text-gray-600">
+                                      Marked
                                     </span>
                                   )}
                                 </div>

@@ -175,7 +175,6 @@ model BoardRule {
   mapId    String
   type     BoardRuleType
   startPos Int
-  endPos   Int
   
   map      BoardMap      @relation(fields: [mapId], references: [id], onDelete: Cascade)
   

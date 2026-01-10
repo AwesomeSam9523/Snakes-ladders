@@ -1,5 +1,5 @@
 const prisma = require('../../prisma/client');
-const { getBoardState } = require('../game/board.service');
+const { getBoardStateForTeam } = require('../game/board.service');
 
 
 const getDashboard = async (teamId) => {
@@ -31,7 +31,7 @@ const getDashboard = async (teamId) => {
     throw new Error('Team not found');
   }
 
-  const boardState = await getBoardState();
+  const boardState = await getBoardStateForTeam(teamId);
 
   return {
     team: {
@@ -90,8 +90,8 @@ const getCheckpoints = async (teamId) => {
 };
 
 
-const getBoard = async () => {
-  return await getBoardState();
+const getBoard = async (teamId) => {
+  return await getBoardStateForTeam(teamId);
 };
 
 // Get current checkpoint (pending approval OR approved but waiting for question/answer)

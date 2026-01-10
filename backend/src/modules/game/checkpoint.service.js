@@ -1,6 +1,6 @@
 const prisma = require('../../prisma/client');
 const { GAME_CONFIG } = require('../../config/constants');
-const { getSnakeEndPositionForTeam } = require('./board.service');
+const { checkSnakeForTeam } = require('./board.service');
 
 
 const getTeamCheckpoints = async (teamId) => {
@@ -87,9 +87,7 @@ const handleSnakeDodge = async (checkpointId, success) => {
       message: 'Snake dodged successfully!',
     };
   } else {
-    // Dodge failed - apply penalty and move to snake end (using team's map)
-    const snakeEndPos = await getSnakeEndPositionForTeam(checkpoint.teamId, checkpoint.positionAfter);
-
+    // Dodge failed - team stays at snake position, no movement
     // Add time penalty
     await prisma.timeLog.create({
       data: {
@@ -99,11 +97,10 @@ const handleSnakeDodge = async (checkpointId, success) => {
       },
     });
 
-    // Update team position to snake end and add penalty time
+    // Add penalty time but team stays at same position
     await prisma.team.update({
       where: { id: checkpoint.teamId },
       data: {
-        currentPosition: snakeEndPos || checkpoint.positionAfter,
         totalTimeSec: { increment: GAME_CONFIG.SNAKE_PENALTY_SECONDS },
         canRollDice: true,
       },
@@ -113,8 +110,8 @@ const handleSnakeDodge = async (checkpointId, success) => {
       success: false,
       penalty: true,
       penaltySeconds: GAME_CONFIG.SNAKE_PENALTY_SECONDS,
-      newPosition: snakeEndPos,
-      message: `Snake bite! +${GAME_CONFIG.SNAKE_PENALTY_SECONDS / 60} minutes penalty`,
+      newPosition: checkpoint.positionAfter, // Stay at same position
+      message: `Snake bite! +${GAME_CONFIG.SNAKE_PENALTY_SECONDS / 60} minutes penalty. Team stays at position ${checkpoint.positionAfter}`,
     };
   }
 };

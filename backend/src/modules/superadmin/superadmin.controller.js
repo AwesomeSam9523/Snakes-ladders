@@ -76,6 +76,25 @@ const changeTeamRoom = async (req, res, next) => {
   }
 };
 
+const assignMapToTeam = async (req, res, next) => {
+  try {
+    const { teamId } = req.params;
+    const { mapId } = req.body;
+
+    if (!mapId || typeof mapId !== 'number') {
+      return sendBadRequest(res, 'Valid map ID is required');
+    }
+
+    const team = await superadminService.assignMapToTeam(teamId, mapId);
+    return sendSuccess(res, team, 'Map assigned successfully');
+  } catch (error) {
+    if (error.message === 'Map not found') {
+      return sendNotFound(res, error.message);
+    }
+    next(error);
+  }
+};
+
 const adjustTeamTimer = async (req, res, next) => {
   try {
     const { teamId } = req.params;
@@ -207,6 +226,15 @@ const getBoardRules = async (req, res, next) => {
   }
 };
 
+const getAllMaps = async (req, res, next) => {
+  try {
+    const maps = await superadminService.getAllMaps();
+    return sendSuccess(res, maps, 'Maps fetched successfully');
+  } catch (error) {
+    next(error);
+  }
+};
+
 const getAuditLogs = async (req, res, next) => {
   try {
     const limit = parseInt(req.query.limit) || 100;
@@ -223,6 +251,7 @@ module.exports = {
   disqualifyTeam,
   reinstateTeam,
   changeTeamRoom,
+  assignMapToTeam,
   adjustTeamTimer,
   setTeamTimer,
   undoCheckpoint,
@@ -233,6 +262,7 @@ module.exports = {
   addSnake,
   removeSnake,
   getBoardRules,
+  getAllMaps,
   getAuditLogs,
 };
 

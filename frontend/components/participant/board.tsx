@@ -1,6 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
+import { useEffect, useState } from "react"
 
 interface BoardProps {
   currentPosition: number
@@ -8,9 +9,46 @@ interface BoardProps {
 }
 
 const BOARD_SIZE = 10
-const SNAKE_TILES = [98, 95, 93, 87, 64, 62, 54, 17]
 
 export function Board({ currentPosition, teamId }: BoardProps) {
+  // Default snake positions if no map assigned
+  const [snakeTiles, setSnakeTiles] = useState<number[]>([98, 95, 93, 87, 64, 62, 54, 17])
+  const [loading, setLoading] = useState(true)
+  
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+
+  useEffect(() => {
+    const fetchBoardState = async () => {
+      try {
+        const token = localStorage.getItem("token")
+        const res = await fetch(`${API_URL}/participant/board`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+        
+        if (res.ok) {
+          const data = await res.json()
+          console.log("Board data received:", data)
+          if (data.data && Array.isArray(data.data.snakes)) {
+            console.log("Snake positions:", data.data.snakes)
+            setSnakeTiles(data.data.snakes)
+          } else {
+            console.log("No snake data or wrong format:", data)
+          }
+        } else {
+          console.error("Failed to fetch board:", res.status)
+        }
+      } catch (error) {
+        console.error("Error fetching board state:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    fetchBoardState()
+  }, [API_URL])
+
   const getPosition = (num: number) => {
     const row = Math.floor((num - 1) / BOARD_SIZE)
     const col = (num - 1) % BOARD_SIZE
@@ -33,7 +71,7 @@ export function Board({ currentPosition, teamId }: BoardProps) {
           {/* Grid */}
           {tiles.map((num) => {
             const pos = getPosition(num)
-            const isSnakeTile = SNAKE_TILES.includes(num)
+            const isSnakeTile = snakeTiles.includes(num)
             const isCurrentPosition = currentPosition === num
 
             return (
@@ -83,7 +121,7 @@ export function Board({ currentPosition, teamId }: BoardProps) {
             transition={{ duration: 0.5, repeat: Number.POSITIVE_INFINITY, repeatDelay: 1 }}
           />
 
-          {SNAKE_TILES.includes(currentPosition) && (
+          {snakeTiles.includes(currentPosition) && (
             <motion.circle
               cx={getPosition(currentPosition).x * 10 + 5}
               cy={getPosition(currentPosition).y * 10 + 5}
@@ -103,7 +141,7 @@ export function Board({ currentPosition, teamId }: BoardProps) {
         <p className="text-sm text-muted-foreground">
           <span className="font-semibold text-foreground">{teamId}</span> is at position{" "}
           <span className="font-semibold text-primary">{currentPosition}</span>
-          {SNAKE_TILES.includes(currentPosition) && (
+          {snakeTiles.includes(currentPosition) && (
             <span className="ml-2 text-danger font-semibold">⚠ Danger Zone!</span>
           )}
         </p>

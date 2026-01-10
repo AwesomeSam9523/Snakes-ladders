@@ -68,7 +68,8 @@ const getPendingCheckpoint = async (req, res, next) => {
 
 const getBoard = async (req, res, next) => {
   try {
-    const board = await participantService.getBoard();
+    const teamId = req.user.teamId;
+    const board = await participantService.getBoard(teamId);
     return sendSuccess(res, board, 'Board loaded');
   } catch (error) {
     next(error);

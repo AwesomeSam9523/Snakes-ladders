@@ -26,6 +26,9 @@ router.post('/teams/:teamId/reinstate', superadminController.reinstateTeam);
 // Change team room
 router.put('/teams/:teamId/room', superadminController.changeTeamRoom);
 
+// Assign map to team
+router.put('/teams/:teamId/map', superadminController.assignMapToTeam);
+
 // Adjust team timer (add/subtract)
 router.post('/teams/:teamId/timer/adjust', superadminController.adjustTeamTimer);
 
@@ -46,6 +49,9 @@ router.delete('/admins/:adminId', superadminController.deleteAdmin);
 
 // Get all board rules
 router.get('/board/rules', superadminController.getBoardRules);
+
+// Get all maps
+router.get('/board/maps', superadminController.getAllMaps);
 
 // Add snake
 router.post('/board/snakes', superadminController.addSnake);

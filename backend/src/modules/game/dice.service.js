@@ -1,6 +1,6 @@
 const prisma = require('../../prisma/client');
 const { rollDice, calculateNewPosition, getRandomRoom, hasReachedGoal } = require('./game.utils');
-const { checkSnakeAtPosition } = require('./board.service');
+const { checkSnakeForTeam } = require('./board.service');
 const { GAME_CONFIG } = require('../../config/constants');
 const { logDiceRoll, logCheckpointReached } = require('../audit/audit.service');
 
@@ -34,8 +34,8 @@ const processDiceRoll = async (teamId) => {
   // Get new room (different from current)
   const newRoom = getRandomRoom(team.currentRoom);
 
-  // Check if landed on snake (using global board rules)
-  const snake = await checkSnakeAtPosition(positionAfter);
+  // Check if landed on snake (using team's specific map)
+  const snake = await checkSnakeForTeam(teamId, positionAfter);
   const isSnakePosition = snake !== null;
 
   // Record the dice roll
@@ -95,7 +95,6 @@ const processDiceRoll = async (teamId) => {
     positionAfter,
     roomAssigned: newRoom,
     isSnakePosition,
-    snakeEndPosition: snake ? snake.endPos : null,
     checkpoint,
     diceRoll: diceRollRecord,
     hasWon: hasReachedGoal(positionAfter),

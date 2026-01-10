@@ -3,6 +3,7 @@ const { hashPassword } = require('../../utils/password.util');
 const { generateTeamCode } = require('../../utils/random.util');
 const { GAME_CONFIG, ROOMS } = require('../../config/constants');
 const { logTeamCreated, logAdminAction, AUDIT_ACTIONS } = require('../audit/audit.service');
+const { assignMapToTeam: assignMap, getAllBoardMaps } = require('../game/board.service');
 
 // Create team with User entry for login
 const createTeam = async (teamName, members, password) => {
@@ -92,6 +93,19 @@ const changeTeamRoom = async (teamId, newRoom) => {
     where: { id: teamId },
     data: { currentRoom: newRoom },
   });
+};
+
+const assignMapToTeam = async (teamId, mapId) => {
+  // Verify map exists
+  const map = await prisma.boardMap.findUnique({
+    where: { id: mapId },
+  });
+  
+  if (!map) {
+    throw new Error('Map not found');
+  }
+  
+  return await assignMap(teamId, mapId);
 };
 
 const adjustTeamTimer = async (teamId, secondsToAdd, reason) => {
@@ -293,6 +307,7 @@ module.exports = {
   disqualifyTeam,
   reinstateTeam,
   changeTeamRoom,
+  assignMapToTeam,
   adjustTeamTimer,
   setTeamTimer,
   undoCheckpoint,
@@ -303,5 +318,6 @@ module.exports = {
   addSnake,
   removeSnake,
   getAllBoardRules,
+  getAllMaps: getAllBoardMaps,
 };
 

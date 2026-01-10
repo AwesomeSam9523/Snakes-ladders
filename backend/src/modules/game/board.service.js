@@ -37,13 +37,12 @@ const deleteBoardMap = async (mapId) => {
   });
 };
 
-const createBoardRule = async (mapId, type, startPos, endPos) => {
+const createBoardRule = async (mapId, type, startPos) => {
   return await prisma.boardRule.create({
     data: {
       mapId,
       type,
       startPos,
-      endPos,
     },
   });
 };
@@ -92,11 +91,6 @@ const checkSnakeForTeam = async (teamId, position) => {
   });
 
   return snake;
-};
-
-const getSnakeEndPositionForTeam = async (teamId, position) => {
-  const snake = await checkSnakeForTeam(teamId, position);
-  return snake ? snake.endPos : null;
 };
 
 // Check any snake at a position (global check)
@@ -154,19 +148,15 @@ const getBoardStateForTeam = async (teamId) => {
     return {
       boardSize: 100,
       mapName: null,
-      snakes: {},
-      ladders: {},
+      snakes: [],
     };
   }
 
-  const snakeMap = {};
-  const ladderMap = {};
+  const snakePositions = [];
 
   team.map.rules.forEach(rule => {
     if (rule.type === 'SNAKE') {
-      snakeMap[rule.startPos] = rule.endPos;
-    } else if (rule.type === 'LADDER') {
-      ladderMap[rule.startPos] = rule.endPos;
+      snakePositions.push(rule.startPos);
     }
   });
 
@@ -174,8 +164,7 @@ const getBoardStateForTeam = async (teamId) => {
     boardSize: 100,
     mapId: team.map.id,
     mapName: team.map.name,
-    snakes: snakeMap,
-    ladders: ladderMap,
+    snakes: snakePositions,
   };
 };
 
@@ -208,7 +197,6 @@ module.exports = {
   
   // Team-specific operations
   checkSnakeForTeam,
-  getSnakeEndPositionForTeam,
   checkSnakeAtPosition,
   assignMapToTeam,
   getTeamMap,

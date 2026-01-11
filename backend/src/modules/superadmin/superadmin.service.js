@@ -96,12 +96,18 @@ const changeTeamRoom = async (teamId, newRoom) => {
 };
 
 const assignMapToTeam = async (teamId, mapId) => {
+  console.log('🔍 Assigning map:', { teamId, mapId, mapIdType: typeof mapId });
+  
   // Verify map exists (mapId should be a string UUID)
   const map = await prisma.boardMap.findUnique({
     where: { id: String(mapId) },
   });
   
+  console.log('📍 Map found:', map ? `Yes (${map.name})` : 'No');
+  
   if (!map) {
+    const allMaps = await prisma.boardMap.findMany({ select: { id: true, name: true } });
+    console.log('📋 Available maps:', allMaps);
     throw new Error('Map not found');
   }
   

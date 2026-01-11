@@ -1,73 +1,26 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-// 5 Different Board Maps with unique snake positions
-// Each map has 8 snakes - NO snake head positions are shared between maps
 const BOARD_MAPS = [
   {
     name: 'Map-1',
-    snakes: [
-      { start: 16, end: 6 },
-      { start: 17, end: 26 },
-      { start: 19, end: 11 },
-      { start: 18, end: 53 },
-      { start: 19, end: 19 },
-      { start: 64, end: 60 },
-      { start: 87, end: 24 },
-      { start: 93, end: 73 },
-    ],
+    snakes: [2,3,4,5,6,16, 17, 19, 54, 62, 64, 87, 93],
   },
   {
     name: 'Map-2',
-    snakes: [
-      { start: 14, end: 4 },
-      { start: 31, end: 9 },
-      { start: 48, end: 28 },
-      { start: 55, end: 33 },
-      { start: 67, end: 45 },
-      { start: 72, end: 51 },
-      { start: 88, end: 36 },
-      { start: 95, end: 75 },
-    ],
+    snakes: [14, 31, 48, 55, 67, 72, 88, 95],
   },
   {
     name: 'Map-3',
-    snakes: [
-      { start: 17, end: 7 },
-      { start: 34, end: 12 },
-      { start: 44, end: 22 },
-      { start: 58, end: 38 },
-      { start: 69, end: 47 },
-      { start: 78, end: 58 },
-      { start: 84, end: 64 },
-      { start: 97, end: 77 },
-    ],
+    snakes: [17, 34, 44, 58, 69, 78, 84, 97],
   },
   {
     name: 'Map-4',
-    snakes: [
-      { start: 19, end: 9 },
-      { start: 37, end: 15 },
-      { start: 46, end: 24 },
-      { start: 52, end: 30 },
-      { start: 65, end: 43 },
-      { start: 75, end: 54 },
-      { start: 89, end: 68 },
-      { start: 91, end: 71 },
-    ],
+    snakes: [19, 37, 46, 52, 65, 75, 89, 91],
   },
   {
     name: 'Map-5',
-    snakes: [
-      { start: 21, end: 11 },
-      { start: 39, end: 17 },
-      { start: 43, end: 21 },
-      { start: 59, end: 37 },
-      { start: 66, end: 44 },
-      { start: 79, end: 57 },
-      { start: 86, end: 66 },
-      { start: 98, end: 78 },
-    ],
+    snakes: [21, 39, 43, 59, 66, 79, 86, 98],
   },
 ];
 
@@ -90,19 +43,18 @@ async function seedBoardMaps() {
 
     console.log(`📍 Created ${mapData.name} (ID: ${map.id})`);
 
-    // Create snakes for this map
-    for (const snake of mapData.snakes) {
+    // Create snakes for this map 
+    for (const snakePos of mapData.snakes) {
       await prisma.boardRule.create({
         data: {
           mapId: map.id,
           type: 'SNAKE',
-          startPos: snake.start,
-          endPos: snake.end,
+          startPos: snakePos,
         },
       });
     }
 
-    console.log(`   └── Added ${mapData.snakes.length} snakes: ${mapData.snakes.map(s => s.start).join(', ')}`);
+    console.log(`   └── Added ${mapData.snakes.length} snakes: ${mapData.snakes.join(', ')}`);
   }
 
   console.log('\n✅ Board maps seeded successfully!');

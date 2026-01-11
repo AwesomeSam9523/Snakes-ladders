@@ -96,16 +96,16 @@ const changeTeamRoom = async (teamId, newRoom) => {
 };
 
 const assignMapToTeam = async (teamId, mapId) => {
-  // Verify map exists
+  // Verify map exists (mapId should be a string UUID)
   const map = await prisma.boardMap.findUnique({
-    where: { id: mapId },
+    where: { id: String(mapId) },
   });
   
   if (!map) {
     throw new Error('Map not found');
   }
   
-  return await assignMap(teamId, mapId);
+  return await assignMap(teamId, String(mapId));
 };
 
 const adjustTeamTimer = async (teamId, secondsToAdd, reason) => {

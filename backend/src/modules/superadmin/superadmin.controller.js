@@ -81,7 +81,7 @@ const assignMapToTeam = async (req, res, next) => {
     const { teamId } = req.params;
     const { mapId } = req.body;
 
-    if (!mapId || typeof mapId !== 'number') {
+    if (!mapId || typeof mapId !== 'string') {
       return sendBadRequest(res, 'Valid map ID is required');
     }
 
@@ -228,8 +228,13 @@ const getBoardRules = async (req, res, next) => {
 
 const getAllMaps = async (req, res, next) => {
   try {
-    const maps = await superadminService.getAllMaps();
-    return sendSuccess(res, maps, 'Maps fetched successfully');
+    const allMaps = await superadminService.getAllMaps();
+    const formattedMaps = allMaps.map(m => ({
+      id: m.id,
+      name: m.name,
+      teamsCount: m._count?.teams || 0,
+    }));
+    return sendSuccess(res, { maps: formattedMaps }, 'Maps fetched successfully');
   } catch (error) {
     next(error);
   }

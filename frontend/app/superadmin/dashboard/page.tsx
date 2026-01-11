@@ -15,7 +15,7 @@ interface Team {
   totalTime: number
   points: number
   disqualified: boolean
-  mapId?: number
+  mapId?: string
   mapName?: string
   checkpoints: Array<{
     id: string
@@ -79,7 +79,7 @@ export default function SuperAdminDashboard() {
   const [searchQuery, setSearchQuery] = useState("")
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([])
   const [generatedPasswords, setGeneratedPasswords] = useState<Record<string, string>>({})
-  const [maps, setMaps] = useState<Array<{id: number, name: string, teamsCount: number}>>([])
+  const [maps, setMaps] = useState<Array<{id: string, name: string, teamsCount: number}>>([])
   const [editingTeam, setEditingTeam] = useState<{teamId: string, field: string, value: any} | null>(null)
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
@@ -413,7 +413,7 @@ export default function SuperAdminDashboard() {
     }
   }
 
-  const handleAssignMap = async (teamId: string, mapId: number) => {
+  const handleAssignMap = async (teamId: string, mapId: string) => {
     try {
       const token = localStorage.getItem("token")
       const res = await fetch(`${API_URL}/superadmin/teams/${teamId}/map`, {
@@ -726,7 +726,7 @@ export default function SuperAdminDashboard() {
                       <select
                         value={team.mapId || ""}
                         onChange={(e) => {
-                          const mapId = parseInt(e.target.value)
+                          const mapId = e.target.value
                           if (mapId) {
                             handleAssignMap(team.id, mapId)
                           }

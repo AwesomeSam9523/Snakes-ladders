@@ -15,6 +15,8 @@ interface Team {
   totalTime: number
   points: number
   disqualified: boolean
+  mapId?: number
+  mapName?: string
   checkpoints: Array<{
     id: string
     checkpointNumber: number
@@ -77,8 +79,30 @@ export default function SuperAdminDashboard() {
   const [searchQuery, setSearchQuery] = useState("")
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([])
   const [generatedPasswords, setGeneratedPasswords] = useState<Record<string, string>>({})
+  const [maps, setMaps] = useState<Array<{id: number, name: string, teamsCount: number}>>([])
+  const [editingTeam, setEditingTeam] = useState<{teamId: string, field: string, value: any} | null>(null)
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+
+  // Fetch maps from backend
+  const fetchMaps = async () => {
+    try {
+      const token = localStorage.getItem("token")
+      const res = await fetch(`${API_URL}/superadmin/board/maps`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      if (res.ok) {
+        const data = await res.json()
+        if (data.data && data.data.maps) {
+          setMaps(data.data.maps)
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching maps:", error)
+    }
+  }
 
   // Fetch questions from backend
   const fetchQuestions = async () => {
@@ -132,6 +156,8 @@ export default function SuperAdminDashboard() {
             totalTime: t.totalTimeSec || 0,
             points: t.points || 0,
             disqualified: t.status === 'DISQUALIFIED',
+            mapId: t.mapId,
+            mapName: t.map?.name,
             checkpoints: t.checkpoints || [],
           })))
         }
@@ -169,6 +195,7 @@ export default function SuperAdminDashboard() {
       fetchTeams()
       fetchActivityLogs()
       fetchQuestions()
+      fetchMaps()
       
       // Auto-refresh teams every 10 seconds to see position updates
       const interval = setInterval(fetchTeams, 10000)
@@ -331,17 +358,84 @@ export default function SuperAdminDashboard() {
     setShowNewQuestionModal(false)
   }
 
-  const handleDisqualifyTeam = (teamId: string) => {
-    setTeams((prev) => prev.map((team) => (team.id === teamId ? { ...team, disqualified: !team.disqualified } : team)))
+  const handleDisqualifyTeam = async (teamId: string) => {
+    try {
+      const team = teams.find(t => t.id === teamId)
+      const endpoint = team?.disqualified ? 'reinstate' : 'disqualify'
+      
+      const token = localStorage.getItem("token")
+      const res = await fetch(`${API_URL}/superadmin/teams/${teamId}/${endpoint}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (res.ok) {
+        fetchTeams() // Refresh teams from DB
+        alert(`Team ${endpoint}d successfully!`)
+      } else {
+        const error = await res.json()
+        alert(`Error: ${error.message || `Failed to ${endpoint} team`}`)
+      }
+    } catch (error) {
+      console.error(`Error updating team status:`, error)
+      alert("Failed to update team status. Check if backend is running.")
+    }
   }
 
-  const handleChangeRoom = (teamId: string) => {
+  const handleChangeRoom = async (teamId: string) => {
     if (!newRoom) return
 
-    setTeams((prev) => prev.map((team) => (team.id === teamId ? { ...team, currentRoom: Number(newRoom) } : team)))
+    try {
+      const token = localStorage.getItem("token")
+      const res = await fetch(`${API_URL}/superadmin/teams/${teamId}/room`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ roomNumber: parseInt(newRoom) }),
+      })
 
-    setSelectedTeamForEdit(null)
-    setNewRoom("")
+      if (res.ok) {
+        fetchTeams() // Refresh teams from DB
+        setSelectedTeamForEdit(null)
+        setNewRoom("")
+        alert("Room updated successfully!")
+      } else {
+        const error = await res.json()
+        alert(`Error: ${error.message || 'Failed to update room'}`)
+      }
+    } catch (error) {
+      console.error("Error updating room:", error)
+      alert("Failed to update room. Check if backend is running.")
+    }
+  }
+
+  const handleAssignMap = async (teamId: string, mapId: number) => {
+    try {
+      const token = localStorage.getItem("token")
+      const res = await fetch(`${API_URL}/superadmin/teams/${teamId}/map`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ mapId }),
+      })
+
+      if (res.ok) {
+        fetchTeams() // Refresh teams from DB
+        alert("Map assigned successfully!")
+      } else {
+        const error = await res.json()
+        alert(`Error: ${error.message || 'Failed to assign map'}`)
+      }
+    } catch (error) {
+      console.error("Error assigning map:", error)
+      alert("Failed to assign map. Check if backend is running.")
+    }
   }
 
   const handleRemoveQuestion = async (questionId: string) => {
@@ -622,6 +716,35 @@ export default function SuperAdminDashboard() {
                       <p className={`font-bold ${team.disqualified ? "text-red-600" : "text-green-600"}`}>
                         {team.disqualified ? "Disqualified" : "Active"}
                       </p>
+                    </div>
+                  </div>
+
+                  {/* Map Assignment Section */}
+                  <div className="mb-3 p-3 bg-blue-50 rounded border border-blue-200">
+                    <div className="flex items-center gap-3">
+                      <p className="text-sm font-medium text-gray-700">Board Map:</p>
+                      <select
+                        value={team.mapId || ""}
+                        onChange={(e) => {
+                          const mapId = parseInt(e.target.value)
+                          if (mapId) {
+                            handleAssignMap(team.id, mapId)
+                          }
+                        }}
+                        className="px-3 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 bg-white"
+                      >
+                        <option value="">Select a map...</option>
+                        {maps.map((map) => (
+                          <option key={map.id} value={map.id}>
+                            {map.name} ({map.teamsCount} teams)
+                          </option>
+                        ))}
+                      </select>
+                      {team.mapName && (
+                        <span className="text-sm text-blue-700 font-medium">
+                          ✓ Currently: {team.mapName}
+                        </span>
+                      )}
                     </div>
                   </div>
 

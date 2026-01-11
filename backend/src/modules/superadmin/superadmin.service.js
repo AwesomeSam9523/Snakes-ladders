@@ -229,6 +229,12 @@ const getAllTeamsWithDetails = async () => {
           username: true,
         },
       },
+      map: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
       checkpoints: {
         orderBy: { checkpointNumber: 'desc' },
         include: {

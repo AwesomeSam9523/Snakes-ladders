@@ -81,6 +81,7 @@ export default function SuperAdminDashboard() {
   const [generatedPasswords, setGeneratedPasswords] = useState<Record<string, string>>({})
   const [maps, setMaps] = useState<Array<{id: string, name: string, teamsCount: number}>>([])
   const [editingTeam, setEditingTeam] = useState<{teamId: string, field: string, value: any} | null>(null)
+  const [editValues, setEditValues] = useState<Record<string, any>>({})
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
 
@@ -438,6 +439,43 @@ export default function SuperAdminDashboard() {
     }
   }
 
+  const handleUpdateTeamField = async (teamId: string, field: string, value: any) => {
+    try {
+      const token = localStorage.getItem("token")
+      const fieldMap: Record<string, string> = {
+        'teamName': 'teamName',
+        'position': 'currentPosition',
+        'points': 'points',
+        'time': 'totalTimeSec'
+      }
+      
+      const updates: Record<string, any> = {}
+      updates[fieldMap[field]] = field === 'time' ? parseInt(value) : field === 'position' || field === 'points' ? parseInt(value) : value
+      
+      const res = await fetch(`${API_URL}/superadmin/teams/${teamId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(updates),
+      })
+
+      if (res.ok) {
+        fetchTeams() // Refresh teams from DB
+        setEditingTeam(null)
+        setEditValues({})
+        alert(`${field.charAt(0).toUpperCase() + field.slice(1)} updated successfully!`)
+      } else {
+        const error = await res.json()
+        alert(`Error: ${error.message || 'Failed to update field'}`)
+      }
+    } catch (error) {
+      console.error("Error updating team field:", error)
+      alert("Failed to update. Check if backend is running.")
+    }
+  }
+
   const handleRemoveQuestion = async (questionId: string) => {
     if (!confirm("Are you sure you want to delete this question?")) {
       return
@@ -697,19 +735,115 @@ export default function SuperAdminDashboard() {
                     </div>
                     <div>
                       <p className="text-xs text-gray-600 uppercase">Team Name</p>
-                      <p className="font-bold text-gray-900">{team.teamName || '-'}</p>
+                      {editingTeam?.teamId === team.id && editingTeam?.field === 'teamName' ? (
+                        <div className="flex gap-1">
+                          <input
+                            type="text"
+                            value={editValues[team.id] || team.teamName}
+                            onChange={(e) => setEditValues({...editValues, [team.id]: e.target.value})}
+                            className="w-full px-2 py-0.5 text-sm border border-blue-500 rounded focus:outline-none"
+                            autoFocus
+                          />
+                          <button
+                            onClick={() => handleUpdateTeamField(team.id, 'teamName', editValues[team.id])}
+                            className="text-green-600 hover:text-green-800 text-xs">✓</button>
+                          <button
+                            onClick={() => { setEditingTeam(null); setEditValues({}) }}
+                            className="text-red-600 hover:text-red-800 text-xs">✕</button>
+                        </div>
+                      ) : (
+                        <p 
+                          className="font-bold text-gray-900 cursor-pointer hover:text-blue-600"
+                          onClick={() => {
+                            setEditingTeam({teamId: team.id, field: 'teamName', value: team.teamName})
+                            setEditValues({...editValues, [team.id]: team.teamName})
+                          }}
+                        >{team.teamName || '-'}</p>
+                      )}
                     </div>
                     <div>
                       <p className="text-xs text-gray-600 uppercase">Position</p>
-                      <p className="font-bold text-gray-900">{team.currentPosition}</p>
+                      {editingTeam?.teamId === team.id && editingTeam?.field === 'position' ? (
+                        <div className="flex gap-1">
+                          <input
+                            type="number"
+                            value={editValues[team.id] || team.currentPosition}
+                            onChange={(e) => setEditValues({...editValues, [team.id]: e.target.value})}
+                            className="w-full px-2 py-0.5 text-sm border border-blue-500 rounded focus:outline-none"
+                            autoFocus
+                          />
+                          <button
+                            onClick={() => handleUpdateTeamField(team.id, 'position', editValues[team.id])}
+                            className="text-green-600 hover:text-green-800 text-xs">✓</button>
+                          <button
+                            onClick={() => { setEditingTeam(null); setEditValues({}) }}
+                            className="text-red-600 hover:text-red-800 text-xs">✕</button>
+                        </div>
+                      ) : (
+                        <p 
+                          className="font-bold text-gray-900 cursor-pointer hover:text-blue-600"
+                          onClick={() => {
+                            setEditingTeam({teamId: team.id, field: 'position', value: team.currentPosition})
+                            setEditValues({...editValues, [team.id]: team.currentPosition})
+                          }}
+                        >{team.currentPosition}</p>
+                      )}
                     </div>
                     <div>
                       <p className="text-xs text-gray-600 uppercase">Points</p>
-                      <p className="font-bold text-gray-900">{team.currentRoom}</p>
+                      {editingTeam?.teamId === team.id && editingTeam?.field === 'points' ? (
+                        <div className="flex gap-1">
+                          <input
+                            type="number"
+                            value={editValues[team.id] || team.points}
+                            onChange={(e) => setEditValues({...editValues, [team.id]: e.target.value})}
+                            className="w-full px-2 py-0.5 text-sm border border-blue-500 rounded focus:outline-none"
+                            autoFocus
+                          />
+                          <button
+                            onClick={() => handleUpdateTeamField(team.id, 'points', editValues[team.id])}
+                            className="text-green-600 hover:text-green-800 text-xs">✓</button>
+                          <button
+                            onClick={() => { setEditingTeam(null); setEditValues({}) }}
+                            className="text-red-600 hover:text-red-800 text-xs">✕</button>
+                        </div>
+                      ) : (
+                        <p 
+                          className="font-bold text-gray-900 cursor-pointer hover:text-blue-600"
+                          onClick={() => {
+                            setEditingTeam({teamId: team.id, field: 'points', value: team.points})
+                            setEditValues({...editValues, [team.id]: team.points})
+                          }}
+                        >{team.points}</p>
+                      )}
                     </div>
                     <div>
                       <p className="text-xs text-gray-600 uppercase">Time (sec)</p>
-                      <p className="font-bold text-gray-900">{team.totalTime}</p>
+                      {editingTeam?.teamId === team.id && editingTeam?.field === 'time' ? (
+                        <div className="flex gap-1">
+                          <input
+                            type="number"
+                            value={editValues[team.id] || team.totalTime}
+                            onChange={(e) => setEditValues({...editValues, [team.id]: e.target.value})}
+                            className="w-full px-2 py-0.5 text-sm border border-blue-500 rounded focus:outline-none"
+                            autoFocus
+                          />
+                          <button
+                            onClick={() => handleUpdateTeamField(team.id, 'time', editValues[team.id])}
+                            className="text-green-600 hover:text-green-800 text-xs">✓</button>
+                          <button
+                            onClick={() => { setEditingTeam(null); setEditValues({}) }}
+                            className="text-red-600 hover:text-red-800 text-xs">✕</button>
+                        </div>
+                      ) : (
+                        <p 
+                          className="font-bold text-gray-900 cursor-pointer hover:text-blue-600"
+                          onClick={() => {
+                            setEditingTeam({teamId: team.id, field: 'time', value: team.totalTime})
+                            setEditValues({...editValues, [team.id]: team.totalTime})
+                          }}
+                        >{team.totalTime}</p>
+                      )}
                     </div>
                     <div>
                       <p className="text-xs text-gray-600 uppercase">Status</p>

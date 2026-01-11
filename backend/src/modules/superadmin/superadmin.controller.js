@@ -76,6 +76,21 @@ const changeTeamRoom = async (req, res, next) => {
   }
 };
 
+const updateTeamDetails = async (req, res, next) => {
+  try {
+    const { teamId } = req.params;
+    const updates = req.body;
+
+    const team = await superadminService.updateTeamDetails(teamId, updates);
+    return sendSuccess(res, team, 'Team details updated successfully');
+  } catch (error) {
+    if (error.message === 'No valid fields to update') {
+      return sendBadRequest(res, error.message);
+    }
+    next(error);
+  }
+};
+
 const assignMapToTeam = async (req, res, next) => {
   try {
     const { teamId } = req.params;
@@ -256,6 +271,7 @@ module.exports = {
   disqualifyTeam,
   reinstateTeam,
   changeTeamRoom,
+  updateTeamDetails,
   assignMapToTeam,
   adjustTeamTimer,
   setTeamTimer,

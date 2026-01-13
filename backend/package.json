@@ -4,6 +4,7 @@
   "description": "Backend for Snakes & Ladders Tech Quest Game",
   "main": "src/server.js",
   "scripts": {
+    "build": "echo 'Nothing'",
     "dev": "node --watch src/app.js",
     "start": "node src/app.js",
     "db:generate": "node node_modules/prisma/build/index.js generate",

@@ -1,4 +1,4 @@
-const prisma = require('../prisma/client');
+const prisma = require('../config/db');
 const { MESSAGES } = require('../config/constants');
 const { sendBadRequest } = require('../utils/response.util');
 

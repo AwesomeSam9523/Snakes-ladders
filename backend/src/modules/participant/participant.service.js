@@ -1,4 +1,4 @@
-const prisma = require('../../prisma/client');
+const prisma = require('../../config/db');
 const { getBoardStateForTeam } = require('../game/board.service');
 
 

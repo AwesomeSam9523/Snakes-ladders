@@ -1,4 +1,4 @@
-const prisma = require('../../prisma/client');
+const prisma = require('../../config/db');
 const { GAME_CONFIG } = require('../../config/constants');
 
 // Get global leaderboard (all teams)

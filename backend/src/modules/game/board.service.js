@@ -1,4 +1,4 @@
-const prisma = require('../../prisma/client');
+const prisma = require('../../config/db');
 
 const createBoardMap = async (name) => {
   return await prisma.boardMap.create({

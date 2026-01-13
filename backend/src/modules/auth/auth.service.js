@@ -1,4 +1,4 @@
-const prisma = require('../../prisma/client');
+const prisma = require('../../config/db');
 const { hashPassword, comparePassword } = require('../../utils/password.util');
 const { generateToken } = require('../../middlewares/session.middleware');
 const { ROLES } = require('../../config/constants');

@@ -26,7 +26,7 @@ app.use('/api', routes);
 app.use(notFoundHandler);
 app.use(errorHandler);
 
-if (process.env.VERCEL !== '0') {
+if (process.env.VERCEL !== '1') {
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);

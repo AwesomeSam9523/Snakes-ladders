@@ -248,6 +248,32 @@ const submitAnswer = async (teamId, assignmentId, answer) => {
     },
   });
 
+  // Get checkpoint to check if it's a snake position
+  const checkpoint = await prisma.checkpoint.findUnique({
+    where: { id: assignment.checkpointId },
+    select: { isSnakePosition: true, teamId: true },
+  });
+
+  // Calculate points based on snake position and answer correctness
+  let pointsChange = 0;
+  if (isAutoMarked) {
+    if (checkpoint.isSnakePosition) {
+      // Snake position: correct = 0, incorrect = -1
+      pointsChange = isCorrect ? 0 : -1;
+    } else {
+      // Normal position: correct = +1, incorrect = 0
+      pointsChange = isCorrect ? 1 : 0;
+    }
+
+    // Update team points
+    await prisma.team.update({
+      where: { id: checkpoint.teamId },
+      data: { 
+        points: { increment: pointsChange },
+      },
+    });
+  }
+
   // Approve the checkpoint so team can move on
   await prisma.checkpoint.update({
     where: { id: assignment.checkpointId },

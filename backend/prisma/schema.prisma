@@ -68,6 +68,7 @@ model Team {
   currentPosition Int        @default(1)
   currentRoom     Int        @default(1)
   totalTimeSec    Int        @default(0)
+  points          Int        @default(0)
   status          TeamStatus @default(ACTIVE)
   canRollDice     Boolean    @default(true)
   mapId           String?

@@ -26,9 +26,6 @@ router.post('/teams/:teamId/reinstate', superadminController.reinstateTeam);
 // Change team room
 router.put('/teams/:teamId/room', superadminController.changeTeamRoom);
 
-// Update team details (name, position, points, time)
-router.patch('/teams/:teamId', superadminController.updateTeamDetails);
-
 // Assign map to team
 router.put('/teams/:teamId/map', superadminController.assignMapToTeam);
 

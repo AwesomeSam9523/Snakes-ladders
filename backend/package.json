@@ -11,7 +11,8 @@
     "db:migrate": "node node_modules/prisma/build/index.js migrate dev",
     "db:studio": "node node_modules/prisma/build/index.js studio",
     "db:seed": "node prisma/seed.js",
-    "db:seed-maps": "node prisma/seed-maps.js"
+    "db:seed-maps": "node prisma/seed-maps.js",
+    "postinstall": "prisma generate && prisma migrate deploy"
   },
   "keywords": ["snakes", "ladders", "game", "tech-quest"],
   "author": "",

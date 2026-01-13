@@ -10,7 +10,7 @@ interface Checkpoint {
   positionBefore?: number
   positionAfter?: number
   position?: number
-  roomNumber?: number
+  roomNumber?: string
   status: "PENDING" | "APPROVED" | "REJECTED"
   isSnakePosition?: boolean
   questionAssign?: {
@@ -36,7 +36,7 @@ interface Team {
   teamId?: string  // User's username like "TEAM001"
   members: Array<{ name: string }>
   currentPosition: number
-  currentRoom: number
+  currentRoom: string
   status: string
   totalTimeSec: number
   checkpoints: Checkpoint[]

@@ -18,7 +18,7 @@ import {useCheckVersion} from "@/hooks/use-check-version";
 interface TeamData {
   teamId: string
   currentPosition: number
-  currentRoom: number | null
+  currentRoom: string | null
   canRollDice: boolean
   totalTimeSec: number
   status?: string
@@ -485,7 +485,7 @@ export default function ParticipantDashboard() {
 
       <StatusStrip
         currentPosition={teamData.currentPosition}
-        roomNumber={teamData.currentRoom || 0}
+        roomNumber={teamData.currentRoom || "—"}
         status={gameStatus}
         totalTimeSec={teamData.totalTimeSec}
       />

@@ -45,7 +45,7 @@ async function main() {
       teamCode: 'TEAM001',
       teamName: 'Test Team',
       currentPosition: 1,
-      currentRoom: 1,
+      currentRoom: 'AB1 301',
       status: 'ACTIVE',
       totalTimeSec: 0,
     },

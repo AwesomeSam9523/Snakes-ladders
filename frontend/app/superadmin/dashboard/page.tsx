@@ -11,7 +11,7 @@ interface Team {
   teamId?: string  
   members: string[]
   currentPosition: number
-  currentRoom: number
+  currentRoom: string
   totalTime: number
   points: number
   disqualified: boolean
@@ -22,7 +22,7 @@ interface Team {
     checkpointNumber: number
     positionBefore: number
     positionAfter: number
-    roomNumber: number
+    roomNumber: string
     status: "PENDING" | "APPROVED" | "FAILED"
     isSnakePosition: boolean
     questionAssign?: {
@@ -152,7 +152,7 @@ export default function SuperAdminDashboard() {
             teamId: t.user?.username || t.teamCode, // Use username as TEAM ID (e.g., "TEAM001")
             members: t.members?.map((m: any) => m.name) || [],
             currentPosition: t.currentPosition || 1,
-            currentRoom: t.currentRoom || 1,
+            currentRoom: t.currentRoom || "AB1 301",
             totalTime: t.totalTimeSec || 0,
             points: t.points || 0,
             disqualified: t.status === 'DISQUALIFIED',
@@ -395,7 +395,7 @@ export default function SuperAdminDashboard() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ roomNumber: parseInt(newRoom) }),
+        body: JSON.stringify({ roomNumber: newRoom }),
       })
 
       if (res.ok) {
@@ -751,13 +751,23 @@ export default function SuperAdminDashboard() {
                   <div className="flex flex-wrap gap-2">
                     {selectedTeamForEdit === team.id ? (
                       <div className="flex gap-2 w-full">
-                        <input
-                          type="number"
+                        <select
                           value={newRoom}
                           onChange={(e) => setNewRoom(e.target.value)}
-                          placeholder="New room number"
                           className="flex-1 px-3 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:border-gray-600"
-                        />
+                        >
+                          <option value="">Select room...</option>
+                          <option value="AB1 301">AB1 301</option>
+                          <option value="AB1 302">AB1 302</option>
+                          <option value="AB1 303">AB1 303</option>
+                          <option value="AB1 304">AB1 304</option>
+                          <option value="AB1 305">AB1 305</option>
+                          <option value="AB1 306">AB1 306</option>
+                          <option value="AB1 307">AB1 307</option>
+                          <option value="AB1 308">AB1 308</option>
+                          <option value="AB1 309">AB1 309</option>
+                          <option value="AB1 310">AB1 310</option>
+                        </select>
                         <button
                           onClick={() => handleChangeRoom(team.id)}
                           className="px-3 py-1 text-sm bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors font-medium"

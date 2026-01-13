@@ -62,14 +62,14 @@ const changeTeamRoom = async (req, res, next) => {
     const { teamId } = req.params;
     const { roomNumber } = req.body;
 
-    if (!roomNumber || typeof roomNumber !== 'number') {
+    if (!roomNumber || typeof roomNumber !== 'string') {
       return sendBadRequest(res, 'Valid room number is required');
     }
 
     const team = await superadminService.changeTeamRoom(teamId, roomNumber);
     return sendSuccess(res, team, MESSAGES.ROOM_UPDATED);
   } catch (error) {
-    if (error.message === 'Invalid room number') {
+    if (error.message.includes('Invalid room') || error.message.includes('full')) {
       return sendBadRequest(res, error.message);
     }
     next(error);
@@ -250,6 +250,15 @@ const getAuditLogs = async (req, res, next) => {
   }
 };
 
+const getRoomCapacity = async (req, res, next) => {
+  try {
+    const roomCapacity = await superadminService.getRoomCapacity();
+    return sendSuccess(res, roomCapacity, 'Room capacity fetched successfully');
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createTeam,
   updateTeamPassword,
@@ -269,5 +278,6 @@ module.exports = {
   getBoardRules,
   getAllMaps,
   getAuditLogs,
+  getRoomCapacity,
 };
 

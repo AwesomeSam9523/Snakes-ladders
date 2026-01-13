@@ -31,8 +31,8 @@ const processDiceRoll = async (teamId) => {
     positionAfter = positionBefore; // Stay at current position
   }
 
-  // Get new room (different from current)
-  const newRoom = getRandomRoom(team.currentRoom);
+  // Get new room (different from current, with capacity check)
+  const newRoom = await getRandomRoom(team.currentRoom, teamId);
 
   // Check if landed on snake (using team's specific map)
   const snake = await checkSnakeForTeam(teamId, positionAfter);

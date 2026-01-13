@@ -100,7 +100,7 @@ model DiceRoll {
   value        Int
   positionFrom Int
   positionTo   Int
-  roomAssigned Int
+  roomAssigned String
   createdAt    DateTime @default(now())
 
   team         Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)

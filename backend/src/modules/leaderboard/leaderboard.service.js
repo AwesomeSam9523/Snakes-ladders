@@ -115,18 +115,18 @@ const getFinishedTeams = async () => {
   const teams = await prisma.team.findMany({
     where: {
       currentPosition: GAME_CONFIG.BOARD_SIZE,
-      isDisqualified: false,
+      status: { not: 'DISQUALIFIED' },
     },
     select: {
       id: true,
       teamName: true,
-      totalTimeTaken: true,
-      roomNumber: true,
+      totalTimeSec: true,
+      currentRoom: true,
       members: true,
       updatedAt: true,
     },
     orderBy: [
-      { totalTimeTaken: 'asc' },
+      { totalTimeSec: 'asc' },
     ],
   });
 
@@ -134,8 +134,8 @@ const getFinishedTeams = async () => {
     rank: index + 1,
     id: team.id,
     teamName: team.teamName,
-    totalTimeTaken: team.totalTimeTaken,
-    roomNumber: team.roomNumber,
+    totalTimeSec: team.totalTimeSec,
+    currentRoom: team.currentRoom,
     membersCount: team.members.length,
     finishedAt: team.updatedAt,
   }));
@@ -144,34 +144,34 @@ const getFinishedTeams = async () => {
 // Get leaderboard statistics
 const getLeaderboardStats = async () => {
   const totalTeams = await prisma.team.count({
-    where: { isDisqualified: false },
+    where: { status: { not: 'DISQUALIFIED' } },
   });
 
   const finishedTeams = await prisma.team.count({
     where: {
       currentPosition: GAME_CONFIG.BOARD_SIZE,
-      isDisqualified: false,
+      status: { not: 'DISQUALIFIED' },
     },
   });
 
   const disqualifiedTeams = await prisma.team.count({
-    where: { isDisqualified: true },
+    where: { status: 'DISQUALIFIED' },
   });
 
   const avgPosition = await prisma.team.aggregate({
-    where: { isDisqualified: false },
+    where: { status: { not: 'DISQUALIFIED' } },
     _avg: { currentPosition: true },
   });
 
   const avgTime = await prisma.team.aggregate({
-    where: { isDisqualified: false },
-    _avg: { totalTimeTaken: true },
+    where: { status: { not: 'DISQUALIFIED' } },
+    _avg: { totalTimeSec: true },
   });
 
   // Teams by room
   const teamsByRoom = await prisma.team.groupBy({
-    by: ['roomNumber'],
-    where: { isDisqualified: false },
+    by: ['currentRoom'],
+    where: { status: { not: 'DISQUALIFIED' } },
     _count: { id: true },
     _avg: { currentPosition: true },
   });
@@ -182,10 +182,10 @@ const getLeaderboardStats = async () => {
     disqualifiedTeams,
     activeTeams: totalTeams - finishedTeams,
     averagePosition: Math.round(avgPosition._avg.currentPosition || 0),
-    averageTimeTaken: Math.round(avgTime._avg.totalTimeTaken || 0),
+    averageTimeTaken: Math.round(avgTime._avg.totalTimeSec || 0),
     completionRate: totalTeams > 0 ? Math.round((finishedTeams / totalTeams) * 100) : 0,
     teamsByRoom: teamsByRoom.map((r) => ({
-      roomNumber: r.roomNumber,
+      roomNumber: r.currentRoom,
       teamCount: r._count.id,
       avgPosition: Math.round(r._avg.currentPosition || 0),
     })),
@@ -195,7 +195,7 @@ const getLeaderboardStats = async () => {
 // Get live leaderboard updates (for real-time)
 const getLiveLeaderboard = async (lastUpdateTime = null) => {
   const where = {
-    isDisqualified: false,
+    status: { not: 'DISQUALIFIED' },
   };
 
   if (lastUpdateTime) {
@@ -208,13 +208,13 @@ const getLiveLeaderboard = async (lastUpdateTime = null) => {
       id: true,
       teamName: true,
       currentPosition: true,
-      totalTimeTaken: true,
-      roomNumber: true,
+      totalTimeSec: true,
+      currentRoom: true,
       updatedAt: true,
     },
     orderBy: [
       { currentPosition: 'desc' },
-      { totalTimeTaken: 'asc' },
+      { totalTimeSec: 'asc' },
     ],
   });
 

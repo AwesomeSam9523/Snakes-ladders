@@ -6,7 +6,7 @@ import type { GameStatus } from "@/app/page"
 
 interface StatusStripProps {
   currentPosition: number
-  roomNumber: number
+  roomNumber: string | number
   status: GameStatus
   totalTimeSec: number
 }

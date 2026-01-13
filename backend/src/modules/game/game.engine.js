@@ -8,7 +8,7 @@ const initializeTeam = async (teamId) => {
     where: { id: teamId },
     data: {
       currentPosition: 1,
-      currentRoom: 1,
+      currentRoom: 'AB1 301',
       totalTimeSec: 0,
       status: 'ACTIVE',
       canRollDice: true,

@@ -5,18 +5,47 @@ const { GAME_CONFIG, ROOMS } = require('../../config/constants');
 const { logTeamCreated, logAdminAction, AUDIT_ACTIONS } = require('../audit/audit.service');
 const { assignMapToTeam: assignMap, getAllBoardMaps } = require('../game/board.service');
 
+// Helper function to find an available room with capacity < 5
+const findAvailableRoom = async () => {
+  // Get team counts per room
+  const roomCounts = await prisma.team.groupBy({
+    by: ['currentRoom'],
+    _count: { id: true },
+    where: {
+      status: 'ACTIVE', // Only count active teams
+    },
+  });
+
+  // Create a map of room -> count
+  const roomCountMap = {};
+  roomCounts.forEach(rc => {
+    roomCountMap[rc.currentRoom] = rc._count.id;
+  });
+
+  // Find rooms with less than 5 teams
+  for (const room of ROOMS) {
+    const count = roomCountMap[room] || 0;
+    if (count < GAME_CONFIG.TEAMS_PER_ROOM) {
+      return room;
+    }
+  }
+
+  // If all rooms are full, throw error
+  throw new Error('All rooms are full. Maximum capacity reached.');
+};
+
 // Create team with User entry for login
 const createTeam = async (teamName, members, password) => {
   const teamCode = generateTeamCode();
   const hashedPassword = await hashPassword(password);
-  const randomRoom = ROOMS[Math.floor(Math.random() * ROOMS.length)];
+  const assignedRoom = await findAvailableRoom();
 
   // Create team first
   const team = await prisma.team.create({
     data: {
       teamCode,
       teamName,
-      currentRoom: randomRoom,
+      currentRoom: assignedRoom,
       members: {
         create: members.map(name => ({ name })),
       },
@@ -87,6 +116,19 @@ const reinstateTeam = async (teamId) => {
 const changeTeamRoom = async (teamId, newRoom) => {
   if (!ROOMS.includes(newRoom)) {
     throw new Error('Invalid room number');
+  }
+
+  // Check if the target room has capacity
+  const teamsInRoom = await prisma.team.count({
+    where: {
+      currentRoom: newRoom,
+      status: 'ACTIVE',
+      id: { not: teamId }, // Exclude current team if already in this room
+    },
+  });
+
+  if (teamsInRoom >= GAME_CONFIG.TEAMS_PER_ROOM) {
+    throw new Error(`Room ${newRoom} is full. Maximum ${GAME_CONFIG.TEAMS_PER_ROOM} teams per room.`);
   }
 
   return await prisma.team.update({
@@ -307,6 +349,30 @@ const getAllBoardRules = async () => {
   });
 };
 
+const getRoomCapacity = async () => {
+  // Get team counts per room
+  const roomCounts = await prisma.team.groupBy({
+    by: ['currentRoom'],
+    _count: { id: true },
+    where: {
+      status: 'ACTIVE',
+    },
+  });
+
+  // Create result with all rooms
+  const result = ROOMS.map(room => {
+    const roomData = roomCounts.find(rc => rc.currentRoom === room);
+    return {
+      room,
+      currentTeams: roomData ? roomData._count.id : 0,
+      maxTeams: GAME_CONFIG.TEAMS_PER_ROOM,
+      available: (roomData ? roomData._count.id : 0) < GAME_CONFIG.TEAMS_PER_ROOM,
+    };
+  });
+
+  return result;
+};
+
 module.exports = {
   createTeam,
   updateTeamPassword,
@@ -325,5 +391,7 @@ module.exports = {
   removeSnake,
   getAllBoardRules,
   getAllMaps: getAllBoardMaps,
+  findAvailableRoom,
+  getRoomCapacity,
 };
 

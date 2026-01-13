@@ -1,4 +1,4 @@
-const prisma = require('../../prisma/client');
+const prisma = require('../../config/db');
 const { logAdminAction, AUDIT_ACTIONS } = require('../audit/audit.service');
 
 const getAllTeams = async () => {

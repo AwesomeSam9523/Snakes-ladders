@@ -1,4 +1,4 @@
-const prisma = require('../../prisma/client');
+const prisma = require('../../config/db');
 const { processDiceRoll } = require('./dice.service');
 const { approveCheckpoint, handleSnakeDodge } = require('./checkpoint.service');
 const { getBoardStateForTeam } = require('./board.service');

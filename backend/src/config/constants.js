@@ -11,8 +11,11 @@ const GAME_CONFIG = {
   STARTING_POSITION: 1,
 };
 
-// Room numbers (1-10)
-const ROOMS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+// Room numbers (AB1 301 - AB1 310)
+const ROOMS = [
+  'AB1 301', 'AB1 302', 'AB1 303', 'AB1 304', 'AB1 305',
+  'AB1 306', 'AB1 307', 'AB1 308', 'AB1 309', 'AB1 310'
+];
 
 // Roles for authentication
 const ROLES = {

@@ -4,6 +4,7 @@ const routes = require('./routes');
 const { errorHandler, notFoundHandler } = require('./middlewares/error.middleware');
 
 const app = express();
+const API_VERSION_TIME = Date.now().toString();
 
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:3000',
@@ -15,6 +16,10 @@ app.use(express.urlencoded({ extended: true }));
 
 app.get('/', (req, res) => {
   res.json({ message: 'Welcome to the Snakes and Ladders API' });
+});
+
+app.get('/version', (req, res) => {
+  res.json({ version: API_VERSION_TIME });
 });
 
 app.get('/health', (req, res) => {

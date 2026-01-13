@@ -11,6 +11,7 @@ import { TeamsList } from "@/components/participant/teams-list"
 import { QuestionPanel } from "@/components/participant/question-panel"
 import { Toaster } from "@/components/ui/toaster"
 import { useToast } from "@/hooks/use-toast"
+import {useCheckVersion} from "@/hooks/use-check-version";
 
 /* ---------- TYPES ---------- */
 
@@ -58,6 +59,7 @@ export default function ParticipantDashboard() {
   const { toast } = useToast()
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+  useCheckVersion();
 
   // Fetch team's own data from backend
   const fetchTeamData = async () => {

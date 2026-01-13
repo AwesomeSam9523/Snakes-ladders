@@ -1,11 +1,13 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
+import {useEffect, useState} from "react"
+import {useRouter} from "next/navigation"
+import {useCheckVersion} from "@/hooks/use-check-version";
 
 export default function Home() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
+  useCheckVersion();
 
   useEffect(() => {
     // Check if user is already logged in
@@ -27,7 +29,6 @@ export default function Home() {
     }
     setLoading(false)
   }, [router])
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">

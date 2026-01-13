@@ -1,4 +1,4 @@
-const prisma = require('../../prisma/client');
+const prisma = require('../../config/db');
 const { rollDice, calculateNewPosition, getRandomRoom, hasReachedGoal } = require('./game.utils');
 const { checkSnakeForTeam } = require('./board.service');
 const { GAME_CONFIG } = require('../../config/constants');

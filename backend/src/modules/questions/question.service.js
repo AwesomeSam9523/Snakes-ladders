@@ -1,4 +1,4 @@
-const prisma = require('../../prisma/client');
+const prisma = require('../../config/db');
 const { CHECKPOINT_STATUS } = require('../../config/constants');
 
 // Map difficulty string to number

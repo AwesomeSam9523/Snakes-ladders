@@ -26,6 +26,9 @@ router.post('/teams/:teamId/reinstate', superadminController.reinstateTeam);
 // Change team room
 router.put('/teams/:teamId/room', superadminController.changeTeamRoom);
 
+// Auto-assign team to available room
+router.post('/teams/:teamId/room/auto-assign', superadminController.autoAssignTeamRoom);
+
 // Get room capacity
 router.get('/rooms/capacity', superadminController.getRoomCapacity);
 

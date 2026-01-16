@@ -81,6 +81,7 @@ export default function SuperAdminDashboard() {
   const [generatedPasswords, setGeneratedPasswords] = useState<Record<string, string>>({})
   const [maps, setMaps] = useState<Array<{id: string, name: string, teamsCount: number}>>([])
   const [editingTeam, setEditingTeam] = useState<{teamId: string, field: string, value: any} | null>(null)
+  const [roomCapacities, setRoomCapacities] = useState<Array<{room: string, currentTeams: number, maxTeams: number, available: boolean}>>([])
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
 
@@ -101,6 +102,26 @@ export default function SuperAdminDashboard() {
       }
     } catch (error) {
       console.error("Error fetching maps:", error)
+    }
+  }
+
+  // Fetch room capacities
+  const fetchRoomCapacities = async () => {
+    try {
+      const token = localStorage.getItem("token")
+      const res = await fetch(`${API_URL}/superadmin/rooms/capacity`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      if (res.ok) {
+        const data = await res.json()
+        if (data.data) {
+          setRoomCapacities(data.data)
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching room capacities:", error)
     }
   }
 
@@ -196,9 +217,13 @@ export default function SuperAdminDashboard() {
       fetchActivityLogs()
       fetchQuestions()
       fetchMaps()
+      fetchRoomCapacities()
       
-      // Auto-refresh teams every 10 seconds to see position updates
-      const interval = setInterval(fetchTeams, 10000)
+      // Auto-refresh teams and room capacities every 10 seconds
+      const interval = setInterval(() => {
+        fetchTeams()
+        fetchRoomCapacities()
+      }, 10000)
       return () => clearInterval(interval)
     }
   }, [router])
@@ -408,6 +433,31 @@ export default function SuperAdminDashboard() {
     } catch (error) {
       console.error("Error updating room:", error)
       alert("Failed to update room. Check if backend is running.")
+    }
+  }
+
+  const handleAutoAssignRoom = async (teamId: string) => {
+    try {
+      const token = localStorage.getItem("token")
+      const res = await fetch(`${API_URL}/superadmin/teams/${teamId}/room/auto-assign`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        fetchTeams() // Refresh teams from DB
+        setSelectedTeamForEdit(null)
+        alert(`Team automatically assigned to ${data.data.assignedRoom}!`)
+      } else {
+        const error = await res.json()
+        alert(`Error: ${error.message || 'Failed to auto-assign room'}`)
+      }
+    } catch (error) {
+      console.error("Error auto-assigning room:", error)
+      alert("Failed to auto-assign room. Check if backend is running.")
     }
   }
 
@@ -755,22 +805,29 @@ export default function SuperAdminDashboard() {
                           className="flex-1 px-3 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:border-gray-600"
                         >
                           <option value="">Select room...</option>
-                          <option value="AB1 301">AB1 301</option>
-                          <option value="AB1 302">AB1 302</option>
-                          <option value="AB1 303">AB1 303</option>
-                          <option value="AB1 304">AB1 304</option>
-                          <option value="AB1 305">AB1 305</option>
-                          <option value="AB1 306">AB1 306</option>
-                          <option value="AB1 307">AB1 307</option>
-                          <option value="AB1 308">AB1 308</option>
-                          <option value="AB1 309">AB1 309</option>
-                          <option value="AB1 310">AB1 310</option>
+                          {["AB1 301", "AB1 302", "AB1 303", "AB1 304", "AB1 305", "AB1 306", "AB1 307", "AB1 308", "AB1 309", "AB1 310"].map((room) => {
+                            const capacity = roomCapacities.find(r => r.room === room)
+                            const availableSlots = capacity ? capacity.maxTeams - capacity.currentTeams : 7
+                            const isFull = availableSlots <= 0
+                            return (
+                              <option key={room} value={room} disabled={isFull}>
+                                {room} ({availableSlots} slots{isFull ? " - FULL" : ""})
+                              </option>
+                            )
+                          })}
                         </select>
                         <button
                           onClick={() => handleChangeRoom(team.id)}
                           className="px-3 py-1 text-sm bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors font-medium"
                         >
                           Update
+                        </button>
+                        <button
+                          onClick={() => handleAutoAssignRoom(team.id)}
+                          className="px-3 py-1 text-sm bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition-colors font-medium whitespace-nowrap"
+                          title="Auto-assign to room with available capacity"
+                        >
+                          Auto-Assign
                         </button>
                         <button
                           onClick={() => {

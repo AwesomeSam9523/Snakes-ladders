@@ -259,12 +259,32 @@ const getRoomCapacity = async (req, res, next) => {
   }
 };
 
+const autoAssignTeamRoom = async (req, res, next) => {
+  try {
+    const { teamId } = req.params;
+    
+    // Find available room with capacity
+    const availableRoom = await superadminService.findAvailableRoom();
+    
+    // Assign team to that room
+    const team = await superadminService.changeTeamRoom(teamId, availableRoom);
+    
+    return sendSuccess(res, { team, assignedRoom: availableRoom }, `Team automatically assigned to ${availableRoom}`);
+  } catch (error) {
+    if (error.message.includes('full')) {
+      return sendBadRequest(res, error.message);
+    }
+    next(error);
+  }
+};
+
 module.exports = {
   createTeam,
   updateTeamPassword,
   disqualifyTeam,
   reinstateTeam,
   changeTeamRoom,
+  autoAssignTeamRoom,
   assignMapToTeam,
   adjustTeamTimer,
   setTeamTimer,

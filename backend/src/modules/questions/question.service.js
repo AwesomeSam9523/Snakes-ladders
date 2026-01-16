@@ -1,30 +1,15 @@
 const prisma = require('../../config/db');
 const { CHECKPOINT_STATUS } = require('../../config/constants');
 
-// Map difficulty string to number
-const difficultyMap = {
-  'EASY': 1,
-  'MEDIUM': 2,
-  'HARD': 3,
-  'easy': 1,
-  'medium': 2,
-  'hard': 3,
-};
-
 // Valid question types
 const validQuestionTypes = ['CODING', 'NUMERICAL', 'MCQ', 'PHYSICAL'];
 
 const createQuestion = async (questionData) => {
-  const { content, text, difficulty, type, options, correctAnswer, hint } = questionData;
+  const { content, text, isSnakeQuestion, type, options, correctAnswer, hint } = questionData;
 
   // Use text or content (frontend sends content)
   const questionText = text || content;
   
-  // Convert difficulty string to number
-  const difficultyLevel = typeof difficulty === 'number' 
-    ? difficulty 
-    : (difficultyMap[difficulty] || 2);
-
   // Validate question type
   const questionType = validQuestionTypes.includes(type) ? type : 'CODING';
 
@@ -32,7 +17,7 @@ const createQuestion = async (questionData) => {
     data: {
       text: questionText,
       hint: hint || '',
-      difficulty: difficultyLevel,
+      isSnakeQuestion: isSnakeQuestion === true || isSnakeQuestion === 'true',
       type: questionType,
       options: options || [],
       correctAnswer: correctAnswer || null,
@@ -42,7 +27,7 @@ const createQuestion = async (questionData) => {
 };
 
 const updateQuestion = async (questionId, questionData) => {
-  const { content, text, difficulty, type, options, correctAnswer, isActive, hint } = questionData;
+  const { content, text, isSnakeQuestion, type, options, correctAnswer, isActive, hint } = questionData;
   
   const updateData = {};
   
@@ -54,10 +39,8 @@ const updateQuestion = async (questionId, questionData) => {
     updateData.hint = hint;
   }
   
-  if (difficulty !== undefined) {
-    updateData.difficulty = typeof difficulty === 'number' 
-      ? difficulty 
-      : (difficultyMap[difficulty] || 2);
+  if (isSnakeQuestion !== undefined) {
+    updateData.isSnakeQuestion = isSnakeQuestion === true || isSnakeQuestion === 'true';
   }
   
   if (type && validQuestionTypes.includes(type)) {
@@ -83,6 +66,12 @@ const updateQuestion = async (questionId, questionData) => {
 };
 
 const deleteQuestion = async (questionId) => {
+  // First delete all question assignments for this question
+  await prisma.questionAssignment.deleteMany({
+    where: { questionId: questionId },
+  });
+  
+  // Then delete the question
   return prisma.question.delete({
     where: { id: questionId },
   });

@@ -132,7 +132,7 @@ model Question {
   id            String       @id @default(uuid())
   text          String
   hint          String
-  difficulty    Int          @default(1)
+  isSnakeQuestion Boolean    @default(false)
   type          QuestionType @default(CODING)
   options       String[]     @default([])
   correctAnswer String?

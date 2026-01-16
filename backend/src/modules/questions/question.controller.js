@@ -3,7 +3,7 @@ const { sendSuccess, sendError, sendNotFound, sendBadRequest, sendCreated } = re
 
 const createQuestion = async (req, res, next) => {
   try {
-    const { content, text, difficulty, type, options, correctAnswer, hint } = req.body;
+    const { content, text, isSnakeQuestion, type, options, correctAnswer, hint } = req.body;
 
     const questionText = text || content;
     
@@ -33,7 +33,7 @@ const createQuestion = async (req, res, next) => {
     const question = await questionService.createQuestion({
       text: questionText,
       hint,
-      difficulty,
+      isSnakeQuestion,
       type,
       options: options || [],
       correctAnswer: correctAnswer || null,
@@ -48,7 +48,7 @@ const createQuestion = async (req, res, next) => {
 const updateQuestion = async (req, res, next) => {
   try {
     const { questionId } = req.params;
-    const { content, text, difficulty, type, options, correctAnswer, isActive, hint } = req.body;
+    const { content, text, isSnakeQuestion, type, options, correctAnswer, isActive, hint } = req.body;
 
     // Validate MCQ has options
     if (type === 'MCQ' && options && options.length < 2) {
@@ -63,7 +63,7 @@ const updateQuestion = async (req, res, next) => {
     const question = await questionService.updateQuestion(questionId, {
       content,
       text,
-      difficulty,
+      isSnakeQuestion,
       type,
       options,
       correctAnswer,
@@ -96,10 +96,10 @@ const deleteQuestion = async (req, res, next) => {
 
 const getAllQuestions = async (req, res, next) => {
   try {
-    const { difficulty, category, isActive } = req.query;
+    const { isSnakeQuestion, category, isActive } = req.query;
 
     const filters = {};
-    if (difficulty) filters.difficulty = difficulty;
+    if (isSnakeQuestion !== undefined) filters.isSnakeQuestion = isSnakeQuestion === 'true';
     if (category) filters.category = category;
     if (isActive !== undefined) filters.isActive = isActive === 'true';
 
@@ -128,9 +128,9 @@ const getQuestionById = async (req, res, next) => {
 const getRandomQuestion = async (req, res, next) => {
   try {
     const { teamId } = req.params;
-    const { difficulty } = req.query;
+    const { isSnakeQuestion } = req.query;
 
-    const question = await questionService.getRandomQuestion(teamId, difficulty || null);
+    const question = await questionService.getRandomQuestion(teamId, isSnakeQuestion === 'true');
 
     if (!question) {
       return sendNotFound(res, 'No questions available');
@@ -141,7 +141,7 @@ const getRandomQuestion = async (req, res, next) => {
       id: question.id,
       content: question.content,
       options: question.options,
-      difficulty: question.difficulty,
+      isSnakeQuestion: question.isSnakeQuestion,
       category: question.category,
       points: question.points,
     };

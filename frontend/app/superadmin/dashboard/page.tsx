@@ -42,7 +42,7 @@ interface Question {
   questionNumber?: string
   text: string
   hint: string
-  difficulty: "easy" | "medium" | "hard"
+  isSnakeQuestion: boolean
   type: "CODING" | "NUMERICAL" | "MCQ" | "PHYSICAL"
   options?: string[]
   correctAnswer?: string
@@ -68,7 +68,7 @@ export default function SuperAdminDashboard() {
   const [newTeamMembers, setNewTeamMembers] = useState("")
   const [newTeamPassword, setNewTeamPassword] = useState("")
   const [newQuestion, setNewQuestion] = useState("")
-  const [newQuestionDifficulty, setNewQuestionDifficulty] = useState<"easy" | "medium" | "hard">("medium")
+  const [newQuestionIsSnake, setNewQuestionIsSnake] = useState<boolean>(false)
   const [newQuestionType, setNewQuestionType] = useState<"CODING" | "NUMERICAL" | "MCQ" | "PHYSICAL">("CODING")
   const [newQuestionOptions, setNewQuestionOptions] = useState("")
   const [newQuestionCorrectAnswer, setNewQuestionCorrectAnswer] = useState("")
@@ -121,7 +121,7 @@ export default function SuperAdminDashboard() {
             questionNumber: `Q${String(index + 1).padStart(3, "0")}`,
             text: q.content || q.text,
             hint: q.hint || "",
-            difficulty: q.difficultyLabel || (q.difficulty === 1 ? "easy" : q.difficulty === 2 ? "medium" : q.difficulty === 3 ? "hard" : "medium"),
+            isSnakeQuestion: q.isSnakeQuestion || false,
             type: q.type || "CODING",
             options: q.options || [],
             correctAnswer: q.correctAnswer || "",
@@ -315,9 +315,7 @@ export default function SuperAdminDashboard() {
       const payload: any = {
         content: newQuestion,
         hint: newQuestionHint,
-        difficulty: newQuestionDifficulty.toUpperCase(),
-        category: "GENERAL",
-        points: newQuestionDifficulty === "easy" ? 5 : newQuestionDifficulty === "medium" ? 10 : 15,
+        isSnakeQuestion: newQuestionIsSnake,
         type: newQuestionType,
       }
 
@@ -350,7 +348,7 @@ export default function SuperAdminDashboard() {
     }
 
     setNewQuestion("")
-    setNewQuestionDifficulty("medium")
+    setNewQuestionIsSnake(false)
     setNewQuestionType("CODING")
     setNewQuestionOptions("")
     setNewQuestionCorrectAnswer("")
@@ -940,20 +938,21 @@ export default function SuperAdminDashboard() {
                   className="flex justify-between items-start p-3 border border-gray-200 rounded hover:bg-gray-50"
                 >
                   <div className="flex-1">
-                    <p className="font-semibold text-gray-900 text-sm">{question.questionNumber || `Q${String(index + 1).padStart(3, "0")}`}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold text-gray-900 text-sm">{question.questionNumber || `Q${String(index + 1).padStart(3, "0")}`}</p>
+                      {question.isSnakeQuestion && (
+                        <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded font-medium">
+                          🐍 Snake Question
+                        </span>
+                      )}
+                      {!question.isSnakeQuestion && (
+                        <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded font-medium">
+                          ✓ Normal Question
+                        </span>
+                      )}
+                    </div>
                     <p className="text-gray-700 text-sm mt-1">{question.text}</p>
                     <div className="mt-2 flex gap-2 flex-wrap">
-                      <span
-                        className={`text-xs px-2 py-1 rounded ${
-                          question.difficulty === "easy"
-                            ? "bg-green-100 text-green-700"
-                            : question.difficulty === "medium"
-                              ? "bg-yellow-100 text-yellow-700"
-                              : "bg-red-100 text-red-700"
-                        }`}
-                      >
-                        {question.difficulty.charAt(0).toUpperCase() + question.difficulty.slice(1)}
-                      </span>
                       <span
                         className={`text-xs px-2 py-1 rounded ${
                           question.type === "CODING"
@@ -1193,16 +1192,18 @@ export default function SuperAdminDashboard() {
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Difficulty</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Question Category</label>
                 <select
-                  value={newQuestionDifficulty}
-                  onChange={(e) => setNewQuestionDifficulty(e.target.value as "easy" | "medium" | "hard")}
+                  value={newQuestionIsSnake ? "snake" : "normal"}
+                  onChange={(e) => setNewQuestionIsSnake(e.target.value === "snake")}
                   className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-gray-600 focus:ring-1 focus:ring-gray-600 text-gray-900"
                 >
-                  <option value="easy">Easy</option>
-                  <option value="medium">Medium</option>
-                  <option value="hard">Hard</option>
+                  <option value="normal">Normal Question</option>
+                  <option value="snake">Snake Question</option>
                 </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Snake questions are assigned when a team lands on a snake position
+                </p>
               </div>
             </div>
 
@@ -1215,6 +1216,7 @@ export default function SuperAdminDashboard() {
                   setNewQuestionOptions("")
                   setNewQuestionCorrectAnswer("")
                   setNewQuestionHint("")
+                  setNewQuestionIsSnake(false)
                 }}
                 className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded font-medium text-sm hover:bg-gray-300 transition-colors"
               >

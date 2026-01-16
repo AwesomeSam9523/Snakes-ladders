@@ -80,10 +80,6 @@ const deleteQuestion = async (questionId) => {
 const getAllQuestions = async (filters = {}) => {
   const where = {};
 
-  if (filters.difficulty) {
-    where.difficulty = filters.difficulty;
-  }
-
   if (filters.isActive !== undefined) {
     where.isActive = filters.isActive;
   }
@@ -93,13 +89,9 @@ const getAllQuestions = async (filters = {}) => {
     orderBy: { createdAt: 'desc' },
   });
 
-  // Map difficulty number back to string for frontend
-  const difficultyLabels = { 1: 'easy', 2: 'medium', 3: 'hard' };
-  
   return questions.map(q => ({
     ...q,
     content: q.text, // Frontend expects 'content'
-    difficultyLabel: difficultyLabels[q.difficulty] || 'medium',
   }));
 };
 
@@ -109,7 +101,7 @@ const getQuestionById = async (questionId) => {
   });
 };
 
-const getRandomQuestion = async (teamId, difficulty = null) => {
+const getRandomQuestion = async (teamId, isSnakeQuestion = null) => {
   // Get questions already answered by this team recently
   const recentCheckpoints = await prisma.checkpoint.findMany({
     where: {
@@ -131,8 +123,8 @@ const getRandomQuestion = async (teamId, difficulty = null) => {
     id: { notIn: usedQuestionIds },
   };
 
-  if (difficulty) {
-    where.difficulty = difficulty;
+  if (isSnakeQuestion !== null && isSnakeQuestion !== undefined) {
+    where.isSnakeQuestion = isSnakeQuestion === true || isSnakeQuestion === 'true';
   }
 
   // Get count of available questions
@@ -142,7 +134,7 @@ const getRandomQuestion = async (teamId, difficulty = null) => {
     // If no unused questions, allow any question
     delete where.id;
     const totalCount = await prisma.question.count({ 
-      where: { isActive: true, difficulty: difficulty || undefined } 
+      where: { isActive: true, isSnakeQuestion: isSnakeQuestion !== null ? where.isSnakeQuestion : undefined } 
     });
     
     if (totalCount === 0) {
@@ -151,7 +143,7 @@ const getRandomQuestion = async (teamId, difficulty = null) => {
 
     const randomIndex = Math.floor(Math.random() * totalCount);
     const questions = await prisma.question.findMany({
-      where: { isActive: true, difficulty: difficulty || undefined },
+      where: { isActive: true, isSnakeQuestion: isSnakeQuestion !== null ? where.isSnakeQuestion : undefined },
       skip: randomIndex,
       take: 1,
     });
@@ -237,11 +229,6 @@ const getQuestionStats = async () => {
     _avg: { timesUsed: true },
   });
 
-  const byDifficulty = await prisma.question.groupBy({
-    by: ['difficulty'],
-    _count: { id: true },
-  });
-
   const byCategory = await prisma.question.groupBy({
     by: ['category'],
     _count: { id: true },
@@ -252,10 +239,6 @@ const getQuestionStats = async () => {
     totalUsed: stats._sum.timesUsed || 0,
     totalCorrect: stats._sum.timesCorrect || 0,
     averageUsage: stats._avg.timesUsed || 0,
-    byDifficulty: byDifficulty.reduce((acc, item) => {
-      acc[item.difficulty] = item._count.id;
-      return acc;
-    }, {}),
     byCategory: byCategory.reduce((acc, item) => {
       acc[item.category] = item._count.id;
       return acc;
@@ -269,7 +252,6 @@ const bulkCreateQuestions = async (questions) => {
       content: q.content,
       options: q.options,
       correctAnswer: q.correctAnswer,
-      difficulty: q.difficulty || 'MEDIUM',
       category: q.category || 'GENERAL',
       points: q.points || 10,
     })),
@@ -291,20 +273,6 @@ const toggleQuestionStatus = async (questionId) => {
   });
 };
 
-const getQuestionForPosition = async (position, teamId) => {
-  // Determine difficulty based on position
-  let difficulty;
-  if (position <= 33) {
-    difficulty = 'EASY';
-  } else if (position <= 66) {
-    difficulty = 'MEDIUM';
-  } else {
-    difficulty = 'HARD';
-  }
-
-  return getRandomQuestion(teamId, difficulty);
-};
-
 module.exports = {
   createQuestion,
   updateQuestion,
@@ -317,6 +285,5 @@ module.exports = {
   getQuestionStats,
   bulkCreateQuestions,
   toggleQuestionStatus,
-  getQuestionForPosition,
 };
 

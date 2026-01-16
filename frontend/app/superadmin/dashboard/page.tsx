@@ -46,7 +46,6 @@ interface Question {
   type: "CODING" | "NUMERICAL" | "MCQ" | "PHYSICAL"
   options?: string[]
   correctAnswer?: string
-  difficulty?: "easy" | "medium" | "hard"
 }
 
 interface ActivityLog {
@@ -126,7 +125,6 @@ export default function SuperAdminDashboard() {
             type: q.type || "CODING",
             options: q.options || [],
             correctAnswer: q.correctAnswer || "",
-            difficulty: q.difficulty || "medium",
           })))
         }
       }
@@ -1299,19 +1297,6 @@ export default function SuperAdminDashboard() {
                   />
                 </div>
               )}
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Difficulty</label>
-                <select
-                  value={editingQuestion.difficulty}
-                  onChange={(e) => setEditingQuestion({ ...editingQuestion, difficulty: e.target.value as "easy" | "medium" | "hard" })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-gray-600 focus:ring-1 focus:ring-gray-600 text-gray-900"
-                >
-                  <option value="easy">Easy</option>
-                  <option value="medium">Medium</option>
-                  <option value="hard">Hard</option>
-                </select>
-              </div>
             </div>
 
             <div className="flex gap-3 mt-6">

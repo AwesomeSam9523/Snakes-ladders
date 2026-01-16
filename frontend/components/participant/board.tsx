@@ -37,7 +37,8 @@ export function Board({ currentPosition, teamId }: BoardProps) {
             console.log("No snake data or wrong format:", data)
           }
         } else {
-          console.error("Failed to fetch board:", res.status)
+          // If unauthorized or other error, use default snake positions
+          console.log("Using default snake positions (board fetch failed with status:", res.status, ")")
         }
       } catch (error) {
         console.error("Error fetching board state:", error)

@@ -491,7 +491,7 @@ export default function SuperAdminDashboard() {
       const payload: any = {
         content: editingQuestion.text,
         hint: editingQuestion.hint,
-        difficulty: (editingQuestion.difficulty || "medium").toUpperCase(),
+        isSnakeQuestion: editingQuestion.isSnakeQuestion || false,
         type: editingQuestion.type,
       }
 

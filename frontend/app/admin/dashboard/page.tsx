@@ -298,6 +298,11 @@ export default function AdminDashboard() {
                           <div className="flex justify-between items-center mb-2">
                             <span className="text-sm font-medium text-gray-700">
                               Checkpoint #{checkpoint.checkpointNumber} (Position {checkpoint.positionAfter || checkpoint.position})
+                              {checkpoint.isSnakePosition && (
+                                <span className="ml-2 text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded font-medium">
+                                  🐍 Snake
+                                </span>
+                              )}
                             </span>
                             
                             {/* Step 1: Checkpoint Approval Status */}

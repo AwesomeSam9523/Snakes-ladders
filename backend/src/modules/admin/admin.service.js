@@ -163,16 +163,29 @@ const markQuestionAnswer = async (assignmentId, isCorrect, adminUsername = 'admi
     },
   });
 
+  // Calculate points based on snake position and answer correctness
+  let pointsChange = 0;
+  if (assignment.checkpoint.isSnakePosition) {
+    // Snake position: correct = 0, incorrect = -1
+    pointsChange = isCorrect ? 0 : -1;
+  } else {
+    // Normal position: correct = +1, incorrect = 0
+    pointsChange = isCorrect ? 1 : 0;
+  }
+
+  // Update team points
+  await prisma.team.update({
+    where: { id: assignment.checkpoint.teamId },
+    data: { 
+      points: { increment: pointsChange },
+      canRollDice: true,
+    },
+  });
+
   // Approve checkpoint
   await prisma.checkpoint.update({
     where: { id: assignment.checkpointId },
     data: { status: 'APPROVED' },
-  });
-
-  // Enable dice roll for team
-  await prisma.team.update({
-    where: { id: assignment.checkpoint.teamId },
-    data: { canRollDice: true },
   });
 
   // Log the answer marking to audit

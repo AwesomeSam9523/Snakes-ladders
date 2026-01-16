@@ -111,6 +111,55 @@ const reinstateTeam = async (teamId) => {
   });
 };
 
+// Get available rooms with capacity
+const getAvailableRooms = async (excludeTeamId = null) => {
+  // Get team counts per room
+  const roomCounts = await prisma.team.groupBy({
+    by: ['currentRoom'],
+    _count: { id: true },
+    where: {
+      status: 'ACTIVE',
+      id: excludeTeamId ? { not: excludeTeamId } : undefined,
+    },
+  });
+
+  // Create a map of room -> count
+  const roomCountMap = {};
+  roomCounts.forEach(rc => {
+    roomCountMap[rc.currentRoom] = rc._count.id;
+  });
+
+  // Return all rooms with their capacities
+  return ROOMS.map(room => ({
+    room,
+    teamsCount: roomCountMap[room] || 0,
+    available: (roomCountMap[room] || 0) < GAME_CONFIG.TEAMS_PER_ROOM,
+  }));
+};
+
+// Auto-assign team to a room with available capacity
+const autoAssignTeamRoom = async (teamId) => {
+  const availableRooms = await getAvailableRooms(teamId);
+  
+  // Filter only rooms with capacity
+  const roomsWithCapacity = availableRooms.filter(r => r.available);
+  
+  if (roomsWithCapacity.length === 0) {
+    throw new Error('All rooms are full. Cannot assign team to any room.');
+  }
+  
+  // Sort by teams count (ascending) to balance load
+  roomsWithCapacity.sort((a, b) => a.teamsCount - b.teamsCount);
+  
+  // Assign to the room with the least teams
+  const bestRoom = roomsWithCapacity[0].room;
+  
+  return await prisma.team.update({
+    where: { id: teamId },
+    data: { currentRoom: bestRoom },
+  });
+};
+
 //Change team room 8Rq7oghI
 
 const changeTeamRoom = async (teamId, newRoom) => {

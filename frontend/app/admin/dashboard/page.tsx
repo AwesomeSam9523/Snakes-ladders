@@ -47,6 +47,7 @@ interface Question {
   content: string
   type?: string
   questionNumber?: string
+  isSnakeQuestion?: boolean
 }
 
 export default function AdminDashboard() {
@@ -402,7 +403,7 @@ export default function AdminDashboard() {
                   <option value="">Choose a question</option>
                   {questions.map((q) => (
                     <option key={q.id} value={q.id}>
-                      {q.questionNumber || `Q${questions.indexOf(q) + 1}`}
+                      {q.questionNumber || `Q${questions.indexOf(q) + 1}`} {q.isSnakeQuestion ? '🐍 Snake' : '✓ Normal'}
                     </option>
                   ))}
                 </select>

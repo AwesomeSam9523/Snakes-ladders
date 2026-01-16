@@ -46,6 +46,7 @@ interface Question {
   type: "CODING" | "NUMERICAL" | "MCQ" | "PHYSICAL"
   options?: string[]
   correctAnswer?: string
+  difficulty?: "easy" | "medium" | "hard"
 }
 
 interface ActivityLog {
@@ -125,6 +126,7 @@ export default function SuperAdminDashboard() {
             type: q.type || "CODING",
             options: q.options || [],
             correctAnswer: q.correctAnswer || "",
+            difficulty: q.difficulty || "medium",
           })))
         }
       }
@@ -489,7 +491,7 @@ export default function SuperAdminDashboard() {
       const payload: any = {
         content: editingQuestion.text,
         hint: editingQuestion.hint,
-        difficulty: editingQuestion.difficulty.toUpperCase(),
+        difficulty: (editingQuestion.difficulty || "medium").toUpperCase(),
         type: editingQuestion.type,
       }
 

@@ -94,12 +94,12 @@ export function QuestionPanel({
 
   if (gameStatus === "IDLE" || gameStatus === "ROLLING") {
     return (
-      <div className="rounded-2xl bg-card border border-border p-6 h-full flex items-center justify-center">
-        <div className="text-center space-y-3">
-          <div className="w-16 h-16 mx-auto rounded-full bg-secondary flex items-center justify-center">
-            <FileText className="w-8 h-8 text-muted-foreground" />
+      <div className="rounded-xl sm:rounded-2xl bg-card border border-border p-4 sm:p-6 h-full flex items-center justify-center">
+        <div className="text-center space-y-2 sm:space-y-3">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto rounded-full bg-secondary flex items-center justify-center">
+            <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-muted-foreground" />
           </div>
-          <p className="text-sm text-muted-foreground">Roll the dice to begin</p>
+          <p className="text-xs sm:text-sm text-muted-foreground">Roll the dice to begin</p>
         </div>
       </div>
     )
@@ -107,13 +107,13 @@ export function QuestionPanel({
 
   if (gameStatus === "PENDING_APPROVAL") {
     return (
-      <div className="rounded-2xl bg-card border border-border p-6 h-full flex items-center justify-center">
-        <div className="text-center space-y-3">
-          <div className="w-16 h-16 mx-auto rounded-full bg-warning/20 flex items-center justify-center animate-pulse">
-            <AlertTriangle className="w-8 h-8 text-warning" />
+      <div className="rounded-xl sm:rounded-2xl bg-card border border-border p-4 sm:p-6 h-full flex items-center justify-center">
+        <div className="text-center space-y-2 sm:space-y-3 px-2">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto rounded-full bg-warning/20 flex items-center justify-center animate-pulse">
+            <AlertTriangle className="w-6 h-6 sm:w-8 sm:h-8 text-warning" />
           </div>
-          <p className="font-semibold">Checkpoint Reached!</p>
-          <p className="text-sm text-muted-foreground">Go to Room {checkpoint?.roomNumber} and wait for admin approval</p>
+          <p className="font-semibold text-sm sm:text-base">Checkpoint Reached!</p>
+          <p className="text-xs sm:text-sm text-muted-foreground">Go to Room {checkpoint?.roomNumber} and wait for admin approval</p>
         </div>
       </div>
     )
@@ -121,13 +121,13 @@ export function QuestionPanel({
 
   if (gameStatus === "AWAITING_QUESTION") {
     return (
-      <div className="rounded-2xl bg-card border border-border p-6 h-full flex items-center justify-center">
-        <div className="text-center space-y-3">
-          <div className="w-16 h-16 mx-auto rounded-full bg-blue-500/20 flex items-center justify-center animate-pulse">
-            <FileText className="w-8 h-8 text-blue-500" />
+      <div className="rounded-xl sm:rounded-2xl bg-card border border-border p-4 sm:p-6 h-full flex items-center justify-center">
+        <div className="text-center space-y-2 sm:space-y-3 px-2">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto rounded-full bg-blue-500/20 flex items-center justify-center animate-pulse">
+            <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-blue-500" />
           </div>
-          <p className="font-semibold">Checkpoint Approved!</p>
-          <p className="text-sm text-muted-foreground">Waiting for admin to assign a question...</p>
+          <p className="font-semibold text-sm sm:text-base">Checkpoint Approved!</p>
+          <p className="text-xs sm:text-sm text-muted-foreground">Waiting for admin to assign a question...</p>
         </div>
       </div>
     )
@@ -155,18 +155,18 @@ export function QuestionPanel({
         </div>
 
         {submitResult && (
-          <div className={`p-4 rounded-lg ${submitResult.isCorrect ? 'bg-green-100 dark:bg-green-900/30' : submitResult.autoMarked ? 'bg-red-100 dark:bg-red-900/30' : 'bg-blue-100 dark:bg-blue-900/30'}`}>
+          <div className={`p-3 sm:p-4 rounded-lg ${submitResult.isCorrect ? 'bg-green-100 dark:bg-green-900/30' : submitResult.autoMarked ? 'bg-red-100 dark:bg-red-900/30' : 'bg-blue-100 dark:bg-blue-900/30'}`}>
             <div className="flex items-center gap-2">
               {submitResult.autoMarked ? (
                 submitResult.isCorrect ? (
-                  <CheckCircle className="w-5 h-5 text-green-600" />
+                  <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 flex-shrink-0" />
                 ) : (
-                  <XCircle className="w-5 h-5 text-red-600" />
+                  <XCircle className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 flex-shrink-0" />
                 )
               ) : (
-                <AlertTriangle className="w-5 h-5 text-blue-600" />
+                <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0" />
               )}
-              <p className="text-sm font-semibold">{submitResult.message}</p>
+              <p className="text-xs sm:text-sm font-semibold">{submitResult.message}</p>
             </div>
           </div>
         )}
@@ -247,18 +247,18 @@ export function QuestionPanel({
               </div>
             )}
 
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <Button 
                 onClick={handleHintClick} 
                 variant="outline"
-                className="flex items-center gap-2"
+                className="flex items-center justify-center gap-2 text-sm w-full sm:w-auto"
                 disabled={usingHint}
               >
-                <HelpCircle className="w-4 h-4" />
+                <HelpCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 {usingHint ? "Loading..." : showHint ? "Hide Hint" : "Show Hint (+60s)"}
               </Button>
-              <Button onClick={handleSubmit} disabled={!answer.trim() || submitting} className="flex-1">
-                <Upload className="w-4 h-4 mr-2" />
+              <Button onClick={handleSubmit} disabled={!answer.trim() || submitting} className="flex-1 text-sm">
+                <Upload className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2" />
                 {submitting ? "Submitting..." : "Submit Answer"}
               </Button>
             </div>

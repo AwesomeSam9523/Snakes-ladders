@@ -65,11 +65,11 @@ export function Board({ currentPosition, teamId }: BoardProps) {
   const tiles = Array.from({ length: 150 }, (_, i) => i + 1)
 
   return (
-    <div className="rounded-2xl bg-card border border-border p-6">
-      <h3 className="text-lg font-semibold mb-4">Game Board</h3>
+    <div className="rounded-xl sm:rounded-2xl bg-card border border-border p-3 sm:p-4 md:p-6">
+      <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Game Board</h3>
 
-      <div className="relative w-full max-w-4xl mx-auto">
-        <svg viewBox="0 0 150 100" className="w-full h-full">
+      <div className="relative w-full max-w-4xl mx-auto overflow-x-auto">
+        <svg viewBox="0 0 150 100" className="w-full h-full min-w-[300px]">
           {/* Grid */}
           {tiles.map((num) => {
             const pos = getPosition(num)
@@ -139,8 +139,8 @@ export function Board({ currentPosition, teamId }: BoardProps) {
         </svg>
       </div>
 
-      <div className="mt-4 p-3 rounded-lg bg-muted">
-        <p className="text-sm text-muted-foreground">
+      <div className="mt-3 sm:mt-4 p-2 sm:p-3 rounded-lg bg-muted">
+        <p className="text-xs sm:text-sm text-muted-foreground">
           <span className="font-semibold text-foreground">{teamId}</span> is at position{" "}
           <span className="font-semibold text-primary">{currentPosition}</span>
           {snakeTiles.includes(currentPosition) && (

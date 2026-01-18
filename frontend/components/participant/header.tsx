@@ -24,23 +24,23 @@ export function Header({ teamId }: HeaderProps) {
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-lg">
-      <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-lg">S&L</span>
+      <div className="container mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-primary flex items-center justify-center flex-shrink-0">
+            <span className="text-primary-foreground font-bold text-base sm:text-lg">S&L</span>
           </div>
-          <span className="font-semibold text-lg">Snake & Ladder — Tech Quest</span>
+          <span className="font-semibold text-sm sm:text-base md:text-lg truncate">Snake & Ladder — Tech Quest</span>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary">
-            <span className="text-sm text-muted-foreground">Team:</span>
-            <span className="font-mono font-semibold">{teamId}</span>
+        <div className="flex items-center gap-2 sm:gap-4">
+          <div className="hidden sm:flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-secondary">
+            <span className="text-xs sm:text-sm text-muted-foreground">Team:</span>
+            <span className="font-mono font-semibold text-sm">{teamId}</span>
           </div>
 
-          <Button variant="ghost" size="sm" onClick={handleLogout}>
-            <LogOut className="w-4 h-4 mr-2" />
-            Logout
+          <Button variant="ghost" size="sm" onClick={handleLogout} className="px-2 sm:px-3">
+            <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Logout</span>
           </Button>
         </div>
       </div>

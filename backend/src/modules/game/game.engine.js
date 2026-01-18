@@ -117,7 +117,7 @@ const checkWinCondition = async (teamId) => {
     select: { currentPosition: true, status: true },
   });
 
-  return team && team.currentPosition >= 100;
+  return team && team.currentPosition >= 150;
 };
 
 module.exports = {

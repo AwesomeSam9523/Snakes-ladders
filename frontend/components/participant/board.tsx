@@ -8,7 +8,8 @@ interface BoardProps {
   teamId: string
 }
 
-const BOARD_SIZE = 10
+const BOARD_COLS = 15
+const BOARD_ROWS = 10
 
 export function Board({ currentPosition, teamId }: BoardProps) {
   // Default snake positions if no map assigned
@@ -51,24 +52,24 @@ export function Board({ currentPosition, teamId }: BoardProps) {
   }, [API_URL])
 
   const getPosition = (num: number) => {
-    const row = Math.floor((num - 1) / BOARD_SIZE)
-    const col = (num - 1) % BOARD_SIZE
+    const row = Math.floor((num - 1) / BOARD_COLS)
+    const col = (num - 1) % BOARD_COLS
     const isEvenRow = row % 2 === 0
 
     return {
-      x: isEvenRow ? col : BOARD_SIZE - 1 - col,
-      y: BOARD_SIZE - 1 - row,
+      x: isEvenRow ? col : BOARD_COLS - 1 - col,
+      y: BOARD_ROWS - 1 - row,
     }
   }
 
-  const tiles = Array.from({ length: 100 }, (_, i) => i + 1)
+  const tiles = Array.from({ length: 150 }, (_, i) => i + 1)
 
   return (
     <div className="rounded-2xl bg-card border border-border p-6">
       <h3 className="text-lg font-semibold mb-4">Game Board</h3>
 
-      <div className="relative aspect-square w-full max-w-2xl mx-auto">
-        <svg viewBox="0 0 100 100" className="w-full h-full">
+      <div className="relative w-full max-w-4xl mx-auto">
+        <svg viewBox="0 0 150 100" className="w-full h-full">
           {/* Grid */}
           {tiles.map((num) => {
             const pos = getPosition(num)

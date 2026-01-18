@@ -6,7 +6,7 @@ const calculateNewPosition = (currentPosition, diceValue) => {
   
   // Cannot exceed board size
   if (newPosition > GAME_CONFIG.BOARD_SIZE) {
-    return currentPosition; // Stay at current position if would exceed 100
+    return currentPosition; // Stay at current position if would exceed 150
   }
   
   return newPosition;

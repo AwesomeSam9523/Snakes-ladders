@@ -26,7 +26,7 @@ const processDiceRoll = async (teamId) => {
   const positionBefore = team.currentPosition;
   let positionAfter = calculateNewPosition(positionBefore, diceValue);
 
-  // Check if team would exceed 100
+  // Check if team would exceed 150
   if (positionAfter > GAME_CONFIG.BOARD_SIZE) {
     positionAfter = positionBefore; // Stay at current position
   }
@@ -49,7 +49,7 @@ const processDiceRoll = async (teamId) => {
     },
   });
 
-  // Check if team stayed at same position (roll would exceed 100)
+  // Check if team stayed at same position (roll would exceed 150)
   const stayedAtSamePosition = positionBefore === positionAfter && positionBefore !== GAME_CONFIG.BOARD_SIZE;
   
   // Update team position and room

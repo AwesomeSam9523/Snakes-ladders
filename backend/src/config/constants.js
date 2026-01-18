@@ -1,6 +1,6 @@
 // Game Constants
 const GAME_CONFIG = {
-  BOARD_SIZE: 100,
+  BOARD_SIZE: 150,
   DICE_MIN: 1,
   DICE_MAX: 6,
   TOTAL_ROOMS: 10,

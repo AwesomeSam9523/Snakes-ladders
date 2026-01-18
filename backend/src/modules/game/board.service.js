@@ -146,7 +146,7 @@ const getBoardStateForTeam = async (teamId) => {
 
   if (!team || !team.map) {
     return {
-      boardSize: 100,
+      boardSize: 150,
       mapName: null,
       snakes: [],
     };
@@ -161,7 +161,7 @@ const getBoardStateForTeam = async (teamId) => {
   });
 
   return {
-    boardSize: 100,
+    boardSize: 150,
     mapId: team.map.id,
     mapName: team.map.name,
     snakes: snakePositions,
@@ -172,7 +172,7 @@ const getBoardStateForTeam = async (teamId) => {
 const getBoardState = async () => {
   const maps = await getAllBoardMaps();
   return {
-    boardSize: 100,
+    boardSize: 150,
     totalMaps: maps.length,
     maps: maps.map(m => ({
       id: m.id,

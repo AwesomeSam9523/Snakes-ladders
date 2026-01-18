@@ -63,6 +63,7 @@ const getTeamState = async (teamId) => {
       totalTimeSec: true,
       status: true,
       canRollDice: true,
+      timerPaused: true,
     },
   });
 
@@ -341,7 +342,7 @@ const syncTimer = async (teamId, elapsedSeconds) => {
   // Get team status first
   const team = await prisma.team.findUnique({
     where: { id: teamId },
-    select: { totalTimeSec: true, status: true },
+    select: { totalTimeSec: true, status: true, timerPaused: true },
   });
   
   // If team not found, return null
@@ -349,13 +350,13 @@ const syncTimer = async (teamId, elapsedSeconds) => {
     return null;
   }
   
-  // Don't increment timer if game is completed
-  if (team.status === 'COMPLETED') {
-    return { totalTimeSec: team.totalTimeSec, status: team.status };
+  // Don't increment timer if game is completed or timer is paused
+  if (team.status === 'COMPLETED' || team.timerPaused) {
+    return { totalTimeSec: team.totalTimeSec, status: team.status, timerPaused: team.timerPaused };
   }
   
   if (elapsedSeconds <= 0) {
-    return { totalTimeSec: team.totalTimeSec, status: team.status };
+    return { totalTimeSec: team.totalTimeSec, status: team.status, timerPaused: team.timerPaused };
   }
 
   const updatedTeam = await prisma.team.update({
@@ -368,10 +369,11 @@ const syncTimer = async (teamId, elapsedSeconds) => {
     select: {
       totalTimeSec: true,
       status: true,
+      timerPaused: true,
     },
   });
 
-  return { totalTimeSec: updatedTeam.totalTimeSec, status: updatedTeam.status };
+  return { totalTimeSec: updatedTeam.totalTimeSec, status: updatedTeam.status, timerPaused: updatedTeam.timerPaused };
 };
 
 module.exports = {

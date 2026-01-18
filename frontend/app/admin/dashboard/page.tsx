@@ -39,6 +39,7 @@ interface Team {
   currentRoom: string
   status: string
   totalTimeSec: number
+  timerPaused?: boolean
   checkpoints: Checkpoint[]
 }
 
@@ -212,6 +213,56 @@ export default function AdminDashboard() {
     }
   }
 
+  // Pause team timer
+  const handlePauseTimer = async (teamId: string) => {
+    try {
+      const token = localStorage.getItem("token")
+      const res = await fetch(`${API_URL}/admin/teams/${teamId}/timer/pause`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (res.ok) {
+        fetchTeams()
+        alert("Timer paused successfully!")
+      } else {
+        const error = await res.json()
+        alert(`Error: ${error.message || 'Failed to pause timer'}`)
+      }
+    } catch (error) {
+      console.error("Error pausing timer:", error)
+      alert("Failed to pause timer")
+    }
+  }
+
+  // Resume team timer
+  const handleResumeTimer = async (teamId: string) => {
+    try {
+      const token = localStorage.getItem("token")
+      const res = await fetch(`${API_URL}/admin/teams/${teamId}/timer/resume`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (res.ok) {
+        fetchTeams()
+        alert("Timer resumed successfully!")
+      } else {
+        const error = await res.json()
+        alert(`Error: ${error.message || 'Failed to resume timer'}`)
+      }
+    } catch (error) {
+      console.error("Error resuming timer:", error)
+      alert("Failed to resume timer")
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-white">
@@ -359,6 +410,27 @@ export default function AdminDashboard() {
                                           >
                                             ✗ Incorrect
                                           </button>
+                                        </div>
+                                      )}
+                                      
+                                      {/* Timer controls for CODING/PHYSICAL questions */}
+                                      {(checkpoint.questionAssign.question?.type === "CODING" || checkpoint.questionAssign.question?.type === "PHYSICAL") && (
+                                        <div className="flex gap-2 mt-1">
+                                          {team.timerPaused ? (
+                                            <button
+                                              onClick={() => handleResumeTimer(team.id)}
+                                              className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors font-medium"
+                                            >
+                                              ▶️ Resume Timer
+                                            </button>
+                                          ) : (
+                                            <button
+                                              onClick={() => handlePauseTimer(team.id)}
+                                              className="px-3 py-1 text-xs bg-orange-100 text-orange-700 rounded hover:bg-orange-200 transition-colors font-medium"
+                                            >
+                                              ⏸️ Pause Timer
+                                            </button>
+                                          )}
                                         </div>
                                       )}
                                     </div>

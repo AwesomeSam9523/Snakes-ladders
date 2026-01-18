@@ -22,6 +22,7 @@ interface TeamData {
   canRollDice: boolean
   totalTimeSec: number
   status?: string
+  timerPaused?: boolean
 }
 
 interface LeaderboardTeam {
@@ -49,6 +50,7 @@ export default function ParticipantDashboard() {
     canRollDice: true,
     totalTimeSec: 0,
     status: "ACTIVE",
+    timerPaused: false,
   })
   const [gameStatus, setGameStatus] = useState<GameStatus>("IDLE")
   const [currentCheckpoint, setCurrentCheckpoint] = useState<any>(null)
@@ -97,6 +99,7 @@ export default function ParticipantDashboard() {
             canRollDice: teamState.canRollDice ?? true,
             totalTimeSec: teamState.totalTimeSec || 0,
             status: teamState.status || "ACTIVE",
+            timerPaused: teamState.timerPaused ?? false,
           }))
           
           // Update game status based on canRollDice
@@ -219,8 +222,8 @@ export default function ParticipantDashboard() {
   /* ---------- TIMER ---------- */
   // Client-side timer that increments locally and syncs with DB every 10 seconds
   useEffect(() => {
-    // Don't run timer if game is completed
-    if (teamData.status === "COMPLETED") {
+    // Don't run timer if game is completed or timer is paused
+    if (teamData.status === "COMPLETED" || teamData.timerPaused) {
       return
     }
 
@@ -256,6 +259,7 @@ export default function ParticipantDashboard() {
               ...prev,
               totalTimeSec: data.data.totalTimeSec,
               status: data.data.status || prev.status,
+              timerPaused: data.data.timerPaused ?? prev.timerPaused,
             }))
             localElapsed = 0
             lastSyncTime = Date.now()
@@ -270,7 +274,7 @@ export default function ParticipantDashboard() {
       clearInterval(interval)
       clearInterval(syncInterval)
     }
-  }, [API_URL, teamData.status])
+  }, [API_URL, teamData.status, teamData.timerPaused])
 
   /* ---------- HANDLERS ---------- */
 
@@ -488,6 +492,7 @@ export default function ParticipantDashboard() {
         roomNumber={teamData.currentRoom || "—"}
         status={gameStatus}
         totalTimeSec={teamData.totalTimeSec}
+        timerPaused={teamData.timerPaused}
       />
 
       {/* Game Completed Banner */}

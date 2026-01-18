@@ -9,6 +9,7 @@ interface StatusStripProps {
   roomNumber: string | number
   status: GameStatus
   totalTimeSec: number
+  timerPaused?: boolean
 }
 
 const statusLabels: Record<GameStatus, string> = {
@@ -21,7 +22,7 @@ const statusLabels: Record<GameStatus, string> = {
   LOCKED: "Answer submitted",
 }
 
-export function StatusStrip({ currentPosition, roomNumber, status, totalTimeSec }: StatusStripProps) {
+export function StatusStrip({ currentPosition, roomNumber, status, totalTimeSec, timerPaused = false }: StatusStripProps) {
   const formatTime = (seconds: number) => {
     const h = Math.floor(seconds / 3600)
     const m = Math.floor((seconds % 3600) / 60)
@@ -58,9 +59,14 @@ export function StatusStrip({ currentPosition, roomNumber, status, totalTimeSec 
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary">
-              <Clock className="w-4 h-4 text-warning" />
-              <span className="font-mono text-lg font-semibold">{formatTime(totalTimeSec)}</span>
+            <div className={`flex items-center gap-2 px-4 py-2 rounded-lg ${timerPaused ? 'bg-orange-100' : 'bg-secondary'}`}>
+              <Clock className={`w-4 h-4 ${timerPaused ? 'text-orange-600' : 'text-warning'}`} />
+              <span className={`font-mono text-lg font-semibold ${timerPaused ? 'text-orange-700' : ''}`}>
+                {formatTime(totalTimeSec)}
+              </span>
+              {timerPaused && (
+                <span className="text-xs font-medium text-orange-700 ml-2">⏸️ PAUSED</span>
+              )}
             </div>
           </div>
         </div>

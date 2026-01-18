@@ -139,14 +139,36 @@ const approveCheckpoint = async (req, res, next) => {
   }
 };
 
+const pauseTeamTimer = async (req, res, next) => {
+  try {
+    const { teamId } = req.params;
+    const team = await adminService.pauseTeamTimer(teamId);
+    return sendSuccess(res, team, 'Timer paused');
+  } catch (error) {
+    next(error);
+  }
+};
+
+const resumeTeamTimer = async (req, res, next) => {
+  try {
+    const { teamId } = req.params;
+    const team = await adminService.resumeTeamTimer(teamId);
+    return sendSuccess(res, team, 'Timer resumed');
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getAllTeams,
   getTeamById,
   getPendingCheckpoints,
-  assignQuestion,
-  markQuestion,
+  getCheckpointById,
+  assignQuestionToCheckpoint,
+  markQuestionAnswer,
   getAvailableQuestions,
   getTeamProgress,
   approveCheckpoint,
+  pauseTeamTimer,
+  resumeTeamTimer,
 };
-

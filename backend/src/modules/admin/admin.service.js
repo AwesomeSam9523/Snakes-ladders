@@ -63,6 +63,7 @@ const getPendingCheckpoints = async () => {
           teamName: true,
           currentPosition: true,
           currentRoom: true,
+          timerPaused: true,
         },
       },
       questionAssign: {
@@ -280,6 +281,20 @@ const approveCheckpoint = async (checkpointId, adminUsername = 'admin') => {
   return checkpoint;
 };
 
+const pauseTeamTimer = async (teamId) => {
+  return await prisma.team.update({
+    where: { id: teamId },
+    data: { timerPaused: true },
+  });
+};
+
+const resumeTeamTimer = async (teamId) => {
+  return await prisma.team.update({
+    where: { id: teamId },
+    data: { timerPaused: false },
+  });
+};
+
 module.exports = {
   getAllTeams,
   getTeamById,
@@ -290,5 +305,7 @@ module.exports = {
   getAvailableQuestions,
   getTeamProgress,
   approveCheckpoint,
+  pauseTeamTimer,
+  resumeTeamTimer,
 };
 

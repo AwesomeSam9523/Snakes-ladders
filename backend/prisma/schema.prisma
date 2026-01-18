@@ -71,6 +71,7 @@ model Team {
   points          Int        @default(0)
   status          TeamStatus @default(ACTIVE)
   canRollDice     Boolean    @default(true)
+  timerPaused     Boolean    @default(false)
   mapId           String?
   
   members         TeamMember[]

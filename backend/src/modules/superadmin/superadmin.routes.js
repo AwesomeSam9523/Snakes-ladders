@@ -32,6 +32,9 @@ router.post('/teams/:teamId/room/auto-assign', superadminController.autoAssignTe
 // Get room capacity
 router.get('/rooms/capacity', superadminController.getRoomCapacity);
 
+// Sync team positions with latest approved checkpoints
+router.post('/teams/sync-positions', superadminController.syncTeamPositions);
+
 // Assign map to team
 router.put('/teams/:teamId/map', superadminController.assignMapToTeam);
 

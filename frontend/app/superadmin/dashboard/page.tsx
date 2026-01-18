@@ -219,10 +219,11 @@ export default function SuperAdminDashboard() {
       fetchMaps()
       fetchRoomCapacities()
       
-      // Auto-refresh teams and room capacities every 10 seconds
+      // Auto-refresh teams, room capacities, and sync positions every 10 seconds
       const interval = setInterval(() => {
         fetchTeams()
         fetchRoomCapacities()
+        handleSyncPositions()
       }, 10000)
       return () => clearInterval(interval)
     }
@@ -458,6 +459,24 @@ export default function SuperAdminDashboard() {
     } catch (error) {
       console.error("Error auto-assigning room:", error)
       alert("Failed to auto-assign room. Check if backend is running.")
+    }
+  }
+
+  const handleSyncPositions = async () => {
+    try {
+      const token = localStorage.getItem("token")
+      const res = await fetch(`${API_URL}/superadmin/teams/sync-positions`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (res.ok) {
+        await fetchTeams() // Refresh teams from DB
+      }
+    } catch (error) {
+      console.error("Error syncing positions:", error)
     }
   }
 
@@ -752,7 +771,7 @@ export default function SuperAdminDashboard() {
                       <p className="font-bold text-gray-900">{team.currentPosition}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-600 uppercase">Points</p>
+                      <p className="text-xs text-gray-600 uppercase">Room</p>
                       <p className="font-bold text-gray-900">{team.currentRoom}</p>
                     </div>
                     <div>

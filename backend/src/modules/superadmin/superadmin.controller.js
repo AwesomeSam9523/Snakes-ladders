@@ -278,6 +278,15 @@ const autoAssignTeamRoom = async (req, res, next) => {
   }
 };
 
+const syncTeamPositions = async (req, res, next) => {
+  try {
+    const result = await superadminService.syncAllTeamPositions();
+    return sendSuccess(res, result, 'Team positions synced successfully');
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createTeam,
   updateTeamPassword,
@@ -285,6 +294,7 @@ module.exports = {
   reinstateTeam,
   changeTeamRoom,
   autoAssignTeamRoom,
+  syncTeamPositions,
   assignMapToTeam,
   adjustTeamTimer,
   setTeamTimer,

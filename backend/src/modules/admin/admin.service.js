@@ -173,7 +173,7 @@ const markQuestionAnswer = async (assignmentId, isCorrect, adminUsername = 'admi
     pointsChange = isCorrect ? 1 : 0;
   }
 
-// Update team points, position, and room
+  // Update team points, position, and room
   await prisma.team.update({
     where: { id: assignment.checkpoint.teamId },
     data: {

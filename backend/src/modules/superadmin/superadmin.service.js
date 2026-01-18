@@ -422,6 +422,50 @@ const getRoomCapacity = async () => {
   return result;
 };
 
+const syncAllTeamPositions = async () => {
+  const teams = await prisma.team.findMany({
+    select: { id: true, teamCode: true, currentPosition: true, currentRoom: true },
+  });
+
+  const results = [];
+
+  for (const team of teams) {
+    // Get latest approved checkpoint
+    const latestCheckpoint = await prisma.checkpoint.findFirst({
+      where: { teamId: team.id, status: 'APPROVED' },
+      orderBy: { checkpointNumber: 'desc' },
+    });
+
+    if (latestCheckpoint && 
+        (team.currentPosition !== latestCheckpoint.positionAfter || 
+         team.currentRoom !== latestCheckpoint.roomNumber)) {
+      // Update team to match checkpoint
+      await prisma.team.update({
+        where: { id: team.id },
+        data: {
+          currentPosition: latestCheckpoint.positionAfter,
+          currentRoom: latestCheckpoint.roomNumber,
+        },
+      });
+
+      results.push({
+        teamCode: team.teamCode,
+        updated: true,
+        from: { position: team.currentPosition, room: team.currentRoom },
+        to: { position: latestCheckpoint.positionAfter, room: latestCheckpoint.roomNumber },
+      });
+    } else {
+      results.push({
+        teamCode: team.teamCode,
+        updated: false,
+        message: 'Already synced or no approved checkpoints',
+      });
+    }
+  }
+
+  return results;
+};
+
 module.exports = {
   createTeam,
   updateTeamPassword,
@@ -442,5 +486,6 @@ module.exports = {
   getAllMaps: getAllBoardMaps,
   findAvailableRoom,
   getRoomCapacity,
+  syncAllTeamPositions,
 };
 

@@ -150,6 +150,11 @@ const syncTimer = async (req, res, next) => {
 
     const elapsed = parseInt(elapsedSeconds) || 0;
     const result = await participantService.syncTimer(teamId, elapsed);
+    
+    if (!result) {
+      return sendError(res, 'Team not found', 404);
+    }
+    
     return sendSuccess(res, result, 'Timer synced');
   } catch (error) {
     next(error);

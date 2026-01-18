@@ -344,6 +344,11 @@ const syncTimer = async (teamId, elapsedSeconds) => {
     select: { totalTimeSec: true, status: true },
   });
   
+  // If team not found, return null
+  if (!team) {
+    return null;
+  }
+  
   // Don't increment timer if game is completed
   if (team.status === 'COMPLETED') {
     return { totalTimeSec: team.totalTimeSec, status: team.status };

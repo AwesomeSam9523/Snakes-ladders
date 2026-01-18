@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const routes = require('./routes');
 const { errorHandler, notFoundHandler } = require('./middlewares/error.middleware');
+const { syncAllTeamPositions } = require('./modules/superadmin/superadmin.service');
 
 const app = express();
 const API_VERSION_TIME = Date.now().toString();
@@ -31,10 +32,20 @@ app.use('/api', routes);
 app.use(notFoundHandler);
 app.use(errorHandler);
 
+// Auto-sync team positions every 10 seconds
+setInterval(async () => {
+  try {
+    await syncAllTeamPositions();
+  } catch (error) {
+    console.error('Error in auto-sync:', error.message);
+  }
+}, 10000);
+
 if (process.env.VERCEL !== '1') {
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
+    console.log('✓ Auto-sync enabled: Team positions will sync every 10 seconds');
   });
 }
 

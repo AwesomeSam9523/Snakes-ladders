@@ -54,11 +54,11 @@ interface Question {
 export default function AdminDashboard() {
   const router = useRouter()
   const [teams, setTeams] = useState<Team[]>([])
-  const [questions, setQuestions] = useState<Question[]>([])
+  // questions state removed - no longer needed for manual assignment
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null)
-  const [showQuestionModal, setShowQuestionModal] = useState(false)
+  // showQuestionModal removed - no longer needed
   const [selectedCheckpoint, setSelectedCheckpoint] = useState<Checkpoint | null>(null)
-  const [selectedQuestion, setSelectedQuestion] = useState("")
+  // selectedQuestion removed - no longer needed
   const [searchQuery, setSearchQuery] = useState("")
   const [loading, setLoading] = useState(true)
 
@@ -89,29 +89,7 @@ export default function AdminDashboard() {
     }
   }
 
-  // Fetch available questions
-  const fetchQuestions = async () => {
-    try {
-      const token = localStorage.getItem("token")
-      const res = await fetch(`${API_URL}/admin/questions/available`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-      if (res.ok) {
-        const data = await res.json()
-        if (data.data) {
-          // Add question numbers (Q1, Q2, etc.)
-          setQuestions(data.data.map((q: any, index: number) => ({
-            ...q,
-            questionNumber: `Q${index + 1}`,
-          })))
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching questions:", error)
-    }
-  }
+  // fetchQuestions removed - no longer needed for automatic assignment
 
   useEffect(() => {
     const userRole = localStorage.getItem("userRole")
@@ -119,7 +97,7 @@ export default function AdminDashboard() {
       router.push("/login")
     } else {
       fetchTeams()
-      fetchQuestions()
+      // fetchQuestions removed - questions auto-assigned now
       
       // Auto-refresh teams every 15 seconds to see position updates
       const interval = setInterval(fetchTeams, 15000)
@@ -153,39 +131,7 @@ export default function AdminDashboard() {
     }
   }
 
-  // Assign question via API
-  const handleAssignQuestion = async () => {
-    if (!selectedCheckpoint || !selectedQuestion) return
-
-    try {
-      const token = localStorage.getItem("token")
-      const res = await fetch(`${API_URL}/admin/checkpoints/${selectedCheckpoint.id}/assign-question`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ questionId: selectedQuestion }),
-      })
-
-      if (res.ok) {
-        fetchTeams()
-        fetchQuestions() // Refresh available questions
-        alert("Question assigned successfully!")
-      } else {
-        const error = await res.json()
-        alert(`Error: ${error.message || 'Failed to assign question'}`)
-      }
-    } catch (error) {
-      console.error("Error assigning question:", error)
-      alert("Failed to assign question")
-    }
-
-    setShowQuestionModal(false)
-    setSelectedQuestion("")
-    setSelectedCheckpoint(null)
-    setSelectedTeam(null)
-  }
+  // handleAssignQuestion removed - questions are now auto-assigned during dice roll
 
   // Mark answer as correct or incorrect via API
   const handleMarkAnswer = async (checkpointId: string, isCorrect: boolean) => {
@@ -372,75 +318,68 @@ export default function AdminDashboard() {
                             )}
                           </div>
 
-                          {/* Step 2: Question Assignment (only show if checkpoint is approved) */}
-                          {checkpoint.status === "APPROVED" && (
+                          {/* Step 2: Show Pre-assigned Question */}
+                          {checkpoint.questionAssign && (
                             <div className="mt-2 pt-2 border-t border-gray-100">
-                              {!checkpoint.questionAssign ? (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setSelectedTeam(team)
-                                    setSelectedCheckpoint(checkpoint)
-                                    setShowQuestionModal(true)
-                                  }}
-                                  className="px-3 py-1 text-xs bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition-colors font-medium"
-                                >
-                                  Assign Question
-                                </button>
-                              ) : (
-                                <div className="flex flex-col gap-2">
+                              <div className="mb-2">
+                                <p className="text-xs text-gray-600 uppercase mb-1">Auto-Assigned Question</p>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded font-medium">
+                                    {checkpoint.questionAssign.question?.type || 'N/A'}
+                                  </span>
+                                  <p className="text-xs text-gray-700">{checkpoint.questionAssign.question?.content || 'Question content unavailable'}</p>
+                                </div>
+                              </div>
 
-                                  {/* Step 3: Mark Answer (only show if question is assigned) */}
-                                  {checkpoint.questionAssign.status === "PENDING" ? (
-                                    <div className="flex flex-col gap-2">
-                                      {!checkpoint.questionAssign.participantAnswer && (
-                                        <p className="text-xs text-amber-600">⏳ Waiting for participant to submit answer...</p>
-                                      )}
-                                      {checkpoint.questionAssign.participantAnswer && (
-                                        <div className="flex gap-2">
-                                          <button
-                                            onClick={() => handleMarkAnswer(checkpoint.id, true)}
-                                            className="px-3 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors font-medium"
-                                          >
-                                            ✓ Correct
-                                          </button>
-                                          <button
-                                            onClick={() => handleMarkAnswer(checkpoint.id, false)}
-                                            className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors font-medium"
-                                          >
-                                            ✗ Incorrect
-                                          </button>
-                                        </div>
-                                      )}
-                                      
-                                      {/* Timer controls for CODING/PHYSICAL questions */}
-                                      {(checkpoint.questionAssign.question?.type === "CODING" || checkpoint.questionAssign.question?.type === "PHYSICAL") && (
-                                        <div className="flex gap-2 mt-1">
-                                          {team.timerPaused ? (
-                                            <button
-                                              onClick={() => handleResumeTimer(team.id)}
-                                              className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors font-medium"
-                                            >
-                                              ▶️ Resume Timer
-                                            </button>
-                                          ) : (
-                                            <button
-                                              onClick={() => handlePauseTimer(team.id)}
-                                              className="px-3 py-1 text-xs bg-orange-100 text-orange-700 rounded hover:bg-orange-200 transition-colors font-medium"
-                                            >
-                                              ⏸️ Pause Timer
-                                            </button>
-                                          )}
-                                        </div>
+                              {/* Step 3: Mark Answer (only show if checkpoint is approved and question assigned) */}
+                              {checkpoint.status === "APPROVED" && checkpoint.questionAssign.status === "PENDING" ? (
+                                <div className="flex flex-col gap-2 mt-2">
+                                  {!checkpoint.questionAssign.participantAnswer && (
+                                    <p className="text-xs text-amber-600">⏳ Waiting for participant to submit answer...</p>
+                                  )}
+                                  {checkpoint.questionAssign.participantAnswer && (
+                                    <div className="flex gap-2">
+                                      <button
+                                        onClick={() => handleMarkAnswer(checkpoint.id, true)}
+                                        className="px-3 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors font-medium"
+                                      >
+                                        ✓ Correct
+                                      </button>
+                                      <button
+                                        onClick={() => handleMarkAnswer(checkpoint.id, false)}
+                                        className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors font-medium"
+                                      >
+                                        ✗ Incorrect
+                                      </button>
+                                    </div>
+                                  )}
+                                  
+                                  {/* Timer controls for CODING/PHYSICAL questions */}
+                                  {(checkpoint.questionAssign.question?.type === "CODING" || checkpoint.questionAssign.question?.type === "PHYSICAL") && (
+                                    <div className="flex gap-2 mt-1">
+                                      {team.timerPaused ? (
+                                        <button
+                                          onClick={() => handleResumeTimer(team.id)}
+                                          className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors font-medium"
+                                        >
+                                          ▶️ Resume Timer
+                                        </button>
+                                      ) : (
+                                        <button
+                                          onClick={() => handlePauseTimer(team.id)}
+                                          className="px-3 py-1 text-xs bg-orange-100 text-orange-700 rounded hover:bg-orange-200 transition-colors font-medium"
+                                        >
+                                          ⏸️ Pause Timer
+                                        </button>
                                       )}
                                     </div>
-                                  ) : (
-                                    <span className="text-xs font-medium text-gray-600">
-                                      Marked
-                                    </span>
                                   )}
                                 </div>
-                              )}
+                              ) : checkpoint.questionAssign.status !== "PENDING" ? (
+                                <span className="text-xs font-medium text-gray-600">
+                                  Marked as {checkpoint.questionAssign.status}
+                                </span>
+                              ) : null}
                             </div>
                           )}
                         </div>
@@ -455,59 +394,7 @@ export default function AdminDashboard() {
           )}
         </div>
       </main>
-
-      {/* Question Modal */}
-      {showQuestionModal && selectedTeam && selectedCheckpoint && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4" style={{ zIndex: 9999 }}>
-          <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">
-              Assign Question to {selectedTeam.teamId || selectedTeam.teamName} - Checkpoint #{selectedCheckpoint.checkpointNumber}
-            </h3>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Select Question</label>
-                <select
-                  value={selectedQuestion}
-                  onChange={(e) => setSelectedQuestion(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-gray-600 focus:ring-1 focus:ring-gray-600"
-                >
-                  <option value="">Choose a question</option>
-                  {questions.map((q) => (
-                    <option key={q.id} value={q.id}>
-                      {q.questionNumber || `Q${questions.indexOf(q) + 1}`} {q.isSnakeQuestion ? '🐍 Snake' : '✓ Normal'}
-                    </option>
-                  ))}
-                </select>
-                {questions.length === 0 && (
-                  <p className="text-xs text-gray-500 mt-1">No available questions. Add questions first.</p>
-                )}
-              </div>
-            </div>
-
-            <div className="flex gap-3 mt-6">
-              <button
-                onClick={() => {
-                  setShowQuestionModal(false)
-                  setSelectedQuestion("")
-                  setSelectedCheckpoint(null)
-                  setSelectedTeam(null)
-                }}
-                className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded font-medium text-sm hover:bg-gray-300 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleAssignQuestion}
-                disabled={!selectedQuestion}
-                className="flex-1 px-4 py-2 bg-gray-800 text-white rounded font-medium text-sm hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Assign
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Question Modal removed - no longer needed for automatic assignment */}
     </div>
   )
 }

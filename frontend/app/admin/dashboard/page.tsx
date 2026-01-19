@@ -307,7 +307,7 @@ export default function AdminDashboard() {
                             {checkpoint.status === "PENDING" ? (
                               <button
                                 onClick={() => handleApproveCheckpoint(checkpoint.id)}
-                                className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors font-medium"
+                                className="px-3 py-1 text-xs bg-gray-900 text-white rounded hover:bg-gray-800 transition-colors font-medium"
                               >
                                 Approve Checkpoint
                               </button>

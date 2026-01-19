@@ -286,30 +286,32 @@ export function QuestionPanel({
           </div>
         )}
 
-        <div className={`p-4 rounded-lg text-center ${
-          status === 'CORRECT' ? 'bg-green-100 dark:bg-green-900/30' :
-          status === 'INCORRECT' ? 'bg-red-100 dark:bg-red-900/30' :
-          'bg-secondary'
-        }`}>
-          {status === 'CORRECT' ? (
-            <>
-              <CheckCircle className="w-6 h-6 mx-auto text-green-600 mb-2" />
-              <p className="text-sm font-semibold text-green-700 dark:text-green-400">✓ Correct!</p>
-              <p className="text-xs text-muted-foreground mt-1">You can now roll the dice again.</p>
-            </>
-          ) : status === 'INCORRECT' ? (
-            <>
-              <XCircle className="w-6 h-6 mx-auto text-red-600 mb-2" />
-              <p className="text-sm font-semibold text-red-700 dark:text-red-400">✗ Incorrect</p>
-              <p className="text-xs text-muted-foreground mt-1">Waiting for admin review...</p>
-            </>
-          ) : (
-            <>
-              <p className="text-sm font-semibold">✓ Answer Submitted</p>
-              <p className="text-xs text-muted-foreground mt-1">Waiting for admin to evaluate your answer...</p>
-            </>
-          )}
-        </div>
+        {participantAnswer && (
+          <div className={`p-4 rounded-lg text-center ${
+            status === 'CORRECT' ? 'bg-green-100 dark:bg-green-900/30' :
+            status === 'INCORRECT' ? 'bg-red-100 dark:bg-red-900/30' :
+            'bg-secondary'
+          }`}>
+            {status === 'CORRECT' ? (
+              <>
+                <CheckCircle className="w-6 h-6 mx-auto text-green-600 mb-2" />
+                <p className="text-sm font-semibold text-green-700 dark:text-green-400">✓ Correct!</p>
+                <p className="text-xs text-muted-foreground mt-1">You can now roll the dice again.</p>
+              </>
+            ) : status === 'INCORRECT' ? (
+              <>
+                <XCircle className="w-6 h-6 mx-auto text-red-600 mb-2" />
+                <p className="text-sm font-semibold text-red-700 dark:text-red-400">✗ Incorrect</p>
+                <p className="text-xs text-muted-foreground mt-1">Waiting for admin review...</p>
+              </>
+            ) : (
+              <>
+                <p className="text-sm font-semibold">✓ Answer Submitted</p>
+                <p className="text-xs text-muted-foreground mt-1">Waiting for admin to evaluate your answer...</p>
+              </>
+            )}
+          </div>
+        )}
       </div>
     )
   }

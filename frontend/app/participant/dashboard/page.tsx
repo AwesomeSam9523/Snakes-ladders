@@ -149,9 +149,17 @@ export default function ParticipantDashboard() {
             })
             
             if (checkpoint.questionAssign.status === "PENDING") {
-              // Question assigned and revealed, not yet answered
-              if (gameStatus !== "SOLVING") {
-                setGameStatus("QUESTION_ASSIGNED")
+              // Question assigned and revealed
+              if (checkpoint.questionAssign.participantAnswer) {
+                // Answer already submitted, waiting for admin to mark
+                if (gameStatus !== "SOLVING") {
+                  setGameStatus("LOCKED")
+                }
+              } else {
+                // Not yet answered
+                if (gameStatus !== "SOLVING") {
+                  setGameStatus("QUESTION_ASSIGNED")
+                }
               }
             }
           } else if (checkpoint.status === "PENDING") {
@@ -378,10 +386,11 @@ export default function ParticipantDashboard() {
         setTeamData(prev => ({ ...prev, canRollDice: true }))
         setGameStatus("IDLE")
 
-        // Show generic success message for all submissions
+        // Show success message in green
         toast({
           title: "Answer Submitted",
           description: "Your answer has been submitted successfully.",
+          className: "bg-green-100 border-green-500 text-green-900",
         })
 
         // Refresh data

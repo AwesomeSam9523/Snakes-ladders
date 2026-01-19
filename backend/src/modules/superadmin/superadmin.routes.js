@@ -3,7 +3,6 @@ const router = express.Router();
 const superadminController = require('./superadmin.controller');
 const { verifyToken } = require('../../middlewares/session.middleware');
 const { superadminOnly } = require('../../middlewares/role.middleware');
-const { cacheMiddleware, CACHE_KEYS } = require('../../utils/cache.util');
 
 // Apply authentication and superadmin check to all routes
 router.use(verifyToken);
@@ -30,8 +29,8 @@ router.put('/teams/:teamId/room', superadminController.changeTeamRoom);
 // Auto-assign team to available room
 router.post('/teams/:teamId/room/auto-assign', superadminController.autoAssignTeamRoom);
 
-// Get room capacity (cached for 5 seconds)
-router.get('/rooms/capacity', cacheMiddleware(CACHE_KEYS.ROOM_CAPACITY, 5), superadminController.getRoomCapacity);
+// Get room capacity
+router.get('/rooms/capacity', superadminController.getRoomCapacity);
 
 // Sync team positions with latest approved checkpoints
 router.post('/teams/sync-positions', superadminController.syncTeamPositions);

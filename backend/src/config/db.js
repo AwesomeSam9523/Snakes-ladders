@@ -5,7 +5,7 @@ const prismaClientSingleton = () => {
     log: ['error', 'warn'],
     datasources: {
       db: {
-        url: process.env.DATABASE_URL + '?connection_limit=15&pool_timeout=20&connect_timeout=10'
+        url: process.env.DATABASE_URL + '?connection_limit=20&pool_timeout=30&connect_timeout=15'
       }
     }
   })

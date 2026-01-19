@@ -377,7 +377,7 @@ export default function AdminDashboard() {
                                 </div>
                               ) : checkpoint.questionAssign.status !== "PENDING" ? (
                                 <span className="text-xs font-medium text-gray-600">
-                                  Marked as {checkpoint.questionAssign.status}
+                                  Marked
                                 </span>
                               ) : null}
                             </div>

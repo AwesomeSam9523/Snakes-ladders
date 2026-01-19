@@ -42,10 +42,28 @@ const getAvailableQuestions = async (teamId, isSnakePosition) => {
  * Returns question and determines room type needed
  */
 const selectRandomQuestion = async (teamId, isSnakePosition) => {
-  const availableQuestions = await getAvailableQuestions(teamId, isSnakePosition);
+  let availableQuestions = await getAvailableQuestions(teamId, isSnakePosition);
 
+  // If no questions available (all used by this team), allow reuse
   if (availableQuestions.length === 0) {
-    throw new Error(`No available questions for team. Snake position: ${isSnakePosition}`);
+    // Get all questions matching the criteria (allow reuse)
+    const whereClause = {};
+    
+    if (isSnakePosition) {
+      whereClause.type = 'CODING';
+      whereClause.isSnakeQuestion = true;
+    } else {
+      whereClause.isSnakeQuestion = false;
+    }
+    
+    availableQuestions = await prisma.question.findMany({
+      where: whereClause,
+    });
+    
+    // If still no questions found, throw error
+    if (availableQuestions.length === 0) {
+      throw new Error(`No questions exist in database. Snake position: ${isSnakePosition}. Please add questions to the database.`);
+    }
   }
 
   // For normal positions, weight question types

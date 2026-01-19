@@ -6,8 +6,11 @@ const generateDiceValue = () => {
   return Math.floor(Math.random() * (GAME_CONFIG.DICE_MAX - GAME_CONFIG.DICE_MIN + 1)) + GAME_CONFIG.DICE_MIN;
 };
 
-//Get a random room different from the current room (respecting capacity)
+//Get a random room different from the current room (respecting capacity from database)
 const getRandomRoom = async (currentRoom, teamId = null) => {
+  // Get all rooms with their capacities from database
+  const rooms = await prisma.room.findMany();
+  
   // Get team counts per room
   const roomCounts = await prisma.team.groupBy({
     by: ['currentRoom'],
@@ -25,21 +28,21 @@ const getRandomRoom = async (currentRoom, teamId = null) => {
   });
 
   // Find available rooms (not current room and has capacity)
-  const availableRooms = ROOMS.filter(room => {
-    if (room === currentRoom) return false;
-    const count = roomCountMap[room] || 0;
-    return count < GAME_CONFIG.TEAMS_PER_ROOM;
+  const availableRooms = rooms.filter(roomData => {
+    if (roomData.roomNumber === currentRoom) return false;
+    const count = roomCountMap[roomData.roomNumber] || 0;
+    return count < roomData.capacity;
   });
 
   if (availableRooms.length === 0) {
     // If no rooms with capacity, just pick any other room (edge case)
-    const otherRooms = ROOMS.filter(room => room !== currentRoom);
+    const otherRooms = rooms.filter(roomData => roomData.roomNumber !== currentRoom);
     const randomIndex = Math.floor(Math.random() * otherRooms.length);
-    return otherRooms[randomIndex];
+    return otherRooms[randomIndex].roomNumber;
   }
 
   const randomIndex = Math.floor(Math.random() * availableRooms.length);
-  return availableRooms[randomIndex];
+  return availableRooms[randomIndex].roomNumber;
 };
 
 //Generate a unique team code

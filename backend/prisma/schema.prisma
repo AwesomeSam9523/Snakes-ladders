@@ -45,6 +45,16 @@ enum UserRole {
   SUPERADMIN
 }
 
+// ROOM MANAGEMENT
+
+model Room {
+  id         String   @id @default(uuid())
+  roomNumber String   @unique
+  capacity   Int      @default(7)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
 // LOGIN TABLE (Unified)
 
 model User {

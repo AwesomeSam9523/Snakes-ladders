@@ -3,7 +3,7 @@ const GAME_CONFIG = {
   BOARD_SIZE: 150,
   DICE_MIN: 1,
   DICE_MAX: 6,
-  TOTAL_ROOMS: 10,
+  TOTAL_ROOMS: 15,
   TOTAL_TEAMS: 50,
   TEAMS_PER_ROOM: 7,
   TOTAL_MAPS: 5,
@@ -11,10 +11,11 @@ const GAME_CONFIG = {
   STARTING_POSITION: 1,
 };
 
-// Room numbers (AB1 301 - AB1 310)
+// Room numbers (AB1 301 - AB1 315)
 const ROOMS = [
   'AB1 301', 'AB1 302', 'AB1 303', 'AB1 304', 'AB1 305',
-  'AB1 306', 'AB1 307', 'AB1 308', 'AB1 309', 'AB1 310'
+  'AB1 306', 'AB1 307', 'AB1 308', 'AB1 309', 'AB1 310',
+  'AB1 311', 'AB1 312', 'AB1 313', 'AB1 314', 'AB1 315'
 ];
 
 // Roles for authentication

@@ -5,8 +5,11 @@ const { GAME_CONFIG, ROOMS } = require('../../config/constants');
 const { logTeamCreated, logAdminAction, AUDIT_ACTIONS } = require('../audit/audit.service');
 const { assignMapToTeam: assignMap, getAllBoardMaps } = require('../game/board.service');
 
-// Helper function to find an available room with capacity < 5
+// Helper function to find an available room with capacity from database
 const findAvailableRoom = async () => {
+  // Get all rooms with their capacities from database
+  const rooms = await prisma.room.findMany();
+  
   // Get team counts per room
   const roomCounts = await prisma.team.groupBy({
     by: ['currentRoom'],
@@ -22,11 +25,11 @@ const findAvailableRoom = async () => {
     roomCountMap[rc.currentRoom] = rc._count.id;
   });
 
-  // Find rooms with less than 5 teams
-  for (const room of ROOMS) {
-    const count = roomCountMap[room] || 0;
-    if (count < GAME_CONFIG.TEAMS_PER_ROOM) {
-      return room;
+  // Find first room with available capacity
+  for (const room of rooms) {
+    const count = roomCountMap[room.roomNumber] || 0;
+    if (count < room.capacity) {
+      return room.roomNumber;
     }
   }
 
@@ -127,8 +130,11 @@ const reinstateTeam = async (teamId) => {
   });
 };
 
-// Get available rooms with capacity
+// Get available rooms with capacity from database
 const getAvailableRooms = async (excludeTeamId = null) => {
+  // Get all rooms with their capacities from database
+  const rooms = await prisma.room.findMany();
+  
   // Get team counts per room
   const roomCounts = await prisma.team.groupBy({
     by: ['currentRoom'],
@@ -146,10 +152,11 @@ const getAvailableRooms = async (excludeTeamId = null) => {
   });
 
   // Return all rooms with their capacities
-  return ROOMS.map(room => ({
-    room,
-    teamsCount: roomCountMap[room] || 0,
-    available: (roomCountMap[room] || 0) < GAME_CONFIG.TEAMS_PER_ROOM,
+  return rooms.map(roomData => ({
+    room: roomData.roomNumber,
+    capacity: roomData.capacity,
+    teamsCount: roomCountMap[roomData.roomNumber] || 0,
+    available: (roomCountMap[roomData.roomNumber] || 0) < roomData.capacity,
   }));
 };
 

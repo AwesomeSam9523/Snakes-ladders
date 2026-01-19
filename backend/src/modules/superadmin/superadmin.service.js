@@ -183,10 +183,15 @@ const autoAssignTeamRoom = async (teamId) => {
   });
 };
 
-//Change team room 8Rq7oghI
+//Change team room
 
 const changeTeamRoom = async (teamId, newRoom) => {
-  if (!ROOMS.includes(newRoom)) {
+  // Validate room exists in database
+  const roomData = await prisma.room.findUnique({
+    where: { roomNumber: newRoom }
+  });
+
+  if (!roomData) {
     throw new Error('Invalid room number');
   }
 
@@ -199,8 +204,8 @@ const changeTeamRoom = async (teamId, newRoom) => {
     },
   });
 
-  if (teamsInRoom >= GAME_CONFIG.TEAMS_PER_ROOM) {
-    throw new Error(`Room ${newRoom} is full. Maximum ${GAME_CONFIG.TEAMS_PER_ROOM} teams per room.`);
+  if (teamsInRoom >= roomData.capacity) {
+    throw new Error(`Room ${newRoom} is full. Maximum ${roomData.capacity} teams per room.`);
   }
 
   return await prisma.team.update({
@@ -422,6 +427,11 @@ const getAllBoardRules = async () => {
 };
 
 const getRoomCapacity = async () => {
+  // Get all rooms with their capacities from database
+  const rooms = await prisma.room.findMany({
+    orderBy: { roomNumber: 'asc' }
+  });
+  
   // Get team counts per room
   const roomCounts = await prisma.team.groupBy({
     by: ['currentRoom'],
@@ -431,14 +441,15 @@ const getRoomCapacity = async () => {
     },
   });
 
-  // Create result with all rooms
-  const result = ROOMS.map(room => {
-    const roomData = roomCounts.find(rc => rc.currentRoom === room);
+  // Create result with all rooms and their database capacities
+  const result = rooms.map(roomData => {
+    const teamCount = roomCounts.find(rc => rc.currentRoom === roomData.roomNumber);
+    const currentTeams = teamCount ? teamCount._count.id : 0;
     return {
-      room,
-      currentTeams: roomData ? roomData._count.id : 0,
-      maxTeams: GAME_CONFIG.TEAMS_PER_ROOM,
-      available: (roomData ? roomData._count.id : 0) < GAME_CONFIG.TEAMS_PER_ROOM,
+      room: roomData.roomNumber,
+      currentTeams,
+      maxTeams: roomData.capacity,
+      available: currentTeams < roomData.capacity,
     };
   });
 

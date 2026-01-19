@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Navbar } from "@/components/navbar"
+import { ROOMS } from "@/lib/constants"
 
 interface Team {
   id: string
@@ -826,7 +827,7 @@ export default function SuperAdminDashboard() {
                           className="flex-1 px-3 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:border-gray-600"
                         >
                           <option value="">Select room...</option>
-                          {["AB1 301", "AB1 302", "AB1 303", "AB1 304", "AB1 305", "AB1 306", "AB1 307", "AB1 308", "AB1 309", "AB1 310"].map((room) => {
+                          {ROOMS.map((room) => {
                             const capacity = roomCapacities.find(r => r.room === room)
                             const availableSlots = capacity ? capacity.maxTeams - capacity.currentTeams : 7
                             const isFull = availableSlots <= 0

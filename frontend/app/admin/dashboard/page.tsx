@@ -121,8 +121,8 @@ export default function AdminDashboard() {
       fetchTeams()
       fetchQuestions()
       
-      // Auto-refresh teams every 10 seconds to see position updates
-      const interval = setInterval(fetchTeams, 10000)
+      // Auto-refresh teams every 15 seconds to see position updates
+      const interval = setInterval(fetchTeams, 15000)
       return () => clearInterval(interval)
     }
   }, [router])

@@ -209,9 +209,9 @@ export default function ParticipantDashboard() {
     fetchTeamData()
     fetchTeams()
     
-    // Refresh team state and leaderboard every 5 seconds
+    // Refresh team state and leaderboard (optimized intervals)
     const teamInterval = setInterval(fetchTeamData, 5000)
-    const leaderboardInterval = setInterval(fetchTeams, 10000)
+    const leaderboardInterval = setInterval(fetchTeams, 15000)
     
     return () => {
       clearInterval(teamInterval)

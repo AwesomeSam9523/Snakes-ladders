@@ -4,6 +4,7 @@ const participantController = require('./participant.controller');
 const { verifyToken } = require('../../middlewares/session.middleware');
 const { participantOnly } = require('../../middlewares/role.middleware');
 const { checkDiceLock } = require('../../middlewares/lock.middleware');
+const { cacheMiddleware, CACHE_KEYS } = require('../../utils/cache.util');
 
 // All routes require authentication and participant role
 router.use(verifyToken);
@@ -35,8 +36,8 @@ router.post('/timer/sync', participantController.syncTimer);
 // Board
 router.get('/board', participantController.getBoard);
 
-// Leaderboard
-router.get('/leaderboard', participantController.getLeaderboardData);
+// Leaderboard (cached for 8 seconds)
+router.get('/leaderboard', cacheMiddleware(CACHE_KEYS.LEADERBOARD, 8), participantController.getLeaderboardData);
 
 module.exports = router;
 

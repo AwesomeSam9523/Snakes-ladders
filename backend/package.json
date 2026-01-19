@@ -15,7 +15,12 @@
     "db:seed": "node prisma/seed.js",
     "db:seed-maps": "node prisma/seed-maps.js"
   },
-  "keywords": ["snakes", "ladders", "game", "tech-quest"],
+  "keywords": [
+    "snakes",
+    "ladders",
+    "game",
+    "tech-quest"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
@@ -24,8 +29,10 @@
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
+    "express-rate-limit": "^8.2.1",
     "express-session": "^1.17.3",
-    "jsonwebtoken": "^9.0.2"
+    "jsonwebtoken": "^9.0.2",
+    "node-cache": "^5.1.2"
   },
   "devDependencies": {
     "nodemon": "^3.0.2",

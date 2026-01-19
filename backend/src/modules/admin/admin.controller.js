@@ -37,34 +37,8 @@ const getPendingCheckpoints = async (req, res, next) => {
   }
 };
 
-const assignQuestion = async (req, res, next) => {
-  try {
-    const { checkpointId } = req.params;
-    const { questionId } = req.body;
-    const adminUsername = req.user?.username || 'admin';
-
-    if (!questionId) {
-      return sendBadRequest(res, 'Question ID is required');
-    }
-
-    const checkpoint = await adminService.getCheckpointById(checkpointId);
-    if (!checkpoint) {
-      return sendNotFound(res, MESSAGES.CHECKPOINT_NOT_FOUND);
-    }
-
-    if (checkpoint.questionAssign) {
-      return sendBadRequest(res, 'Question already assigned to this checkpoint');
-    }
-
-    const assignment = await adminService.assignQuestionToCheckpoint(checkpointId, questionId, adminUsername);
-    return sendSuccess(res, assignment, MESSAGES.QUESTION_ASSIGNED);
-  } catch (error) {
-    if (error.message === 'Question is already assigned to another team') {
-      return sendBadRequest(res, MESSAGES.QUESTION_ALREADY_ASSIGNED);
-    }
-    next(error);
-  }
-};
+// assignQuestion removed - questions are now auto-assigned during dice roll
+// See dice.service.js for automatic assignment logic
 
 const markQuestion = async (req, res, next) => {
   try {
@@ -163,7 +137,7 @@ module.exports = {
   getAllTeams,
   getTeamById,
   getPendingCheckpoints,
-  assignQuestion,
+  // assignQuestion removed - now automatic in dice roll
   markQuestion,
   getAvailableQuestions,
   getTeamProgress,

@@ -18,7 +18,7 @@ router.post('/teams/:teamId/timer/resume', adminController.resumeTeamTimer);
 // Checkpoint routes
 router.get('/checkpoints/pending', adminController.getPendingCheckpoints);
 router.post('/checkpoints/:checkpointId/approve', adminController.approveCheckpoint);
-router.post('/checkpoints/:checkpointId/assign-question', adminController.assignQuestion);
+// assign-question route removed - questions now auto-assigned during dice roll
 router.post('/checkpoints/:checkpointId/mark', adminController.markQuestion);
 
 // Question routes

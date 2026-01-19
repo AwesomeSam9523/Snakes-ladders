@@ -88,102 +88,8 @@ const getCheckpointById = async (checkpointId) => {
 };
 
 
-const assignQuestionToCheckpoint = async (checkpointId, questionId, adminUsername = 'admin') => {
-  // Check if question is already assigned to another pending checkpoint
-  const existingAssignment = await prisma.questionAssignment.findFirst({
-    where: {
-      questionId,
-      status: 'PENDING',
-    },
-  });
-
-  if (existingAssignment) {
-    throw new Error('Question is already assigned to another team');
-  }
-
-  // Get question details to check type
-  const question = await prisma.question.findUnique({
-    where: { id: questionId },
-  });
-
-  if (!question) {
-    throw new Error('Question not found');
-  }
-
-  // Get checkpoint with team details
-  const checkpoint = await prisma.checkpoint.findUnique({
-    where: { id: checkpointId },
-    include: { team: true },
-  });
-
-  if (!checkpoint) {
-    throw new Error('Checkpoint not found');
-  }
-
-  // Determine if room change is needed based on question type
-  // CODING or snake position → TECH room
-  // Others (NUMERICAL, MCQ, PHYSICAL) → NON-TECH room
-  const needsTechRoom = question.type === 'CODING' || checkpoint.isSnakePosition;
-  const { getRandomRoom } = require('../game/game.utils');
-
-  let newRoom = checkpoint.roomNumber;
-  const currentRoom = checkpoint.team.currentRoom;
-
-  // If current room type doesn't match question requirement, reassign room
-  const currentRoomData = await prisma.room.findUnique({
-    where: { roomNumber: currentRoom },
-  });
-
-  if (currentRoomData) {
-    const currentRoomIsTech = currentRoomData.roomType === 'TECH';
-    
-    // If room type doesn't match requirement, get new room
-    if ((needsTechRoom && !currentRoomIsTech) || (!needsTechRoom && currentRoomIsTech)) {
-      newRoom = await getRandomRoom(currentRoom, checkpoint.team.id, needsTechRoom ? 'TECH' : 'NON_TECH');
-      
-      // Update team's current room and checkpoint room
-      await prisma.team.update({
-        where: { id: checkpoint.team.id },
-        data: { currentRoom: newRoom },
-      });
-
-      await prisma.checkpoint.update({
-        where: { id: checkpointId },
-        data: { roomNumber: newRoom },
-      });
-    }
-  }
-
-  const assignment = await prisma.questionAssignment.create({
-    data: {
-      checkpointId,
-      questionId,
-    },
-    include: {
-      question: true,
-      checkpoint: {
-        include: { team: true }
-      },
-    },
-  });
-
-  // Log question assignment to audit
-  await logAdminAction(
-    adminUsername,
-    'admin',
-    AUDIT_ACTIONS.QUESTION_ASSIGNED,
-    assignment.checkpoint.team.teamName,
-    {
-      checkpointId,
-      questionId,
-      questionType: question.type,
-      roomAssigned: newRoom,
-      message: `Assigned ${question.type} question to ${assignment.checkpoint.team.teamName} in room ${newRoom}`
-    }
-  );
-
-  return assignment;
-};
+// assignQuestionToCheckpoint has been removed - questions are now auto-assigned during dice roll
+// See dice.service.js processDiceRoll() for automatic assignment logic
 
 
 const markQuestionAnswer = async (assignmentId, isCorrect, adminUsername = 'admin') => {
@@ -305,19 +211,42 @@ const getTeamProgress = async (teamId) => {
 };
 
 // Approve a checkpoint (team has physically reached the checkpoint)
+// This reveals the pre-assigned question to the team
 // NOTE: Dice is NOT unlocked here - it will be unlocked only after question is marked
 const approveCheckpoint = async (checkpointId, adminUsername = 'admin') => {
-  const checkpoint = await prisma.checkpoint.update({
+  // Get checkpoint with question assignment
+  const checkpoint = await prisma.checkpoint.findUnique({
+    where: { id: checkpointId },
+    include: {
+      team: true,
+      questionAssign: {
+        include: { question: true },
+      },
+    },
+  });
+
+  if (!checkpoint) {
+    throw new Error('Checkpoint not found');
+  }
+
+  if (!checkpoint.questionAssign) {
+    throw new Error('No question assigned to this checkpoint - this should not happen');
+  }
+
+  // Update checkpoint status to APPROVED (reveals question to team)
+  const updatedCheckpoint = await prisma.checkpoint.update({
     where: { id: checkpointId },
     data: { status: 'APPROVED' },
     include: {
       team: true,
-      questionAssign: true,
+      questionAssign: {
+        include: { question: true },
+      },
     },
   });
 
-  // NOTE: Dice roll is NOT unlocked here anymore
-  // The flow is: roll dice → checkpoint created → admin approves → admin assigns question → participant answers → admin marks → dice unlocked
+  // NOTE: Dice roll is NOT unlocked here
+  // The flow is: roll dice → question auto-assigned → admin approves (reveals question) → participant answers → admin marks → dice unlocked
 
   // Log the checkpoint approval to audit
   await logAdminAction(
@@ -329,11 +258,12 @@ const approveCheckpoint = async (checkpointId, adminUsername = 'admin') => {
       checkpointId,
       checkpointNumber: checkpoint.checkpointNumber,
       position: checkpoint.positionAfter,
-      message: `Approved checkpoint #${checkpoint.checkpointNumber} for ${checkpoint.team.teamName} at position ${checkpoint.positionAfter}`
+      questionType: checkpoint.questionAssign.question.type,
+      message: `Approved checkpoint #${checkpoint.checkpointNumber} for ${checkpoint.team.teamName} - revealed ${checkpoint.questionAssign.question.type} question`
     }
   );
 
-  return checkpoint;
+  return updatedCheckpoint;
 };
 
 const pauseTeamTimer = async (teamId) => {
@@ -355,7 +285,7 @@ module.exports = {
   getTeamById,
   getPendingCheckpoints,
   getCheckpointById,
-  assignQuestionToCheckpoint,
+  // assignQuestionToCheckpoint removed - now automatic in dice roll
   markQuestionAnswer,
   getAvailableQuestions,
   getTeamProgress,

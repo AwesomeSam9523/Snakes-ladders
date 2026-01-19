@@ -77,3 +77,6 @@ async function main() {
 
 main();
 
+/*remove assign question manually from admins portal it will randomly allot questions to each team based on position
+
+if the teams position is non snake position then it can */

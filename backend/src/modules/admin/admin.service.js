@@ -101,6 +101,59 @@ const assignQuestionToCheckpoint = async (checkpointId, questionId, adminUsernam
     throw new Error('Question is already assigned to another team');
   }
 
+  // Get question details to check type
+  const question = await prisma.question.findUnique({
+    where: { id: questionId },
+  });
+
+  if (!question) {
+    throw new Error('Question not found');
+  }
+
+  // Get checkpoint with team details
+  const checkpoint = await prisma.checkpoint.findUnique({
+    where: { id: checkpointId },
+    include: { team: true },
+  });
+
+  if (!checkpoint) {
+    throw new Error('Checkpoint not found');
+  }
+
+  // Determine if room change is needed based on question type
+  // CODING or snake position → TECH room
+  // Others (NUMERICAL, MCQ, PHYSICAL) → NON-TECH room
+  const needsTechRoom = question.type === 'CODING' || checkpoint.isSnakePosition;
+  const { getRandomRoom } = require('../game/game.utils');
+
+  let newRoom = checkpoint.roomNumber;
+  const currentRoom = checkpoint.team.currentRoom;
+
+  // If current room type doesn't match question requirement, reassign room
+  const currentRoomData = await prisma.room.findUnique({
+    where: { roomNumber: currentRoom },
+  });
+
+  if (currentRoomData) {
+    const currentRoomIsTech = currentRoomData.roomType === 'TECH';
+    
+    // If room type doesn't match requirement, get new room
+    if ((needsTechRoom && !currentRoomIsTech) || (!needsTechRoom && currentRoomIsTech)) {
+      newRoom = await getRandomRoom(currentRoom, checkpoint.team.id, needsTechRoom ? 'TECH' : 'NON_TECH');
+      
+      // Update team's current room and checkpoint room
+      await prisma.team.update({
+        where: { id: checkpoint.team.id },
+        data: { currentRoom: newRoom },
+      });
+
+      await prisma.checkpoint.update({
+        where: { id: checkpointId },
+        data: { roomNumber: newRoom },
+      });
+    }
+  }
+
   const assignment = await prisma.questionAssignment.create({
     data: {
       checkpointId,
@@ -123,7 +176,9 @@ const assignQuestionToCheckpoint = async (checkpointId, questionId, adminUsernam
     {
       checkpointId,
       questionId,
-      message: `Assigned question to ${assignment.checkpoint.team.teamName}`
+      questionType: question.type,
+      roomAssigned: newRoom,
+      message: `Assigned ${question.type} question to ${assignment.checkpoint.team.teamName} in room ${newRoom}`
     }
   );
 

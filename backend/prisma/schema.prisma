@@ -45,12 +45,18 @@ enum UserRole {
   SUPERADMIN
 }
 
+enum RoomType {
+  TECH
+  NON_TECH
+}
+
 // ROOM MANAGEMENT
 
 model Room {
   id         String   @id @default(uuid())
   roomNumber String   @unique
   capacity   Int      @default(7)
+  roomType   RoomType @default(NON_TECH)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }

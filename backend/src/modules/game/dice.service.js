@@ -31,12 +31,17 @@ const processDiceRoll = async (teamId) => {
     positionAfter = positionBefore; // Stay at current position
   }
 
-  // Get new room (different from current, with capacity check)
-  const newRoom = await getRandomRoom(team.currentRoom, teamId);
-
   // Check if landed on snake (using team's specific map)
   const snake = await checkSnakeForTeam(teamId, positionAfter);
   const isSnakePosition = snake !== null;
+
+  // Determine room type based on snake position
+  // If snake position → TECH room (for coding questions)
+  // If not snake → Will be determined when question is assigned
+  const roomType = isSnakePosition ? 'TECH' : null;
+
+  // Get new room (different from current, filtered by type if determined)
+  const newRoom = await getRandomRoom(team.currentRoom, teamId, roomType);
 
   // Record the dice roll
   const diceRollRecord = await prisma.diceRoll.create({

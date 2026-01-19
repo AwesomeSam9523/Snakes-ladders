@@ -33,9 +33,9 @@ interface LeaderboardTeam {
 export type GameStatus =
   | "IDLE"
   | "ROLLING"
-  | "PENDING_APPROVAL"
-  | "AWAITING_QUESTION"
-  | "QUESTION_ASSIGNED"
+  | "PENDING_APPROVAL"  // Question auto-assigned but hidden until approval
+  // AWAITING_QUESTION removed - questions now auto-assigned during dice roll
+  | "QUESTION_ASSIGNED"  // Checkpoint approved, question revealed
   | "SOLVING"
   | "LOCKED"
 
@@ -105,7 +105,7 @@ export default function ParticipantDashboard() {
           // Update game status based on canRollDice
           // If canRollDice is true, allow rolling again
           if (teamState.canRollDice) {
-            if (gameStatus === "PENDING_APPROVAL" || gameStatus === "LOCKED" || gameStatus === "AWAITING_QUESTION" || gameStatus === "QUESTION_ASSIGNED") {
+            if (gameStatus === "PENDING_APPROVAL" || gameStatus === "LOCKED" || gameStatus === "QUESTION_ASSIGNED") {
               setGameStatus("IDLE")
               setCurrentCheckpoint(null)
               setQuestionData(null)
@@ -127,9 +127,10 @@ export default function ParticipantDashboard() {
           const checkpoint = checkpointData.data
           setCurrentCheckpoint(checkpoint)
           
-          // Check game status based on checkpoint and question assignment
-          if (checkpoint.questionAssign?.question) {
-            // Question is assigned
+          // Check game status based on checkpoint status
+          // Question is auto-assigned but hidden until checkpoint approved
+          if (checkpoint.status === "APPROVED" && checkpoint.questionAssign?.question) {
+            // Checkpoint approved - show question
             setQuestionData({
               id: checkpoint.questionAssign.id,
               assignmentId: checkpoint.questionAssign.id,
@@ -148,16 +149,13 @@ export default function ParticipantDashboard() {
             })
             
             if (checkpoint.questionAssign.status === "PENDING") {
-              // Question assigned but not yet answered
+              // Question assigned and revealed, not yet answered
               if (gameStatus !== "SOLVING") {
                 setGameStatus("QUESTION_ASSIGNED")
               }
             }
-          } else if (checkpoint.status === "APPROVED") {
-            // Checkpoint approved, waiting for admin to assign question
-            setGameStatus("AWAITING_QUESTION")
           } else if (checkpoint.status === "PENDING") {
-            // Checkpoint not yet approved - waiting for admin approval
+            // Checkpoint not yet approved - waiting for admin approval (question hidden)
             setGameStatus("PENDING_APPROVAL")
           }
         } else {
@@ -346,13 +344,13 @@ export default function ParticipantDashboard() {
   }
 
   const handleViewQuestion = () => {
-    // Use actual question data if available
+    // Question is already visible when checkpoint is approved
     if (questionData) {
       setGameStatus("SOLVING")
     } else {
       toast({
-        title: "No Question",
-        description: "Please wait for the admin to assign a question",
+        title: "No Question Available",
+        description: "Please wait for admin to approve your checkpoint",
         variant: "destructive",
       })
     }

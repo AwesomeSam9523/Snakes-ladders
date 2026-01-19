@@ -114,24 +114,13 @@ export function QuestionPanel({
           </div>
           <p className="font-semibold text-sm sm:text-base">Checkpoint Reached!</p>
           <p className="text-xs sm:text-sm text-muted-foreground">Go to Room {checkpoint?.roomNumber} and wait for admin approval</p>
+          <p className="text-xs text-muted-foreground/70 mt-1">Question already assigned, will be revealed after approval</p>
         </div>
       </div>
     )
   }
 
-  if (gameStatus === "AWAITING_QUESTION") {
-    return (
-      <div className="rounded-xl sm:rounded-2xl bg-card border border-border p-4 sm:p-6 h-full flex items-center justify-center">
-        <div className="text-center space-y-2 sm:space-y-3 px-2">
-          <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto rounded-full bg-blue-500/20 flex items-center justify-center animate-pulse">
-            <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-blue-500" />
-          </div>
-          <p className="font-semibold text-sm sm:text-base">Checkpoint Approved!</p>
-          <p className="text-xs sm:text-sm text-muted-foreground">Waiting for admin to assign a question...</p>
-        </div>
-      </div>
-    )
-  }
+  // AWAITING_QUESTION state removed - questions now auto-assigned during dice roll
 
   if (gameStatus === "QUESTION_ASSIGNED" && questionData) {
     const questionType = questionData.question?.type || "CODING"

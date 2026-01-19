@@ -36,7 +36,23 @@ const findAvailableRoom = async () => {
 
 // Create team with User entry for login
 const createTeam = async (teamName, members, password) => {
-  const teamCode = generateTeamCode();
+  // Find the last team by teamCode to auto-increment
+  const lastTeam = await prisma.team.findFirst({
+    orderBy: { teamCode: 'desc' },
+    select: { teamCode: true },
+  });
+
+  let newTeamNumber = 1;
+  if (lastTeam && lastTeam.teamCode) {
+    // Extract number from teamCode (e.g., "TEAM001" -> 1)
+    const match = lastTeam.teamCode.match(/\d+$/);
+    if (match) {
+      newTeamNumber = parseInt(match[0], 10) + 1;
+    }
+  }
+
+  // Format with leading zeros (e.g., 1 -> "001", 12 -> "012", 123 -> "123")
+  const teamCode = `TEAM${newTeamNumber.toString().padStart(3, '0')}`;
   const hashedPassword = await hashPassword(password);
   const assignedRoom = await findAvailableRoom();
 

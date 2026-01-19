@@ -1,6 +1,7 @@
 const prisma = require('../../config/db');
 const { rollDice, calculateNewPosition, getRandomRoom, hasReachedGoal } = require('./game.utils');
 const { checkSnakeForTeam } = require('./board.service');
+const { selectRandomQuestion } = require('./question.assignment');
 const { GAME_CONFIG } = require('../../config/constants');
 const { logDiceRoll, logCheckpointReached } = require('../audit/audit.service');
 
@@ -35,12 +36,11 @@ const processDiceRoll = async (teamId) => {
   const snake = await checkSnakeForTeam(teamId, positionAfter);
   const isSnakePosition = snake !== null;
 
-  // Determine room type based on snake position
-  // If snake position → TECH room (for coding questions)
-  // If not snake → Will be determined when question is assigned
-  const roomType = isSnakePosition ? 'TECH' : null;
+  // Automatically select question based on position type
+  const { question, roomType } = await selectRandomQuestion(teamId, isSnakePosition);
 
-  // Get new room (different from current, filtered by type if determined)
+  // Get new room based on question type (TECH or NON_TECH)
+  // Always exclude current room (team moves to different room)
   const newRoom = await getRandomRoom(team.currentRoom, teamId, roomType);
 
   // Record the dice roll
@@ -75,7 +75,7 @@ const processDiceRoll = async (teamId) => {
     where: { teamId },
   });
 
-  // Create checkpoint
+  // Create checkpoint with auto-assigned question
   const checkpoint = await prisma.checkpoint.create({
     data: {
       teamId,
@@ -88,18 +88,38 @@ const processDiceRoll = async (teamId) => {
     },
   });
 
+  // Create question assignment (hidden from team until checkpoint approved)
+  await prisma.questionAssignment.create({
+    data: {
+      checkpointId: checkpoint.id,
+      questionId: question.id,
+      status: 'PENDING',
+    },
+  });
+
   // Log the dice roll to audit
   await logDiceRoll(team.teamCode, team.teamName, diceValue, positionBefore, positionAfter);
 
   // Log checkpoint reached to audit
-  await logCheckpointReached(team.teamCode, team.teamName, checkpointCount + 1, positionAfter, newRoom, isSnakePosition);
+  await logCheckpointReached(
+    team.teamCode, 
+    team.teamName, 
+    checkpointCount + 1, 
+    positionAfter, 
+    newRoom, 
+    isSnakePosition,
+    `Auto-assigned ${question.type} question (${question.id})`
+  );
 
   return {
     diceValue,
     positionBefore,
     positionAfter,
     roomAssigned: newRoom,
+    roomType,
     isSnakePosition,
+    questionType: question.type,
+    questionAssigned: true,
     checkpoint,
     diceRoll: diceRollRecord,
     hasWon: hasReachedGoal(positionAfter),

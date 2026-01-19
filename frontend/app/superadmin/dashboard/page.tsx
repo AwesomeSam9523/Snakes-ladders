@@ -46,6 +46,7 @@ interface Question {
   type: "CODING" | "NUMERICAL" | "MCQ" | "PHYSICAL"
   options?: string[]
   correctAnswer?: string
+  roomType?: "TECH" | "NON_TECH"
 }
 
 interface ActivityLog {
@@ -73,6 +74,7 @@ export default function SuperAdminDashboard() {
   const [newQuestionOptions, setNewQuestionOptions] = useState("")
   const [newQuestionCorrectAnswer, setNewQuestionCorrectAnswer] = useState("")
   const [newQuestionHint, setNewQuestionHint] = useState("")
+  const [newQuestionRoomType, setNewQuestionRoomType] = useState<"TECH" | "NON_TECH">("TECH")
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null)
   const [selectedTeamForEdit, setSelectedTeamForEdit] = useState<string | null>(null)
   const [newRoom, setNewRoom] = useState("")
@@ -1281,6 +1283,21 @@ export default function SuperAdminDashboard() {
                   Snake questions are assigned when a team lands on a snake position
                 </p>
               </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Room Type</label>
+                <select
+                  value={newQuestionRoomType}
+                  onChange={(e) => setNewQuestionRoomType(e.target.value as "TECH" | "NON_TECH")}
+                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-gray-600 focus:ring-1 focus:ring-gray-600 text-gray-900"
+                >
+                  <option value="TECH">Tech Room</option>
+                  <option value="NON_TECH">Non-Tech Room</option>
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Specify if this question is for Tech or Non-Tech rooms
+                </p>
+              </div>
             </div>
 
             <div className="flex gap-3 mt-6">
@@ -1293,6 +1310,7 @@ export default function SuperAdminDashboard() {
                   setNewQuestionCorrectAnswer("")
                   setNewQuestionHint("")
                   setNewQuestionIsSnake(false)
+                  setNewQuestionRoomType("TECH")
                 }}
                 className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded font-medium text-sm hover:bg-gray-300 transition-colors"
               >
@@ -1373,6 +1391,21 @@ export default function SuperAdminDashboard() {
                   />
                 </div>
               )}
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Room Type</label>
+                <select
+                  value={editingQuestion.roomType || "TECH"}
+                  onChange={(e) => setEditingQuestion({ ...editingQuestion, roomType: e.target.value as "TECH" | "NON_TECH" })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-gray-600 focus:ring-1 focus:ring-gray-600 text-gray-900"
+                >
+                  <option value="TECH">Tech Room</option>
+                  <option value="NON_TECH">Non-Tech Room</option>
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Specify if this question is for Tech or Non-Tech rooms
+                </p>
+              </div>
             </div>
 
             <div className="flex gap-3 mt-6">

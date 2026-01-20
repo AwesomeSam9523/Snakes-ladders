@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../src/config/db');
 
 async function seedRooms() {
   console.log('🌱 Seeding rooms...');

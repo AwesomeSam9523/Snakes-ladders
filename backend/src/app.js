@@ -19,7 +19,7 @@ app.get('/', (req, res) => {
   res.json({ message: 'Welcome to the Snakes and Ladders API' });
 });
 
-app.get('/version', (req, res) => {
+app.get('/api/version', (req, res) => {
   res.json({ version: API_VERSION_TIME });
 });
 

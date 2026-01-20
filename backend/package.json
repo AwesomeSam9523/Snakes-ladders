@@ -14,6 +14,7 @@
     "db:studio": "node node_modules/prisma/build/index.js studio",
     "db:seed": "node prisma/seed.js",
     "db:seed-maps": "node prisma/seed-maps.js",
+    "db:seedRooms": "node prisma/seedRooms.js",
     "postinstall": "npx prisma migrate deploy && npx prisma generate"
   },
   "keywords": [

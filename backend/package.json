@@ -13,7 +13,9 @@
     "db:reset": "node node_modules/prisma/build/index.js migrate reset --force",
     "db:studio": "node node_modules/prisma/build/index.js studio",
     "db:seed": "node prisma/seed.js",
-    "db:seed-maps": "node prisma/seed-maps.js"
+    "db:seed-maps": "node prisma/seed-maps.js",
+    "db:seedRooms": "node prisma/seedRooms.js",
+    "postinstall": "npx prisma migrate deploy && npx prisma generate"
   },
   "keywords": [
     "snakes",
@@ -24,7 +26,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@prisma/client": "^5.7.0",
+    "@prisma/adapter-pg": "^7.2.0",
+    "@prisma/client": "^7.2.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
@@ -32,10 +35,11 @@
     "express-rate-limit": "^8.2.1",
     "express-session": "^1.17.3",
     "jsonwebtoken": "^9.0.2",
-    "node-cache": "^5.1.2"
+    "node-cache": "^5.1.2",
+    "pg": "^8.17.1"
   },
   "devDependencies": {
     "nodemon": "^3.0.2",
-    "prisma": "^5.7.0"
+    "prisma": "^7.2.0"
   }
 }

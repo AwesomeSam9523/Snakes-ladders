@@ -2,6 +2,7 @@ const prisma = require('../../config/db');
 const { logAdminAction, AUDIT_ACTIONS } = require('../audit/audit.service');
 
 const getAllTeams = async () => {
+  console.log(await prisma.$queryRaw`SELECT 1`);
   return await prisma.team.findMany({
     include: {
       members: true,

@@ -13,7 +13,8 @@
     "db:reset": "node node_modules/prisma/build/index.js migrate reset --force",
     "db:studio": "node node_modules/prisma/build/index.js studio",
     "db:seed": "node prisma/seed.js",
-    "db:seed-maps": "node prisma/seed-maps.js"
+    "db:seed-maps": "node prisma/seed-maps.js",
+    "postinstall": "npx prisma migrate deploy && npx prisma generate"
   },
   "keywords": [
     "snakes",

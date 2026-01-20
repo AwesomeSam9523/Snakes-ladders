@@ -1,10 +1,10 @@
 generator client {
   provider = "prisma-client-js"
+  output   = "../generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 // ENUMS
@@ -72,7 +72,7 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  team      Team?    @relation(fields: [teamId], references: [id])
+  team Team? @relation(fields: [teamId], references: [id])
 }
 
 // TEAM MANAGEMENT
@@ -89,16 +89,16 @@ model Team {
   canRollDice     Boolean    @default(true)
   timerPaused     Boolean    @default(false)
   mapId           String?
-  
-  members         TeamMember[]
-  checkpoints     Checkpoint[]
-  diceRolls       DiceRoll[]
-  timeLogs        TimeLog[]
-  user            User?
-  map             BoardMap?  @relation(fields: [mapId], references: [id])
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  members     TeamMember[]
+  checkpoints Checkpoint[]
+  diceRolls   DiceRoll[]
+  timeLogs    TimeLog[]
+  user        User?
+  map         BoardMap?    @relation(fields: [mapId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model TeamMember {
@@ -106,7 +106,7 @@ model TeamMember {
   teamId String
   name   String
 
-  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
 }
 
 // GAME FLOW
@@ -120,25 +120,25 @@ model DiceRoll {
   roomAssigned String
   createdAt    DateTime @default(now())
 
-  team         Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
 }
 
 model Checkpoint {
-  id               String           @id @default(uuid())
-  teamId           String
-  checkpointNumber Int
-  positionBefore   Int
-  positionAfter    Int
-  roomNumber        String
-  status           CheckpointStatus @default(PENDING)
-  isSnakePosition  Boolean          @default(false)
-  snakeDodgeAttempted Boolean       @default(false)
+  id                  String           @id @default(uuid())
+  teamId              String
+  checkpointNumber    Int
+  positionBefore      Int
+  positionAfter       Int
+  roomNumber          String
+  status              CheckpointStatus @default(PENDING)
+  isSnakePosition     Boolean          @default(false)
+  snakeDodgeAttempted Boolean          @default(false)
 
-  questionAssign   QuestionAssignment?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  questionAssign QuestionAssignment?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
 
-  team             Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
   @@unique([teamId, checkpointNumber])
 }
@@ -146,46 +146,46 @@ model Checkpoint {
 // QUESTION ENGINE
 
 model Question {
-  id            String       @id @default(uuid())
-  text          String
-  hint          String
-  isSnakeQuestion Boolean    @default(false)
-  type          QuestionType @default(CODING)
-  options       String[]     @default([])
-  correctAnswer String?
-  isActive      Boolean      @default(true)
+  id              String       @id @default(uuid())
+  text            String
+  hint            String
+  isSnakeQuestion Boolean      @default(false)
+  type            QuestionType @default(CODING)
+  options         String[]     @default([])
+  correctAnswer   String?
+  isActive        Boolean      @default(true)
 
   assignments QuestionAssignment[]
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model QuestionAssignment {
-  id             String         @id @default(uuid())
-  checkpointId   String         @unique
-  questionId     String
-  status         QuestionStatus @default(PENDING)
+  id                String         @id @default(uuid())
+  checkpointId      String         @unique
+  questionId        String
+  status            QuestionStatus @default(PENDING)
   participantAnswer String?
-  submittedAt    DateTime?
-  assignedAt   DateTime       @default(now())
-  answeredAt   DateTime?
+  submittedAt       DateTime?
+  assignedAt        DateTime       @default(now())
+  answeredAt        DateTime?
 
-  checkpoint   Checkpoint @relation(fields: [checkpointId], references: [id], onDelete: Cascade)
-  question     Question   @relation(fields: [questionId], references: [id])
+  checkpoint Checkpoint @relation(fields: [checkpointId], references: [id], onDelete: Cascade)
+  question   Question   @relation(fields: [questionId], references: [id])
 }
 
 // BOARD MAPS & RULES (SNAKES & LADDERS)
 
 model BoardMap {
-  id        String      @id @default(uuid())
-  name      String      @unique
-  isActive  Boolean     @default(true)
-  rules     BoardRule[]
-  teams     Team[]
-  
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+  id       String      @id @default(uuid())
+  name     String      @unique
+  isActive Boolean     @default(true)
+  rules    BoardRule[]
+  teams    Team[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model BoardRule {
@@ -193,9 +193,9 @@ model BoardRule {
   mapId    String
   type     BoardRuleType
   startPos Int
-  
-  map      BoardMap      @relation(fields: [mapId], references: [id], onDelete: Cascade)
-  
+
+  map BoardMap @relation(fields: [mapId], references: [id], onDelete: Cascade)
+
   @@unique([mapId, startPos])
 }
 
@@ -208,7 +208,7 @@ model TimeLog {
   reason    String
   createdAt DateTime @default(now())
 
-  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
 }
 
 // AUDIT LOG

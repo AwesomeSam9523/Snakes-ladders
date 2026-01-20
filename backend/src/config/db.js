@@ -1,20 +1,31 @@
-const { PrismaClient } = require('@prisma/client');
+const { PrismaClient } = require('../../generated/prisma');
+const { PrismaPg } = require('@prisma/adapter-pg');
+const { Pool } = require('pg');
+require('dotenv').config();
 
-const prismaClientSingleton = () => {
+function prismaClientSingleton() {
+  const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    max: 1, // max connections
+    idleTimeoutMillis: 30000,     // close idle connections
+    connectionTimeoutMillis: 15000, // fail fast instead of hanging
+    ssl: {
+      rejectUnauthorized: false,
+    },
+  });
+
+  const adapter = new PrismaPg(pool);
+
   return new PrismaClient({
+    adapter,
     log: ['error', 'warn'],
-    datasources: {
-      db: {
-        url: process.env.DATABASE_URL + '?connection_limit=20&pool_timeout=30&connect_timeout=15'
-      }
-    }
-  })
-}
+  });
+};
 
-const prisma = globalThis.prismaGlobal ?? prismaClientSingleton()
+const prisma = globalThis.prismaGlobal ?? prismaClientSingleton();
 
-
-if (process.env.NODE_ENV !== 'PRODUCTION')
+if (process.env.NODE_ENV !== 'PRODUCTION') {
   globalThis.prismaGlobal = prisma;
+}
 
 module.exports = prisma;

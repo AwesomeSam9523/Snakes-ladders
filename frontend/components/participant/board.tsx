@@ -102,7 +102,7 @@ export function Board({ currentPosition, teamId }: BoardProps) {
                   <text
                     x={pos.x * 10 + 5}
                     y={pos.y * 10 + 3}
-                    fontSize={2}
+                    fontSize={4.5}
                     fill="#dc2626"
                     textAnchor="middle"
                   >

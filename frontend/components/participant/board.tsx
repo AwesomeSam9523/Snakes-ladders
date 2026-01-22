@@ -83,7 +83,7 @@ export function Board({ currentPosition, teamId }: BoardProps) {
                   y={pos.y * 10}
                   width={10}
                   height={10}
-                  fill={isSnakeTile ? "#fee" : num === 1 ? "#d4f5d4" : num === 150 ? "#90EE90" : "#fff"}
+                  fill={isSnakeTile ? "#ffcccc" : num === 1 ? "#2fe469" : num === 150 ? "#e83838" : "#fff"}
                   stroke="#ccc"
                   strokeWidth={0.2}
                 />
@@ -102,7 +102,7 @@ export function Board({ currentPosition, teamId }: BoardProps) {
                   <text
                     x={pos.x * 10 + 5}
                     y={pos.y * 10 + 3}
-                    fontSize={4.5}
+                    fontSize={3.35}
                     fill="#dc2626"
                     textAnchor="middle"
                   >

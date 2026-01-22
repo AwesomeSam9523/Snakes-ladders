@@ -234,6 +234,19 @@ const approveCheckpoint = async (checkpointId, adminUsername = 'admin') => {
     throw new Error('No question assigned to this checkpoint - this should not happen');
   }
 
+  // Validation: Only allow approving the latest pending checkpoint for this team
+  const latestPendingCheckpoint = await prisma.checkpoint.findFirst({
+    where: { 
+      teamId: checkpoint.teamId,
+      status: 'PENDING'
+    },
+    orderBy: { checkpointNumber: 'desc' }
+  });
+
+  if (latestPendingCheckpoint && latestPendingCheckpoint.id !== checkpointId) {
+    throw new Error(`Cannot approve checkpoint #${checkpoint.checkpointNumber}. Please approve the latest checkpoint #${latestPendingCheckpoint.checkpointNumber} first, or delete invalid checkpoints.`);
+  }
+
   // Update checkpoint status to APPROVED (reveals question to team)
   const updatedCheckpoint = await prisma.checkpoint.update({
     where: { id: checkpointId },
@@ -281,6 +294,53 @@ const resumeTeamTimer = async (teamId) => {
   });
 };
 
+const deleteCheckpoint = async (checkpointId, adminUsername = 'admin') => {
+  const checkpoint = await prisma.checkpoint.findUnique({
+    where: { id: checkpointId },
+    include: {
+      team: true,
+      questionAssign: true,
+    },
+  });
+
+  if (!checkpoint) {
+    throw new Error('Checkpoint not found');
+  }
+
+  // Only allow deleting PENDING checkpoints
+  if (checkpoint.status !== 'PENDING') {
+    throw new Error('Can only delete pending checkpoints');
+  }
+
+  // Delete the question assignment first (if exists)
+  if (checkpoint.questionAssign) {
+    await prisma.questionAssignment.delete({
+      where: { id: checkpoint.questionAssign.id },
+    });
+  }
+
+  // Delete the checkpoint
+  await prisma.checkpoint.delete({
+    where: { id: checkpointId },
+  });
+
+  // Log the deletion to audit
+  await logAdminAction(
+    adminUsername,
+    'admin',
+    'CHECKPOINT_DELETED',
+    checkpoint.team.teamName,
+    {
+      checkpointId,
+      checkpointNumber: checkpoint.checkpointNumber,
+      position: checkpoint.positionAfter,
+      message: `Deleted checkpoint #${checkpoint.checkpointNumber} for ${checkpoint.team.teamName}`
+    }
+  );
+
+  return { success: true, message: 'Checkpoint deleted successfully' };
+};
+
 module.exports = {
   getAllTeams,
   getTeamById,
@@ -293,5 +353,6 @@ module.exports = {
   approveCheckpoint,
   pauseTeamTimer,
   resumeTeamTimer,
+  deleteCheckpoint,
 };
 

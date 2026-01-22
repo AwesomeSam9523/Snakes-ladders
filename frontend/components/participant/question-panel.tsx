@@ -239,7 +239,7 @@ export function QuestionPanel({
               <Button 
                 onClick={handleHintClick} 
                 variant="outline"
-                className="flex items-center justify-center gap-2 text-sm w-full sm:w-auto border-gray-300 hover:bg-gray-100"
+                className="flex items-center justify-center gap-2 text-sm w-full sm:w-auto bg-gray-900 text-white border-gray-900 hover:bg-gray-800"
                 disabled={usingHint}
               >
                 <HelpCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -286,27 +286,27 @@ export function QuestionPanel({
         )}
 
         {participantAnswer && (
-          <div className={`p-4 rounded-lg text-center ${
-            status === 'CORRECT' ? 'bg-green-100' :
-            status === 'INCORRECT' ? 'bg-red-100' :
-            'bg-gray-100'
+          <div className={`p-4 rounded-lg text-center border-2 ${
+            status === 'CORRECT' ? 'bg-green-100 border-green-400' :
+            status === 'INCORRECT' ? 'bg-red-100 border-red-400' :
+            'bg-green-50 border-green-500'
           }`}>
             {status === 'CORRECT' ? (
               <>
                 <CheckCircle className="w-6 h-6 mx-auto text-green-600 mb-2" />
                 <p className="text-sm font-semibold text-green-700">✓ Correct!</p>
-                <p className="text-xs text-gray-600 mt-1">You can now roll the dice again.</p>
+                <p className="text-xs text-gray-800 mt-1">You can now roll the dice again.</p>
               </>
             ) : status === 'INCORRECT' ? (
               <>
                 <XCircle className="w-6 h-6 mx-auto text-red-600 mb-2" />
                 <p className="text-sm font-semibold text-red-700">✗ Incorrect</p>
-                <p className="text-xs text-gray-600 mt-1">Waiting for admin review...</p>
+                <p className="text-xs text-gray-800 mt-1">Waiting for admin review...</p>
               </>
             ) : (
               <>
                 <p className="text-sm font-semibold text-gray-900">✓ Answer Submitted</p>
-                <p className="text-xs text-gray-600 mt-1">Waiting for admin to evaluate your answer...</p>
+                <p className="text-xs text-gray-900 mt-1">Waiting for admin to evaluate your answer...</p>
               </>
             )}
           </div>

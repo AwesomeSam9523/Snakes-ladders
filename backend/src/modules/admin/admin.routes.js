@@ -20,6 +20,7 @@ router.get('/checkpoints/pending', adminController.getPendingCheckpoints);
 router.post('/checkpoints/:checkpointId/approve', adminController.approveCheckpoint);
 // assign-question route removed - questions now auto-assigned during dice roll
 router.post('/checkpoints/:checkpointId/mark', adminController.markQuestion);
+router.delete('/checkpoints/:checkpointId', adminController.deleteCheckpoint);
 
 // Question routes
 router.get('/questions/available', adminController.getAvailableQuestions);

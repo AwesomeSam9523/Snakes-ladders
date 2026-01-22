@@ -133,6 +133,17 @@ const resumeTeamTimer = async (req, res, next) => {
   }
 };
 
+const deleteCheckpoint = async (req, res, next) => {
+  try {
+    const { checkpointId } = req.params;
+    const adminUsername = req.user?.username || 'admin';
+    const result = await adminService.deleteCheckpoint(checkpointId, adminUsername);
+    return sendSuccess(res, result, 'Checkpoint deleted successfully');
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getAllTeams,
   getTeamById,
@@ -144,4 +155,5 @@ module.exports = {
   approveCheckpoint,
   pauseTeamTimer,
   resumeTeamTimer,
+  deleteCheckpoint,
 };

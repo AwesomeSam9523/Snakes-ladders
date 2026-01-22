@@ -58,14 +58,15 @@ const processDiceRoll = async (teamId) => {
   const stayedAtSamePosition = positionBefore === positionAfter && positionBefore !== GAME_CONFIG.BOARD_SIZE;
   
   // Update team position and room
-  // If stayed at same position, allow re-roll (canRollDice = true)
+  // Always set canRollDice to false after rolling - team must complete checkpoint first
+  // Only exception: if stayed at same position (roll would exceed 150), allow re-roll
   // If reached goal, mark as COMPLETED
   await prisma.team.update({
     where: { id: teamId },
     data: {
       currentPosition: positionAfter,
       currentRoom: newRoom,
-      canRollDice: stayedAtSamePosition, // Can roll again if stayed at same position
+      canRollDice: stayedAtSamePosition, // Only true if stayed at same position, otherwise false until checkpoint completed
       status: hasReachedGoal(positionAfter) ? 'COMPLETED' : 'ACTIVE',
     },
   });

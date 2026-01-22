@@ -65,8 +65,8 @@ export function Board({ currentPosition, teamId }: BoardProps) {
   const tiles = Array.from({ length: 150 }, (_, i) => i + 1)
 
   return (
-    <div className="rounded-xl sm:rounded-2xl bg-card border border-border p-3 sm:p-4 md:p-6">
-      <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Game Board</h3>
+    <div className="rounded-lg bg-white border border-gray-200 p-4 sm:p-6 shadow-sm">
+      <h3 className="text-lg font-bold text-gray-900 mb-4">Game Board</h3>
 
       <div className="relative w-full max-w-4xl mx-auto overflow-x-auto">
         <svg viewBox="0 0 150 100" className="w-full h-full min-w-[300px]">
@@ -83,29 +83,30 @@ export function Board({ currentPosition, teamId }: BoardProps) {
                   y={pos.y * 10}
                   width={10}
                   height={10}
-                  fill={isSnakeTile ? "oklch(0.55 0.22 25 / 0.15)" : "oklch(0.25 0.015 250)"}
-                  stroke={isSnakeTile ? "oklch(0.55 0.22 25 / 0.4)" : "oklch(0.35 0.015 250)"}
-                  strokeWidth={isSnakeTile ? 0.3 : 0.1}
+                  fill={isSnakeTile ? "#fee" : num === 1 ? "#d4f5d4" : num === 150 ? "#90EE90" : "#fff"}
+                  stroke="#ccc"
+                  strokeWidth={0.2}
                 />
                 <text
                   x={pos.x * 10 + 5}
-                  y={pos.y * 10 + 3.5}
-                  fontSize={2}
-                  fill="oklch(0.65 0.01 250)"
+                  y={pos.y * 10 + 6}
+                  fontSize={2.5}
+                  fill="#000"
                   textAnchor="middle"
-                  fontFamily="monospace"
+                  fontFamily="Arial, sans-serif"
+                  fontWeight="bold"
                 >
                   {num}
                 </text>
                 {isSnakeTile && (
                   <text
                     x={pos.x * 10 + 5}
-                    y={pos.y * 10 + 7.5}
-                    fontSize={3}
-                    fill="oklch(0.55 0.22 25)"
+                    y={pos.y * 10 + 3}
+                    fontSize={2}
+                    fill="#dc2626"
                     textAnchor="middle"
                   >
-                    ⚠
+                    🐍
                   </text>
                 )}
               </g>
@@ -139,12 +140,12 @@ export function Board({ currentPosition, teamId }: BoardProps) {
         </svg>
       </div>
 
-      <div className="mt-3 sm:mt-4 p-2 sm:p-3 rounded-lg bg-muted">
-        <p className="text-xs sm:text-sm text-muted-foreground">
-          <span className="font-semibold text-foreground">{teamId}</span> is at position{" "}
-          <span className="font-semibold text-primary">{currentPosition}</span>
+      <div className="mt-4 p-3 rounded-lg bg-gray-50 border border-gray-200">
+        <p className="text-sm text-gray-700">
+          <span className="font-bold text-gray-900">{teamId}</span> is at position{" "}
+          <span className="font-bold text-blue-600">{currentPosition}</span>
           {snakeTiles.includes(currentPosition) && (
-            <span className="ml-2 text-danger font-semibold">⚠ Danger Zone!</span>
+            <span className="ml-2 text-red-600 font-bold">⚠ Danger Zone!</span>
           )}
         </p>
       </div>

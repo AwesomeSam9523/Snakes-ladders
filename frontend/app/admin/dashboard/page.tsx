@@ -159,6 +159,34 @@ export default function AdminDashboard() {
     }
   }
 
+  // Delete checkpoint
+  const handleDeleteCheckpoint = async (checkpointId: string, checkpointNumber: number) => {
+    if (!confirm(`Are you sure you want to delete Checkpoint #${checkpointNumber}? This action cannot be undone.`)) {
+      return
+    }
+
+    try {
+      const token = localStorage.getItem("token")
+      const res = await fetch(`${API_URL}/admin/checkpoints/${checkpointId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (res.ok) {
+        fetchTeams()
+        alert("Checkpoint deleted successfully!")
+      } else {
+        const error = await res.json()
+        alert(`Error: ${error.message || 'Failed to delete checkpoint'}`)
+      }
+    } catch (error) {
+      console.error("Error deleting checkpoint:", error)
+      alert("Failed to delete checkpoint")
+    }
+  }
+
   // Pause team timer
   const handlePauseTimer = async (teamId: string) => {
     try {
@@ -305,12 +333,21 @@ export default function AdminDashboard() {
                             
                             {/* Step 1: Checkpoint Approval Status */}
                             {checkpoint.status === "PENDING" ? (
-                              <button
-                                onClick={() => handleApproveCheckpoint(checkpoint.id)}
-                                className="px-3 py-1 text-xs bg-gray-900 text-white rounded hover:bg-gray-800 transition-colors font-medium"
-                              >
-                                Approve Checkpoint
-                              </button>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleApproveCheckpoint(checkpoint.id)}
+                                  className="px-3 py-1 text-xs bg-gray-900 text-white rounded hover:bg-gray-800 transition-colors font-medium"
+                                >
+                                  Approve Checkpoint
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteCheckpoint(checkpoint.id, checkpoint.checkpointNumber)}
+                                  className="px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition-colors font-medium"
+                                  title="Delete this checkpoint"
+                                >
+                                  🗑️ Delete
+                                </button>
+                              </div>
                             ) : checkpoint.status === "APPROVED" ? (
                               <span className="text-xs text-green-600 font-medium">✓ Checkpoint Approved</span>
                             ) : (

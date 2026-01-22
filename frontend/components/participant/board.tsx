@@ -8,8 +8,8 @@ interface BoardProps {
   teamId: string
 }
 
-const BOARD_COLS = 15
-const BOARD_ROWS = 10
+const BOARD_COLS = 10
+const BOARD_ROWS = 15
 
 export function Board({ currentPosition, teamId }: BoardProps) {
   // Default snake positions if no map assigned
@@ -69,7 +69,7 @@ export function Board({ currentPosition, teamId }: BoardProps) {
       <h3 className="text-lg font-bold text-gray-900 mb-4">Game Board</h3>
 
       <div className="relative w-full max-w-4xl mx-auto overflow-x-auto">
-        <svg viewBox="0 0 150 100" className="w-full h-full min-w-[300px]">
+        <svg viewBox="0 0 100 150" className="w-full h-full min-w-[300px]">
           {/* Grid */}
           {tiles.map((num) => {
             const pos = getPosition(num)

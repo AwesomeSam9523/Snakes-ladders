@@ -11,5 +11,9 @@
       "src": "(.*)",
       "dest": "src/app.js"
     }
-  ]
+  ],
+  "env": {
+    "PRISMA_GENERATE_SKIP_AUTOINSTALL": "true"
+  },
+  "buildCommand": "npm install && npx prisma generate"
 }

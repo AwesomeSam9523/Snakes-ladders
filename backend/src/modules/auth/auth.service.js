@@ -6,6 +6,8 @@ const { logLogin } = require('../audit/audit.service');
 
 // login for all user types (only database users)
 const login = async (username, password) => {
+  console.log('Login attempt:', { username, hasPassword: !!password });
+  
   // Check database for user
   const user = await prisma.user.findUnique({
     where: { username },
@@ -18,11 +20,15 @@ const login = async (username, password) => {
     },
   });
 
+  console.log('User found:', { found: !!user, hasStoredPassword: !!user?.password });
+
   if (!user) {
     throw new Error('Invalid credentials');
   }
 
   const isValidPassword = await comparePassword(password, user.password);
+  console.log('Password validation:', { isValid: isValidPassword });
+  
   if (!isValidPassword) {
     // Log failed login attempt
     await logLogin(username, 'unknown', false);

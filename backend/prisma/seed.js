@@ -20,7 +20,9 @@ async function main() {
   const superadminPassword = await hashPassword('super123');
   const superadmin = await prisma.user.upsert({
     where: { username: 'SUPER001' },
-    update: {},
+    update: {
+      password: superadminPassword, // Update password if exists
+    },
     create: {
       username: 'SUPER001',
       password: superadminPassword,
@@ -33,7 +35,9 @@ async function main() {
   const adminPassword = await hashPassword('admin123');
   const admin = await prisma.user.upsert({
     where: { username: 'ADMIN001' },
-    update: {},
+    update: {
+      password: adminPassword, // Update password if exists
+    },
     create: {
       username: 'ADMIN001',
       password: adminPassword,
@@ -83,7 +87,10 @@ async function main() {
   const participantPassword = await hashPassword('team123');
   const participant = await prisma.user.upsert({
     where: { username: 'TEAM001' },
-    update: {},
+    update: {
+      password: participantPassword, // Update password if exists
+      teamId: team.id,
+    },
     create: {
       username: 'TEAM001',
       password: participantPassword,

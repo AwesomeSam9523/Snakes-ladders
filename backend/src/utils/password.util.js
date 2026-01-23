@@ -10,6 +10,11 @@ const hashPassword = async (password) => {
 
 //Compare plain text password with hashed password
 const comparePassword = async (password, hashedPassword) => {
+  // Guard against null/undefined values
+  if (!password || !hashedPassword) {
+    console.error('Password comparison failed: missing password or hash');
+    return false;
+  }
   return await bcrypt.compare(password, hashedPassword);
 };
 

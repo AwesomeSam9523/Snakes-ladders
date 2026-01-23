@@ -206,6 +206,8 @@ model BoardRule {
   map BoardMap @relation(fields: [mapId], references: [id], onDelete: Cascade)
 
   @@unique([mapId, startPos])
+  @@index([mapId, type])
+  @@index([mapId, type, startPos])
 }
 
 // TIMER & PENALTIES

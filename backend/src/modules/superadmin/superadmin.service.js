@@ -3,7 +3,7 @@ const { hashPassword } = require('../../utils/password.util');
 const { generateTeamCode } = require('../../utils/random.util');
 const { GAME_CONFIG, ROOMS } = require('../../config/constants');
 const { logTeamCreated, logAdminAction, AUDIT_ACTIONS } = require('../audit/audit.service');
-const { assignMapToTeam: assignMap, getAllBoardMaps } = require('../game/board.service');
+const { assignMapToTeam: assignMap, getAllBoardMaps, clearBoardCache } = require('../game/board.service');
 
 // Helper function to find an available room with capacity from database
 const findAvailableRoom = async () => {
@@ -223,6 +223,9 @@ const assignMapToTeam = async (teamId, mapId) => {
   if (!map) {
     throw new Error('Map not found');
   }
+  
+  // Clear cache for this team since map is changing
+  clearBoardCache(teamId);
   
   return await assignMap(teamId, String(mapId));
 };

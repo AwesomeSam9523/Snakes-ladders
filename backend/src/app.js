@@ -32,21 +32,21 @@ app.use('/api', routes);
 app.use(notFoundHandler);
 app.use(errorHandler);
 
-// Auto-sync team positions every 15 seconds (optimized for load)
+// Auto-sync team positions every 30 seconds (optimized for load)
 setInterval(async () => {
   try {
     await syncAllTeamPositions();
   } catch (error) {
     console.error('Error in auto-sync:', error.message);
   }
-}, 15000);
+}, 30000);
 
 if (process.env.VERCEL !== '1') {
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
-    console.log('✓ Auto-sync enabled: Team positions will sync every 15 seconds');
-    console.log('✓ Connection pooling: 15 concurrent connections max');
+    console.log('✓ Auto-sync enabled: Team positions will sync every 30 seconds');
+    console.log('✓ Connection pooling: 20 concurrent connections max');
   });
 }
 

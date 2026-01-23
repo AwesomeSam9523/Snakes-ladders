@@ -15,7 +15,7 @@
     "db:seed": "node prisma/seed.js",
     "db:seed-maps": "node prisma/seed-maps.js",
     "db:seedRooms": "node prisma/seedRooms.js",
-    "postinstall": "npx prisma migrate deploy && npx prisma generate"
+    "postinstall": "npx prisma generate"
   },
   "keywords": [
     "snakes",

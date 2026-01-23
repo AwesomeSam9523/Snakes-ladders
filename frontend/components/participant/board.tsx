@@ -87,27 +87,27 @@ export function Board({ currentPosition, teamId }: BoardProps) {
                   stroke="#ccc"
                   strokeWidth={0.2}
                 />
-                <text
-                  x={pos.x * 10 + 5}
-                  y={pos.y * 10 + 6}
-                  fontSize={2.5}
-                  fill="#000"
-                  textAnchor="middle"
-                  fontFamily="Arial, sans-serif"
-                  fontWeight="bold"
-                >
-                  {num}
-                </text>
-                {isSnakeTile && (
+                {!isSnakeTile && (
                   <text
                     x={pos.x * 10 + 5}
-                    y={pos.y * 10 + 3}
-                    fontSize={3.35}
-                    fill="#dc2626"
+                    y={pos.y * 10 + 6}
+                    fontSize={2.5}
+                    fill="#2a2a2a"
                     textAnchor="middle"
+                    fontFamily="Arial, sans-serif"
+                    fontWeight="bold"
                   >
-                    🐍
+                    {num}
                   </text>
+                )}
+                {isSnakeTile && (
+                  <image
+                    href="/snake.png"
+                    x={pos.x * 10 + 1}
+                    y={pos.y * 10 + 1}
+                    width={8}
+                    height={8}
+                  />
                 )}
               </g>
             )

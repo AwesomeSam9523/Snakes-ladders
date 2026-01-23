@@ -9,6 +9,14 @@ const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "Snake & Ladder - Admin Portal",
+  icons: {
+    icon: [
+      { url: '/favicon.ico' },
+      { url: '/icon.png', type: 'image/png' },
+    ],
+    apple: '/icon.png',
+    shortcut: '/favicon.ico',
+  },
 }
 
 export default function RootLayout({

@@ -484,14 +484,14 @@ export default function ParticipantDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-white">
         <p className="text-gray-600">Loading...</p>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-white">
       <Header teamId={teamData.teamId} />
 
       <StatusStrip
@@ -504,14 +504,14 @@ export default function ParticipantDashboard() {
 
       {/* Game Completed Banner */}
       {teamData.status === "COMPLETED" && (
-        <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white py-4 sm:py-6 md:py-8 px-3 sm:px-4 text-center">
+        <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white py-4 sm:py-6 md:py-8 px-3 sm:px-4 text-center shadow-lg">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-1 sm:mb-2">🎉 Congratulations! 🎉</h1>
           <p className="text-base sm:text-lg md:text-xl">You have completed the game!</p>
           <p className="text-sm sm:text-base md:text-lg mt-1 sm:mt-2">Final Time: {Math.floor(teamData.totalTimeSec / 3600).toString().padStart(2, "0")}:{Math.floor((teamData.totalTimeSec % 3600) / 60).toString().padStart(2, "0")}:{(teamData.totalTimeSec % 60).toString().padStart(2, "0")}</p>
         </div>
       )}
 
-      <main className="flex-1 container mx-auto p-3 sm:p-4 lg:p-6">
+      <main className="flex-1 container mx-auto p-3 sm:p-4 lg:p-6 bg-gray-50">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Left column */}
           <div className="lg:col-span-2 space-y-6">

@@ -73,6 +73,14 @@ const getSnakesByMap = async (mapId) => {
 // ==================== TEAM-SPECIFIC SNAKE CHECKS ====================
 
 const checkSnakeForTeam = async (teamId, position) => {
+  // Try to get from cache first
+  const cached = boardStateCache.get(teamId);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    const isSnake = cached.data.snakes.includes(position);
+    return isSnake ? { startPos: position, type: 'SNAKE' } : null;
+  }
+
+  // Fetch team's mapId only
   const team = await prisma.team.findUnique({
     where: { id: teamId },
     select: { mapId: true },
@@ -82,6 +90,7 @@ const checkSnakeForTeam = async (teamId, position) => {
     return null; // No map assigned, no snake
   }
 
+  // Check if position has a snake
   const snake = await prisma.boardRule.findFirst({
     where: {
       mapId: team.mapId,
@@ -132,40 +141,58 @@ const getTeamMap = async (teamId) => {
 
 // ==================== BOARD STATE ====================
 
+// In-memory cache for board states (cleared on server restart)
+const boardStateCache = new Map();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
 const getBoardStateForTeam = async (teamId) => {
+  // Check cache first
+  const cached = boardStateCache.get(teamId);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.data;
+  }
+
+  // Optimized query - only fetch what we need
   const team = await prisma.team.findUnique({
     where: { id: teamId },
-    include: {
+    select: {
+      mapId: true,
       map: {
-        include: {
-          rules: true,
+        select: {
+          id: true,
+          name: true,
+          rules: {
+            where: { type: 'SNAKE' }, // Only fetch snakes
+            select: { startPos: true },
+            orderBy: { startPos: 'asc' },
+          },
         },
       },
     },
   });
 
   if (!team || !team.map) {
-    return {
+    const defaultState = {
       boardSize: 150,
       mapName: null,
       snakes: [],
     };
+    // Cache even empty state to avoid repeated queries
+    boardStateCache.set(teamId, { data: defaultState, timestamp: Date.now() });
+    return defaultState;
   }
 
-  const snakePositions = [];
-
-  team.map.rules.forEach(rule => {
-    if (rule.type === 'SNAKE') {
-      snakePositions.push(rule.startPos);
-    }
-  });
-
-  return {
+  const boardState = {
     boardSize: 150,
     mapId: team.map.id,
     mapName: team.map.name,
-    snakes: snakePositions,
+    snakes: team.map.rules.map(rule => rule.startPos),
   };
+
+  // Cache the result
+  boardStateCache.set(teamId, { data: boardState, timestamp: Date.now() });
+
+  return boardState;
 };
 
 // Legacy function for backward compatibility
@@ -180,6 +207,15 @@ const getBoardState = async () => {
       teamsCount: m._count.teams,
     })),
   };
+};
+
+// Clear cache for a specific team (call when map changes)
+const clearBoardCache = (teamId) => {
+  if (teamId) {
+    boardStateCache.delete(teamId);
+  } else {
+    boardStateCache.clear(); // Clear all
+  }
 };
 
 module.exports = {
@@ -201,6 +237,7 @@ module.exports = {
   assignMapToTeam,
   getTeamMap,
   getBoardStateForTeam,
+  clearBoardCache,
   
   // Legacy
   getBoardState,

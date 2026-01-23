@@ -6,9 +6,10 @@ require('dotenv').config();
 function prismaClientSingleton() {
   const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    max: 1, // max connections
-    idleTimeoutMillis: 30000,     // close idle connections
-    connectionTimeoutMillis: 15000, // fail fast instead of hanging
+    max: 20, // max connections - increased for better concurrency
+    min: 2,  // keep minimum connections ready
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 5000, // faster timeout
     ssl: {
       rejectUnauthorized: false,
     },
@@ -19,6 +20,11 @@ function prismaClientSingleton() {
   return new PrismaClient({
     adapter,
     log: ['error', 'warn'],
+    omit: {
+      user: {
+        password: true, // Never include password in queries
+      },
+    },
   });
 };
 

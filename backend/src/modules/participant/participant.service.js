@@ -105,10 +105,30 @@ const getPendingCheckpoint = async (teamId) => {
         status: 'PENDING', // Question assigned but not answered
       },
     },
-    include: {
+    select: {
+      id: true,
+      checkpointNumber: true,
+      positionBefore: true,
+      positionAfter: true,
+      roomNumber: true,
+      status: true,
+      isSnakePosition: true,
+      createdAt: true,
       questionAssign: {
-        include: {
-          question: true,
+        select: {
+          id: true,
+          status: true,
+          participantAnswer: true,
+          question: {
+            select: {
+              id: true,
+              text: true,
+              hint: true,
+              type: true,
+              options: true,
+              isSnakeQuestion: true,
+            },
+          },
         },
       },
     },
@@ -130,12 +150,16 @@ const getPendingCheckpoint = async (teamId) => {
       status: 'APPROVED',
       questionAssign: null,
     },
-    include: {
-      questionAssign: {
-        include: {
-          question: true,
-        },
-      },
+    select: {
+      id: true,
+      checkpointNumber: true,
+      positionBefore: true,
+      positionAfter: true,
+      roomNumber: true,
+      status: true,
+      isSnakePosition: true,
+      createdAt: true,
+      questionAssign: true,
     },
     orderBy: { createdAt: 'desc' },
   });
@@ -150,10 +174,19 @@ const getPendingCheckpoint = async (teamId) => {
       teamId,
       status: 'PENDING',
     },
-    include: {
+    select: {
+      id: true,
+      checkpointNumber: true,
+      positionBefore: true,
+      positionAfter: true,
+      roomNumber: true,
+      status: true,
+      isSnakePosition: true,
+      createdAt: true,
       questionAssign: {
-        include: {
-          question: true,
+        select: {
+          id: true,
+          status: true,
         },
       },
     },
@@ -200,7 +233,13 @@ const submitAnswer = async (teamId, assignmentId, answer) => {
     where: { id: assignmentId },
     include: {
       question: true,
-      checkpoint: true,
+      checkpoint: {
+        select: {
+          id: true,
+          teamId: true,
+          isSnakePosition: true,
+        },
+      },
     },
   });
 
@@ -235,57 +274,57 @@ const submitAnswer = async (teamId, assignmentId, answer) => {
     newStatus = isCorrect ? 'CORRECT' : 'INCORRECT';
   }
 
-  // Update the question assignment with the answer
-  const updatedAssignment = await prisma.questionAssignment.update({
-    where: { id: assignmentId },
-    data: {
-      participantAnswer: answer,
-      submittedAt: new Date(),
-      status: newStatus,
-    },
-    include: {
-      question: true,
-      checkpoint: true,
-    },
-  });
-
-  // Get checkpoint to check if it's a snake position
-  const checkpoint = await prisma.checkpoint.findUnique({
-    where: { id: assignment.checkpointId },
-    select: { isSnakePosition: true, teamId: true },
-  });
-
   // Calculate points based on snake position and answer correctness
   let pointsChange = 0;
   if (isAutoMarked) {
-    if (checkpoint.isSnakePosition) {
+    if (assignment.checkpoint.isSnakePosition) {
       // Snake position: correct = 0, incorrect = -1
       pointsChange = isCorrect ? 0 : -1;
     } else {
       // Normal position: correct = +1, incorrect = 0
       pointsChange = isCorrect ? 1 : 0;
     }
-
-    // Update team points
-    await prisma.team.update({
-      where: { id: checkpoint.teamId },
-      data: { 
-        points: { increment: pointsChange },
-      },
-    });
   }
 
-  // Approve the checkpoint so team can move on
-  await prisma.checkpoint.update({
-    where: { id: assignment.checkpointId },
-    data: { status: 'APPROVED' },
-  });
-
-  // Always unlock dice after answer submission, regardless of correctness
-  await prisma.team.update({
-    where: { id: teamId },
-    data: { canRollDice: true },
-  });
+  // Batch all updates in a transaction for speed
+  const [updatedAssignment] = await prisma.$transaction([
+    // Update the question assignment with the answer
+    prisma.questionAssignment.update({
+      where: { id: assignmentId },
+      data: {
+        participantAnswer: answer,
+        submittedAt: new Date(),
+        status: newStatus,
+      },
+      include: {
+        question: true,
+        checkpoint: true,
+      },
+    }),
+    
+    // Update team points if auto-marked
+    ...(isAutoMarked ? [
+      prisma.team.update({
+        where: { id: teamId },
+        data: { 
+          points: { increment: pointsChange },
+          canRollDice: true, // Unlock dice
+        },
+      })
+    ] : [
+      // Just unlock dice if not auto-marked
+      prisma.team.update({
+        where: { id: teamId },
+        data: { canRollDice: true },
+      })
+    ]),
+    
+    // Approve the checkpoint
+    prisma.checkpoint.update({
+      where: { id: assignment.checkpoint.id },
+      data: { status: 'APPROVED' },
+    }),
+  ]);
 
   return {
     assignment: updatedAssignment,
@@ -300,8 +339,13 @@ const useHint = async (teamId, assignmentId) => {
   // Get the question assignment to verify it belongs to this team
   const assignment = await prisma.questionAssignment.findUnique({
     where: { id: assignmentId },
-    include: {
-      checkpoint: true,
+    select: {
+      id: true,
+      checkpoint: {
+        select: {
+          teamId: true,
+        },
+      },
       question: {
         select: {
           hint: true,
@@ -326,6 +370,9 @@ const useHint = async (teamId, assignmentId) => {
       totalTimeSec: {
         increment: 60,
       },
+    },
+    select: {
+      totalTimeSec: true,
     },
   });
 

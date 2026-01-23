@@ -11,7 +11,7 @@ export default function ParticipantLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="participant min-h-screen bg-background text-foreground">
+    <div className="participant min-h-screen bg-white text-gray-900">
       {children}
     </div>
   )

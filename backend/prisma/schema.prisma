@@ -99,6 +99,10 @@ model Team {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  
+  @@index([status])
+  @@index([canRollDice])
+  @@index([currentPosition])
 }
 
 model TeamMember {
@@ -141,6 +145,8 @@ model Checkpoint {
   team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
   @@unique([teamId, checkpointNumber])
+  @@index([teamId, status])
+  @@index([status])
 }
 
 // QUESTION ENGINE
@@ -173,6 +179,9 @@ model QuestionAssignment {
 
   checkpoint Checkpoint @relation(fields: [checkpointId], references: [id], onDelete: Cascade)
   question   Question   @relation(fields: [questionId], references: [id])
+  
+  @@index([status])
+  @@index([questionId])
 }
 
 // BOARD MAPS & RULES (SNAKES & LADDERS)
@@ -197,6 +206,8 @@ model BoardRule {
   map BoardMap @relation(fields: [mapId], references: [id], onDelete: Cascade)
 
   @@unique([mapId, startPos])
+  @@index([mapId, type])
+  @@index([mapId, type, startPos])
 }
 
 // TIMER & PENALTIES

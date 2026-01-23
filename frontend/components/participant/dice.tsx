@@ -36,22 +36,22 @@ export function Dice({ onRoll, canRoll, isRolling, lastValue }: DiceProps) {
   }
 
   return (
-    <div className="flex flex-col items-center gap-4 sm:gap-6 p-4 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl bg-card border border-border">
+    <div className="flex flex-col items-center gap-4 sm:gap-6 p-4 sm:p-6 md:p-8 rounded-lg bg-white border border-gray-200 shadow-sm">
       <motion.div
         animate={isRolling ? { rotateX: 360, rotateY: 360 } : {}}
         transition={{ duration: 2, ease: "linear" }}
-        className="relative w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-xl sm:rounded-2xl bg-gradient-to-br from-primary to-accent shadow-2xl flex items-center justify-center"
+        className="relative w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-xl bg-gradient-to-br from-gray-800 to-gray-900 shadow-2xl flex items-center justify-center"
       >
-        <span className="text-5xl sm:text-5xl md:text-6xl font-bold text-primary-foreground">{displayValue}</span>
+        <span className="text-5xl sm:text-5xl md:text-6xl font-bold text-white">{displayValue}</span>
       </motion.div>
 
-      <Button onClick={handleRoll} disabled={!canRoll || isRolling} size="lg" className="w-full max-w-xs text-base sm:text-lg">
+      <Button onClick={handleRoll} disabled={!canRoll || isRolling} size="lg" className="w-full max-w-xs text-base sm:text-lg bg-gray-900 text-white hover:bg-gray-800 disabled:bg-gray-300 disabled:text-gray-500">
         <DiceIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
         {isRolling ? "Rolling..." : "Roll Dice"}
       </Button>
 
       {!canRoll && !isRolling && (
-        <p className="text-xs sm:text-sm text-muted-foreground text-center px-2">Complete your current checkpoint to roll again</p>
+        <p className="text-xs sm:text-sm text-gray-600 text-center px-2">Complete your current checkpoint to roll again</p>
       )}
     </div>
   )

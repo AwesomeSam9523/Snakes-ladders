@@ -31,37 +31,37 @@ export function StatusStrip({ currentPosition, roomNumber, status, totalTimeSec,
   }
 
   return (
-    <div className="border-b border-border bg-card">
+    <div className="border-b border-gray-200 bg-white shadow-sm">
       <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-3">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
           <div className="flex items-center gap-3 sm:gap-6 overflow-x-auto">
             <div className="flex-shrink-0">
-              <div className="text-xs sm:text-sm text-muted-foreground mb-0.5 sm:mb-1">Position</div>
-              <div className="text-2xl sm:text-3xl font-bold text-primary">{currentPosition}</div>
+              <div className="text-xs sm:text-sm text-gray-600 mb-0.5 sm:mb-1">Position</div>
+              <div className="text-2xl sm:text-3xl font-bold text-blue-600">{currentPosition}</div>
             </div>
 
-            <div className="h-10 sm:h-12 w-px bg-border flex-shrink-0" />
+            <div className="h-10 sm:h-12 w-px bg-gray-300 flex-shrink-0" />
 
             <div className="flex-shrink-0">
-              <div className="text-xs sm:text-sm text-muted-foreground mb-0.5 sm:mb-1">Room</div>
+              <div className="text-xs sm:text-sm text-gray-600 mb-0.5 sm:mb-1">Room</div>
               <div className="flex items-center gap-1 sm:gap-2">
-                <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-accent" />
-                <span className="text-base sm:text-xl font-semibold">{roomNumber || "—"}</span>
+                <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-700" />
+                <span className="text-base sm:text-xl font-semibold text-gray-900">{roomNumber || "—"}</span>
               </div>
             </div>
 
-            <div className="h-10 sm:h-12 w-px bg-border flex-shrink-0" />
+            <div className="h-10 sm:h-12 w-px bg-gray-300 flex-shrink-0" />
 
             <div className="flex-shrink-0">
-              <div className="text-xs sm:text-sm text-muted-foreground mb-0.5 sm:mb-1">Status</div>
-              <Badge variant="secondary" className="text-xs sm:text-sm">{statusLabels[status]}</Badge>
+              <div className="text-xs sm:text-sm text-gray-600 mb-0.5 sm:mb-1">Status</div>
+              <Badge variant="secondary" className="text-xs sm:text-sm bg-gray-100 text-gray-900 border-gray-300">{statusLabels[status]}</Badge>
             </div>
           </div>
 
           <div className="flex items-center">
-            <div className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg ${timerPaused ? 'bg-orange-100' : 'bg-secondary'} w-full sm:w-auto justify-center`}>
-              <Clock className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${timerPaused ? 'text-orange-600' : 'text-warning'}`} />
-              <span className={`font-mono text-base sm:text-lg font-semibold ${timerPaused ? 'text-orange-700' : ''}`}>
+            <div className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg ${timerPaused ? 'bg-orange-100' : 'bg-gray-100'} w-full sm:w-auto justify-center`}>
+              <Clock className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${timerPaused ? 'text-orange-600' : 'text-gray-700'}`} />
+              <span className={`font-mono text-base sm:text-lg font-semibold ${timerPaused ? 'text-orange-700' : 'text-gray-900'}`}>
                 {formatTime(totalTimeSec)}
               </span>
               {timerPaused && (

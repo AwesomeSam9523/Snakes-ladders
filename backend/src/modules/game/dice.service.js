@@ -32,63 +32,63 @@ const processDiceRoll = async (teamId) => {
     positionAfter = positionBefore; // Stay at current position
   }
 
-  // Check if landed on snake (using team's specific map)
-  const snake = await checkSnakeForTeam(teamId, positionAfter);
+  // Parallel execution: Check snake and get checkpoint count at the same time
+  const [snake, checkpointCount] = await Promise.all([
+    checkSnakeForTeam(teamId, positionAfter),
+    prisma.checkpoint.count({ where: { teamId } })
+  ]);
+  
   const isSnakePosition = snake !== null;
 
   // Automatically select question based on position type
   const { question, roomType } = await selectRandomQuestion(teamId, isSnakePosition);
 
   // Get new room based on question type (TECH or NON_TECH)
-  // Always exclude current room (team moves to different room)
   const newRoom = await getRandomRoom(team.currentRoom, teamId, roomType);
-
-  // Record the dice roll
-  const diceRollRecord = await prisma.diceRoll.create({
-    data: {
-      teamId,
-      value: diceValue,
-      positionFrom: positionBefore,
-      positionTo: positionAfter,
-      roomAssigned: newRoom,
-    },
-  });
 
   // Check if team stayed at same position (roll would exceed 150)
   const stayedAtSamePosition = positionBefore === positionAfter && positionBefore !== GAME_CONFIG.BOARD_SIZE;
+  const hasWon = hasReachedGoal(positionAfter);
   
-  // Update team position and room
-  // If stayed at same position, allow re-roll (canRollDice = true)
-  // If reached goal, mark as COMPLETED
-  await prisma.team.update({
-    where: { id: teamId },
-    data: {
-      currentPosition: positionAfter,
-      currentRoom: newRoom,
-      canRollDice: stayedAtSamePosition, // Can roll again if stayed at same position
-      status: hasReachedGoal(positionAfter) ? 'COMPLETED' : 'ACTIVE',
-    },
-  });
+  // Batch all write operations in a transaction for atomicity and speed
+  const [diceRollRecord, , checkpoint] = await prisma.$transaction([
+    // Record the dice roll
+    prisma.diceRoll.create({
+      data: {
+        teamId,
+        value: diceValue,
+        positionFrom: positionBefore,
+        positionTo: positionAfter,
+        roomAssigned: newRoom,
+      },
+    }),
+    
+    // Update team position and room
+    prisma.team.update({
+      where: { id: teamId },
+      data: {
+        currentPosition: positionAfter,
+        currentRoom: newRoom,
+        canRollDice: stayedAtSamePosition,
+        status: hasWon ? 'COMPLETED' : 'ACTIVE',
+      },
+    }),
+    
+    // Create checkpoint
+    prisma.checkpoint.create({
+      data: {
+        teamId,
+        checkpointNumber: checkpointCount + 1,
+        positionBefore,
+        positionAfter,
+        roomNumber: newRoom,
+        status: 'PENDING',
+        isSnakePosition,
+      },
+    }),
+  ]);
 
-  // Get checkpoint count for this team
-  const checkpointCount = await prisma.checkpoint.count({
-    where: { teamId },
-  });
-
-  // Create checkpoint with auto-assigned question
-  const checkpoint = await prisma.checkpoint.create({
-    data: {
-      teamId,
-      checkpointNumber: checkpointCount + 1,
-      positionBefore,
-      positionAfter,
-      roomNumber: newRoom,
-      status: 'PENDING',
-      isSnakePosition,
-    },
-  });
-
-  // Create question assignment (hidden from team until checkpoint approved)
+  // Create question assignment (separate from transaction to avoid blocking)
   await prisma.questionAssignment.create({
     data: {
       checkpointId: checkpoint.id,
@@ -97,19 +97,19 @@ const processDiceRoll = async (teamId) => {
     },
   });
 
-  // Log the dice roll to audit
-  await logDiceRoll(team.teamCode, team.teamName, diceValue, positionBefore, positionAfter);
-
-  // Log checkpoint reached to audit
-  await logCheckpointReached(
-    team.teamCode, 
-    team.teamName, 
-    checkpointCount + 1, 
-    positionAfter, 
-    newRoom, 
-    isSnakePosition,
-    `Auto-assigned ${question.type} question (${question.id})`
-  );
+  // Fire and forget: Log operations don't need to block response
+  Promise.all([
+    logDiceRoll(team.teamCode, team.teamName, diceValue, positionBefore, positionAfter),
+    logCheckpointReached(
+      team.teamCode, 
+      team.teamName, 
+      checkpointCount + 1, 
+      positionAfter, 
+      newRoom, 
+      isSnakePosition,
+      `Auto-assigned ${question.type} question (${question.id})`
+    )
+  ]).catch(err => console.error('Audit logging error:', err));
 
   return {
     diceValue,
@@ -122,7 +122,7 @@ const processDiceRoll = async (teamId) => {
     questionAssigned: true,
     checkpoint,
     diceRoll: diceRollRecord,
-    hasWon: hasReachedGoal(positionAfter),
+    hasWon,
   };
 };
 

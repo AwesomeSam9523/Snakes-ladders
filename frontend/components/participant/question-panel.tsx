@@ -94,12 +94,12 @@ export function QuestionPanel({
 
   if (gameStatus === "IDLE" || gameStatus === "ROLLING") {
     return (
-      <div className="rounded-xl sm:rounded-2xl bg-card border border-border p-4 sm:p-6 h-full flex items-center justify-center">
+      <div className="rounded-lg bg-white border border-gray-200 p-4 sm:p-6 h-full flex items-center justify-center shadow-sm">
         <div className="text-center space-y-2 sm:space-y-3">
-          <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto rounded-full bg-secondary flex items-center justify-center">
-            <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-muted-foreground" />
+          <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto rounded-full bg-gray-100 flex items-center justify-center">
+            <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-gray-600" />
           </div>
-          <p className="text-xs sm:text-sm text-muted-foreground">Roll the dice to begin</p>
+          <p className="text-xs sm:text-sm text-gray-600">Roll the dice to begin</p>
         </div>
       </div>
     )
@@ -107,14 +107,14 @@ export function QuestionPanel({
 
   if (gameStatus === "PENDING_APPROVAL") {
     return (
-      <div className="rounded-xl sm:rounded-2xl bg-card border border-border p-4 sm:p-6 h-full flex items-center justify-center">
+      <div className="rounded-lg bg-white border border-gray-200 p-4 sm:p-6 h-full flex items-center justify-center shadow-sm">
         <div className="text-center space-y-2 sm:space-y-3 px-2">
-          <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto rounded-full bg-warning/20 flex items-center justify-center animate-pulse">
-            <AlertTriangle className="w-6 h-6 sm:w-8 sm:h-8 text-warning" />
+          <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto rounded-full bg-orange-100 flex items-center justify-center animate-pulse">
+            <AlertTriangle className="w-6 h-6 sm:w-8 sm:h-8 text-orange-600" />
           </div>
-          <p className="font-semibold text-sm sm:text-base">Checkpoint Reached!</p>
-          <p className="text-xs sm:text-sm text-muted-foreground">Go to Room {checkpoint?.roomNumber} and wait for admin approval</p>
-          <p className="text-xs text-muted-foreground/70 mt-1">Question already assigned, will be revealed after approval</p>
+          <p className="font-semibold text-sm sm:text-base text-gray-900">Checkpoint Reached!</p>
+          <p className="text-xs sm:text-sm text-gray-600">Go to Room {checkpoint?.roomNumber} and wait for admin approval</p>
+          <p className="text-xs text-gray-500 mt-1">Question already assigned, will be revealed after approval</p>
         </div>
       </div>
     )
@@ -127,24 +127,24 @@ export function QuestionPanel({
     const options = questionData.question?.options || []
 
     return (
-      <div className="rounded-2xl bg-card border border-border p-6 space-y-6">
+      <div className="rounded-lg bg-white border border-gray-200 p-6 space-y-6 shadow-sm">
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold">Question</h3>
+            <h3 className="text-lg font-bold text-gray-900">Question</h3>
             <div className="flex items-center gap-2">
-              <Badge variant="secondary" className="gap-1">
+              <Badge variant="secondary" className="gap-1 bg-gray-100 text-gray-900 border-gray-300">
                 {getQuestionTypeIcon(questionType)}
                 {getQuestionTypeLabel(questionType)}
               </Badge>
-              <Badge variant="outline">{questionData.question.difficulty === 1 ? "Easy" : questionData.question.difficulty === 2 ? "Medium" : questionData.question.difficulty === 3 ? "Hard" : questionData.question.difficulty}</Badge>
+              <Badge variant="outline" className="border-gray-300 text-gray-700">{questionData.question.difficulty === 1 ? "Easy" : questionData.question.difficulty === 2 ? "Medium" : questionData.question.difficulty === 3 ? "Hard" : questionData.question.difficulty}</Badge>
             </div>
           </div>
 
-          <p className="text-sm leading-relaxed whitespace-pre-wrap">{questionData.question.text}</p>
+          <p className="text-sm leading-relaxed whitespace-pre-wrap text-gray-700">{questionData.question.text}</p>
         </div>
 
         {submitResult && (
-          <div className={`p-3 sm:p-4 rounded-lg ${submitResult.isCorrect ? 'bg-green-100 dark:bg-green-900/30' : submitResult.autoMarked ? 'bg-red-100 dark:bg-red-900/30' : 'bg-blue-100 dark:bg-blue-900/30'}`}>
+          <div className={`p-3 sm:p-4 rounded-lg ${submitResult.isCorrect ? 'bg-green-100' : submitResult.autoMarked ? 'bg-red-100' : 'bg-blue-100'}`}>
             <div className="flex items-center gap-2">
               {submitResult.autoMarked ? (
                 submitResult.isCorrect ? (
@@ -155,14 +155,13 @@ export function QuestionPanel({
               ) : (
                 <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0" />
               )}
-              <p className="text-xs sm:text-sm font-semibold">{submitResult.message}</p>
+              <p className="text-xs sm:text-sm font-semibold text-gray-900">{submitResult.message}</p>
             </div>
           </div>
         )}
 
         {!submitResult && (
-          <div className="space-y-4">
-            {/* MCQ Type - Radio Buttons */}
+          <div className="space-y-4">{/* MCQ Type - Radio Buttons */}
             {questionType === "MCQ" && options.length > 0 && (
               <div className="space-y-3">
                 <Label>Select your answer:</Label>
@@ -225,12 +224,12 @@ export function QuestionPanel({
 
             {/* Hint Display - Shows above buttons when revealed */}
             {showHint && questionData.question.hint && (
-              <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+              <div className="p-3 rounded-lg bg-amber-50 border border-amber-200">
                 <div className="flex items-start gap-2">
                   <HelpCircle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
                   <div className="flex-1">
-                    <p className="text-xs font-semibold text-amber-900 dark:text-amber-200 mb-1">Hint: (+60s penalty)</p>
-                    <p className="text-sm text-amber-800 dark:text-amber-300">{questionData.question.hint}</p>
+                    <p className="text-xs font-semibold text-amber-900 mb-1">Hint: (+60s penalty)</p>
+                    <p className="text-sm text-amber-800">{questionData.question.hint}</p>
                   </div>
                 </div>
               </div>
@@ -240,13 +239,13 @@ export function QuestionPanel({
               <Button 
                 onClick={handleHintClick} 
                 variant="outline"
-                className="flex items-center justify-center gap-2 text-sm w-full sm:w-auto"
+                className="flex items-center justify-center gap-2 text-sm w-full sm:w-auto bg-gray-900 text-white border-gray-900 hover:bg-gray-800"
                 disabled={usingHint}
               >
                 <HelpCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 {usingHint ? "Loading..." : showHint ? "Hide Hint" : "Show Hint (+60s)"}
               </Button>
-              <Button onClick={handleSubmit} disabled={!answer.trim() || submitting} className="flex-1 text-sm">
+              <Button onClick={handleSubmit} disabled={!answer.trim() || submitting} className="flex-1 text-sm bg-gray-900 text-white hover:bg-gray-800 disabled:bg-gray-300 disabled:text-gray-500">
                 <Upload className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2" />
                 {submitting ? "Submitting..." : "Submit Answer"}
               </Button>
@@ -263,51 +262,51 @@ export function QuestionPanel({
     const status = questionData.status
 
     return (
-      <div className="rounded-2xl bg-card border border-border p-6 space-y-6">
+      <div className="rounded-lg bg-white border border-gray-200 p-6 space-y-6 shadow-sm">
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold">Question</h3>
+            <h3 className="text-lg font-bold text-gray-900">Question</h3>
             <div className="flex items-center gap-2">
-              <Badge variant="secondary" className="gap-1">
+              <Badge variant="secondary" className="gap-1 bg-gray-100 text-gray-900 border-gray-300">
                 {getQuestionTypeIcon(questionType)}
                 {getQuestionTypeLabel(questionType)}
               </Badge>
-              <Badge variant="outline">{questionData.question.difficulty === 1 ? "Easy" : questionData.question.difficulty === 2 ? "Medium" : questionData.question.difficulty === 3 ? "Hard" : questionData.question.difficulty}</Badge>
+              <Badge variant="outline" className="border-gray-300 text-gray-700">{questionData.question.difficulty === 1 ? "Easy" : questionData.question.difficulty === 2 ? "Medium" : questionData.question.difficulty === 3 ? "Hard" : questionData.question.difficulty}</Badge>
             </div>
           </div>
 
-          <p className="text-sm leading-relaxed whitespace-pre-wrap">{questionData.question.text}</p>
+          <p className="text-sm leading-relaxed whitespace-pre-wrap text-gray-700">{questionData.question.text}</p>
         </div>
 
         {participantAnswer && (
-          <div className="p-3 rounded-lg bg-secondary/50">
-            <p className="text-xs text-muted-foreground mb-1">Your submitted answer:</p>
-            <p className="text-sm font-mono whitespace-pre-wrap">{participantAnswer}</p>
+          <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
+            <p className="text-xs text-gray-600 mb-1">Your submitted answer:</p>
+            <p className="text-sm font-mono whitespace-pre-wrap text-gray-900">{participantAnswer}</p>
           </div>
         )}
 
         {participantAnswer && (
-          <div className={`p-4 rounded-lg text-center ${
-            status === 'CORRECT' ? 'bg-green-100 dark:bg-green-900/30' :
-            status === 'INCORRECT' ? 'bg-red-100 dark:bg-red-900/30' :
-            'bg-secondary'
+          <div className={`p-4 rounded-lg text-center border-2 ${
+            status === 'CORRECT' ? 'bg-green-100 border-green-400' :
+            status === 'INCORRECT' ? 'bg-red-100 border-red-400' :
+            'bg-green-50 border-green-500'
           }`}>
             {status === 'CORRECT' ? (
               <>
                 <CheckCircle className="w-6 h-6 mx-auto text-green-600 mb-2" />
-                <p className="text-sm font-semibold text-green-700 dark:text-green-400">✓ Correct!</p>
-                <p className="text-xs text-muted-foreground mt-1">You can now roll the dice again.</p>
+                <p className="text-sm font-semibold text-green-700">✓ Correct!</p>
+                <p className="text-xs text-gray-800 mt-1">You can now roll the dice again.</p>
               </>
             ) : status === 'INCORRECT' ? (
               <>
                 <XCircle className="w-6 h-6 mx-auto text-red-600 mb-2" />
-                <p className="text-sm font-semibold text-red-700 dark:text-red-400">✗ Incorrect</p>
-                <p className="text-xs text-muted-foreground mt-1">Waiting for admin review...</p>
+                <p className="text-sm font-semibold text-red-700">✗ Incorrect</p>
+                <p className="text-xs text-gray-800 mt-1">Waiting for admin review...</p>
               </>
             ) : (
               <>
-                <p className="text-sm font-semibold">✓ Answer Submitted</p>
-                <p className="text-xs text-muted-foreground mt-1">Waiting for admin to evaluate your answer...</p>
+                <p className="text-sm font-semibold text-gray-900">✓ Answer Submitted</p>
+                <p className="text-xs text-gray-900 mt-1">Waiting for admin to evaluate your answer...</p>
               </>
             )}
           </div>

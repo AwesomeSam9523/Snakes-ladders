@@ -20,19 +20,16 @@ const login = async (username, password) => {
     },
   });
 
-  console.log('User found:', { found: !!user, hasStoredPassword: !!user?.password });
-
   if (!user) {
-    throw new Error('Invalid credentials');
+    throw new Error('Invalid credentials, user not found.');
   }
 
   const isValidPassword = await comparePassword(password, user.password);
-  console.log('Password validation:', { isValid: isValidPassword });
   
   if (!isValidPassword) {
     // Log failed login attempt
     await logLogin(username, 'unknown', false);
-    throw new Error('Invalid credentials');
+    throw new Error('Invalid credentials, username/password is incorrect.');
   }
 
   // Check if participant team is disqualified

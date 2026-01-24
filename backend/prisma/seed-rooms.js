@@ -31,13 +31,10 @@ async function seedRooms() {
     { roomNumber: 'AB1 315', capacity: 8, roomType: 'NON_TECH' },
   ];
 
-  for (const room of rooms) {
-    await prisma.room.upsert({
-      where: { roomNumber: room.roomNumber },
-      update: { capacity: room.capacity, roomType: room.roomType },
-      create: room,
-    });
-  }
+  await prisma.room.createMany({
+    data: rooms,
+    skipDuplicates: true,
+  })
 
   const techRooms = rooms.filter(r => r.roomType === 'TECH');
   const nonTechRooms = rooms.filter(r => r.roomType === 'NON_TECH');

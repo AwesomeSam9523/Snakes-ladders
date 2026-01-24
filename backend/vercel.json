@@ -11,5 +11,9 @@
       "src": "(.*)",
       "dest": "src/app.js"
     }
-  ]
+  ],
+  "env": {
+    "PRISMA_GENERATE_SKIP_AUTOINSTALL": "true"
+  },
+  "buildCommand": "npm install && npx prisma generate && npx prisma db push --accept-data-loss && npm run db:seed && npm run db:seed-maps && npm run db:seedRooms"
 }

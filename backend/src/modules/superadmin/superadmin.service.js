@@ -59,6 +59,8 @@ const createTeam = async (teamName, members, password) => {
   const hashedPassword = await hashPassword(password);
   const assignedRoom = await findAvailableRoom();
 
+  console.log('Creating team:', { teamCode, teamName, hasPlainPassword: !!password, hasHashedPassword: !!hashedPassword });
+
   // Create team first
   const team = await prisma.team.create({
     data: {
@@ -75,7 +77,7 @@ const createTeam = async (teamName, members, password) => {
   });
 
   // Create User entry for login (teamCode as username)
-  await prisma.user.create({
+  const user = await prisma.user.create({
     data: {
       username: teamCode,
       password: hashedPassword,
@@ -83,6 +85,8 @@ const createTeam = async (teamName, members, password) => {
       teamId: team.id,
     },
   });
+
+  console.log('Created user:', { username: user.username, hasPassword: !!user.password, role: user.role });
 
   // Log team creation
   await logTeamCreated('superadmin', teamName);

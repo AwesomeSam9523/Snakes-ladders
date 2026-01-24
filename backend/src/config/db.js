@@ -19,7 +19,7 @@ function prismaClientSingleton() {
 
   return new PrismaClient({
     adapter,
-    log: ['error', 'warn'],
+    log: ['query', 'error', 'warn'],
     omit: {
       user: {
         password: true, // Never include password in queries

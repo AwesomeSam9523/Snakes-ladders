@@ -20,6 +20,7 @@ const login = async (username, password) => {
     },
   });
 
+  console.log('User:', JSON.stringify(user));
   console.log('User found:', { found: !!user, hasStoredPassword: !!user?.password });
 
   if (!user) {

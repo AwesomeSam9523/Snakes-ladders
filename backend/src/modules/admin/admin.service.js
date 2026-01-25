@@ -11,9 +11,6 @@ const getAllTeams = async () => {
         },
       },
       checkpoints: {
-        where: {
-          status: 'PENDING', // Only load pending checkpoints for performance
-        },
         orderBy: { checkpointNumber: 'desc' },
         take: 3, // Limit to last 3 checkpoints per team
         include: {

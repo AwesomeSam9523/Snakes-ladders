@@ -138,7 +138,7 @@ model Checkpoint {
   roomNumber          String
   status              CheckpointStatus @default(PENDING)
   isSnakePosition     Boolean          @default(false)
-  snakeDodgeAttempted Boolean          @default(false)
+  snakeDodgeAttempted Boolean?
 
   questionAssign QuestionAssignment?
   createdAt      DateTime            @default(now())

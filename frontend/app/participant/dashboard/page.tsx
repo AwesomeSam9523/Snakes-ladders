@@ -227,14 +227,22 @@ export default function ParticipantDashboard() {
 
   /* ---------- TIMER ---------- */
   // Client-side timer that increments locally and syncs with DB every 10 seconds
-  // Server-side timer - just fetch time from server every second
+  // Server-side timer - smooth local display with periodic sync
   useEffect(() => {
     // Don't run timer if game is completed or timer is paused
     if (teamData.status === "COMPLETED" || teamData.timerPaused) {
       return
     }
 
-    // Sync with server every 1 second to get latest time
+    // Local timer for smooth display (increments every second)
+    const displayInterval = setInterval(() => {
+      setTeamData((prev) => ({
+        ...prev,
+        totalTimeSec: prev.totalTimeSec + 1,
+      }))
+    }, 1000)
+
+    // Sync with server every 10 seconds to ensure accuracy
     const syncInterval = setInterval(async () => {
       try {
         const token = localStorage.getItem("token")
@@ -248,7 +256,7 @@ export default function ParticipantDashboard() {
         
         if (res.ok) {
           const data = await res.json()
-          // Update with server time - server calculates elapsed time
+          // Update with accurate server time
           setTeamData((prev) => ({
             ...prev,
             totalTimeSec: data.data.totalTimeSec,
@@ -259,9 +267,10 @@ export default function ParticipantDashboard() {
       } catch (error) {
         console.error("Error syncing timer:", error)
       }
-    }, 1000) // Sync every 1 second
+    }, 10000) // Sync every 10 seconds
 
     return () => {
+      clearInterval(displayInterval)
       clearInterval(syncInterval)
     }
   }, [API_URL, teamData.status, teamData.timerPaused])

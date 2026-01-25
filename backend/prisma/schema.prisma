@@ -101,7 +101,7 @@ model Team {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@index([status])
   @@index([canRollDice])
   @@index([currentPosition])
@@ -181,7 +181,7 @@ model QuestionAssignment {
 
   checkpoint Checkpoint @relation(fields: [checkpointId], references: [id], onDelete: Cascade)
   question   Question   @relation(fields: [questionId], references: [id])
-  
+
   @@index([status])
   @@index([questionId])
 }

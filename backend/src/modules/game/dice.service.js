@@ -4,8 +4,12 @@ const { checkSnakeForTeam } = require('./board.service');
 const { selectRandomQuestion } = require('./question.assignment');
 const { GAME_CONFIG } = require('../../config/constants');
 const { logDiceRoll, logCheckpointReached } = require('../audit/audit.service');
+const { startTimer } = require('../participant/participant.service');
 
 const processDiceRoll = async (teamId) => {
+  // Start timer on first dice roll if not already started
+  await startTimer(teamId);
+
   // Get current team state
   const team = await prisma.team.findUnique({
     where: { id: teamId },

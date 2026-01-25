@@ -227,57 +227,57 @@ export default function ParticipantDashboard() {
 
   /* ---------- TIMER ---------- */
   // Client-side timer that increments locally and syncs with DB every 10 seconds
+  // Server-side timer - fetch from server and display with smooth interpolation
   useEffect(() => {
     // Don't run timer if game is completed or timer is paused
     if (teamData.status === "COMPLETED" || teamData.timerPaused) {
       return
     }
 
-    let lastSyncTime = Date.now()
-    let localElapsed = 0
+    let lastSyncedTime = teamData.totalTimeSec
+    let lastSyncTimestamp = Date.now()
 
-    const interval = setInterval(() => {
+    // Update display every second based on elapsed time since last sync
+    const displayInterval = setInterval(() => {
+      const elapsedSinceSync = Math.floor((Date.now() - lastSyncTimestamp) / 1000)
       setTeamData((prev) => ({
         ...prev,
-        totalTimeSec: prev.totalTimeSec + 1,
+        totalTimeSec: lastSyncedTime + elapsedSinceSync,
       }))
-      localElapsed += 1
     }, 1000)
 
-    // Sync with database every 10 seconds
+    // Sync with server every 5 seconds to get accurate time
     const syncInterval = setInterval(async () => {
-      if (localElapsed > 0) {
-        try {
-          const token = localStorage.getItem("token")
-          const res = await fetch(`${API_URL}/participant/timer/sync`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ elapsedSeconds: localElapsed }),
-          })
+      try {
+        const token = localStorage.getItem("token")
+        const res = await fetch(`${API_URL}/participant/timer/sync`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        })
+        
+        if (res.ok) {
+          const data = await res.json()
+          // Update synced time and timestamp
+          lastSyncedTime = data.data.totalTimeSec
+          lastSyncTimestamp = Date.now()
           
-          if (res.ok) {
-            const data = await res.json()
-            // Update with server time to ensure accuracy
-            setTeamData((prev) => ({
-              ...prev,
-              totalTimeSec: data.data.totalTimeSec,
-              status: data.data.status || prev.status,
-              timerPaused: data.data.timerPaused ?? prev.timerPaused,
-            }))
-            localElapsed = 0
-            lastSyncTime = Date.now()
-          }
-        } catch (error) {
-          console.error("Error syncing timer:", error)
+          setTeamData((prev) => ({
+            ...prev,
+            totalTimeSec: data.data.totalTimeSec,
+            status: data.data.status || prev.status,
+            timerPaused: data.data.timerPaused ?? prev.timerPaused,
+          }))
         }
+      } catch (error) {
+        console.error("Error syncing timer:", error)
       }
-    }, 10000)
+    }, 5000) // Sync every 5 seconds
 
     return () => {
-      clearInterval(interval)
+      clearInterval(displayInterval)
       clearInterval(syncInterval)
     }
   }, [API_URL, teamData.status, teamData.timerPaused])

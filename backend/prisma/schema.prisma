@@ -88,6 +88,8 @@ model Team {
   status          TeamStatus @default(ACTIVE)
   canRollDice     Boolean    @default(true)
   timerPaused     Boolean    @default(false)
+  timerStartedAt  DateTime?
+  timerPausedAt   DateTime?
   mapId           String?
 
   members     TeamMember[]

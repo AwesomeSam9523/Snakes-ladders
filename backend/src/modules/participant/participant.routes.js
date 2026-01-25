@@ -32,6 +32,10 @@ router.post('/hint/use', participantController.useHint);
 // Sync timer with database
 router.post('/timer/sync', participantController.syncTimer);
 
+// Pause/Resume timer
+router.post('/timer/pause', participantController.pauseTimer);
+router.post('/timer/resume', participantController.resumeTimer);
+
 // Board
 router.get('/board', participantController.getBoard);
 

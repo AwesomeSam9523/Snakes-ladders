@@ -146,16 +146,37 @@ const useHint = async (req, res, next) => {
 const syncTimer = async (req, res, next) => {
   try {
     const teamId = req.user.teamId;
-    const { elapsedSeconds } = req.body;
-
-    const elapsed = parseInt(elapsedSeconds) || 0;
-    const result = await participantService.syncTimer(teamId, elapsed);
+    
+    // Server-side timer sync - no client elapsed time needed
+    const result = await participantService.syncTimer(teamId);
     
     if (!result) {
       return sendError(res, 'Team not found', 404);
     }
     
     return sendSuccess(res, result, 'Timer synced');
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Pause timer
+const pauseTimer = async (req, res, next) => {
+  try {
+    const teamId = req.user.teamId;
+    const result = await participantService.pauseTimer(teamId);
+    return sendSuccess(res, result, 'Timer paused');
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Resume timer
+const resumeTimer = async (req, res, next) => {
+  try {
+    const teamId = req.user.teamId;
+    const result = await participantService.resumeTimer(teamId);
+    return sendSuccess(res, result, 'Timer resumed');
   } catch (error) {
     next(error);
   }
@@ -173,5 +194,6 @@ module.exports = {
   submitAnswer,
   useHint,
   syncTimer,
+  pauseTimer,
+  resumeTimer,
 };
-

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 
 import { Header } from "@/components/participant/header"
@@ -11,7 +11,7 @@ import { TeamsList } from "@/components/participant/teams-list"
 import { QuestionPanel } from "@/components/participant/question-panel"
 import { Toaster } from "@/components/ui/toaster"
 import { useToast } from "@/hooks/use-toast"
-import {useCheckVersion} from "@/hooks/use-check-version";
+import { useCheckVersion } from "@/hooks/use-check-version"
 
 /* ---------- TYPES ---------- */
 
@@ -33,9 +33,8 @@ interface LeaderboardTeam {
 export type GameStatus =
   | "IDLE"
   | "ROLLING"
-  | "PENDING_APPROVAL"  // Question auto-assigned but hidden until approval
-  // AWAITING_QUESTION removed - questions now auto-assigned during dice roll
-  | "QUESTION_ASSIGNED"  // Checkpoint approved, question revealed
+  | "PENDING_APPROVAL"
+  | "QUESTION_ASSIGNED"
   | "SOLVING"
   | "LOCKED"
 
@@ -43,6 +42,12 @@ export type GameStatus =
 
 export default function ParticipantDashboard() {
   const router = useRouter()
+  const { toast } = useToast()
+  useCheckVersion()
+
+  const API_URL =
+    process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+
   const [teamData, setTeamData] = useState<TeamData>({
     teamId: "",
     currentPosition: 1,
@@ -52,373 +57,136 @@ export default function ParticipantDashboard() {
     status: "ACTIVE",
     timerPaused: false,
   })
+
   const [gameStatus, setGameStatus] = useState<GameStatus>("IDLE")
   const [currentCheckpoint, setCurrentCheckpoint] = useState<any>(null)
   const [questionData, setQuestionData] = useState<any>(null)
   const [teams, setTeams] = useState<LeaderboardTeam[]>([])
   const [loading, setLoading] = useState(true)
-  const [lastDiceValue, setLastDiceValue] = useState<number>(6)
-  const { toast } = useToast()
+  const [lastDiceValue, setLastDiceValue] = useState(6)
+  const [answer, setAnswer] = useState("")
+  const [submitting, setSubmitting] = useState(false)
+  const [submitResult, setSubmitResult] = useState<any>(null)
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
-  useCheckVersion();
+  /* ---------- DATA FETCHING ---------- */
 
-  // Fetch team's own data from backend
   const fetchTeamData = async () => {
     try {
       const token = localStorage.getItem("token")
       const username = localStorage.getItem("username")
-      
+
       if (!token) {
         router.push("/login")
         return
       }
 
-      // Set teamId from localStorage (username is the Team ID like "TEAM001")
       setTeamData(prev => ({
         ...prev,
         teamId: username || localStorage.getItem("teamCode") || "",
       }))
 
-      // Fetch team state from backend
       const res = await fetch(`${API_URL}/participant/state`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       })
-      
+
       if (res.ok) {
-        const data = await res.json()
-        if (data.data) {
-          const teamState = data.data
-          
+        const { data } = await res.json()
+
+        if (data) {
           setTeamData(prev => ({
             ...prev,
-            currentPosition: teamState.currentPosition || 1,
-            currentRoom: teamState.currentRoom || null,
-            canRollDice: teamState.canRollDice ?? true,
-            totalTimeSec: teamState.totalTimeSec || 0,
-            status: teamState.status || "ACTIVE",
-            timerPaused: teamState.timerPaused ?? false,
+            currentPosition: data.currentPosition ?? 1,
+            currentRoom: data.currentRoom ?? null,
+            canRollDice: data.canRollDice ?? true,
+            totalTimeSec: data.totalTimeSec ?? 0,
+            status: data.status ?? "ACTIVE",
+            timerPaused: data.timerPaused ?? false,
           }))
-          
-          // Update game status based on canRollDice
-          // If canRollDice is true, allow rolling again
-          if (teamState.canRollDice) {
-            if (gameStatus === "PENDING_APPROVAL" || gameStatus === "LOCKED" || gameStatus === "QUESTION_ASSIGNED") {
-              setGameStatus("IDLE")
-              setCurrentCheckpoint(null)
-              setQuestionData(null)
-            }
-          }
         }
       }
 
-      // Fetch pending checkpoint to check for assigned questions
-      const checkpointRes = await fetch(`${API_URL}/participant/checkpoints/pending`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-      
+      const checkpointRes = await fetch(
+        `${API_URL}/participant/checkpoints/pending`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      )
+
       if (checkpointRes.ok) {
-        const checkpointData = await checkpointRes.json()
-        if (checkpointData.data) {
-          const checkpoint = checkpointData.data
-          setCurrentCheckpoint(checkpoint)
-          
-          // Check game status based on checkpoint status
-          // Question is auto-assigned but hidden until checkpoint approved
-          if (checkpoint.status === "APPROVED" && checkpoint.questionAssign?.question) {
-            // Checkpoint approved - show question
-            setQuestionData({
-              id: checkpoint.questionAssign.id,
-              assignmentId: checkpoint.questionAssign.id,
-              question: {
-                id: checkpoint.questionAssign.question.id,
-                text: checkpoint.questionAssign.question.content || checkpoint.questionAssign.question.text,
-                hint: checkpoint.questionAssign.question.hint || "",
-                difficulty: checkpoint.questionAssign.question.difficulty || "MEDIUM",
-                type: checkpoint.questionAssign.question.type || "TEXT",
-                options: checkpoint.questionAssign.question.options || [],
-                correctAnswer: checkpoint.questionAssign.question.correctAnswer || "",
-              },
-              participantAnswer: checkpoint.questionAssign.participantAnswer,
-              isSnakeDodge: checkpoint.isSnakePosition,
-              status: checkpoint.questionAssign.status,
-            })
-            
-            if (checkpoint.questionAssign.status === "PENDING") {
-              // Question assigned and revealed
-              if (checkpoint.questionAssign.participantAnswer) {
-                // Answer already submitted, waiting for admin to mark
-                if (gameStatus !== "SOLVING") {
-                  setGameStatus("LOCKED")
-                }
-              } else {
-                // Not yet answered
-                if (gameStatus !== "SOLVING") {
-                  setGameStatus("QUESTION_ASSIGNED")
-                }
-              }
-            }
-          } else if (checkpoint.status === "PENDING") {
-            // Checkpoint not yet approved - waiting for admin approval (question hidden)
-            setGameStatus("PENDING_APPROVAL")
-          }
-        } else {
-          // No pending checkpoint - can roll dice
-          if (teamData.canRollDice && gameStatus !== "ROLLING") {
-            setGameStatus("IDLE")
-            setCurrentCheckpoint(null)
-            setQuestionData(null)
-          }
+        const { data } = await checkpointRes.json()
+
+        if (!data) {
+          setGameStatus("IDLE")
+          setCurrentCheckpoint(null)
+          setQuestionData(null)
+          return
+        }
+
+        setCurrentCheckpoint(data)
+
+        if (data.status === "PENDING") {
+          setGameStatus("PENDING_APPROVAL")
+        }
+
+        if (data.status === "APPROVED" && data.questionAssign?.question) {
+          setQuestionData({
+            assignmentId: data.questionAssign.id,
+            question: data.questionAssign.question,
+            isSnakeDodge: data.isSnakePosition,
+          })
+          setGameStatus("QUESTION_ASSIGNED")
         }
       }
-    } catch (error) {
-      console.error("Error fetching team data:", error)
+    } catch (err) {
+      console.error(err)
     } finally {
       setLoading(false)
     }
   }
 
-  // Fetch leaderboard teams from backend
   const fetchTeams = async () => {
     try {
       const token = localStorage.getItem("token")
       const res = await fetch(`${API_URL}/participant/leaderboard`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       })
+
       if (res.ok) {
-        const data = await res.json()
-        if (data.data) {
-          setTeams(data.data.map((t: any) => ({
-            id: t.teamId || t.teamName || t.id,
-            position: t.currentPosition || 1,
-          })))
-        }
+        const { data } = await res.json()
+        setTeams(
+          data.map((t: any) => ({
+            id: t.teamId || t.id,
+            position: t.currentPosition,
+          }))
+        )
       }
-    } catch (error) {
-      console.error("Error fetching teams:", error)
+    } catch (err) {
+      console.error(err)
     }
   }
 
+  /* ---------- EFFECTS ---------- */
+
   useEffect(() => {
-    const userRole = localStorage.getItem("userRole")
-    if (userRole !== "participant" && userRole !== "PARTICIPANT") {
+    const role = localStorage.getItem("userRole")
+    if (role?.toUpperCase() !== "PARTICIPANT") {
       router.push("/login")
       return
     }
-    
+
     fetchTeamData()
     fetchTeams()
-    
-    // Refresh team state and leaderboard (optimized intervals)
+
     const teamInterval = setInterval(fetchTeamData, 5000)
     const leaderboardInterval = setInterval(fetchTeams, 15000)
-    
+
     return () => {
       clearInterval(teamInterval)
       clearInterval(leaderboardInterval)
     }
-  }, [router])
+  }, [])
 
-  /* ---------- TIMER ---------- */
-  // Client-side timer that increments locally and syncs with DB every 10 seconds
-  // Server-side timer - fetch from server and display with smooth interpolation
-  useEffect(() => {
-    // Don't run timer if game is completed or timer is paused
-    if (teamData.status === "COMPLETED" || teamData.timerPaused) {
-      return
-    }
-
-    let lastSyncedTime = teamData.totalTimeSec
-    let lastSyncTimestamp = Date.now()
-
-    // Update display every second based on elapsed time since last sync
-    const displayInterval = setInterval(() => {
-      const elapsedSinceSync = Math.floor((Date.now() - lastSyncTimestamp) / 1000)
-      setTeamData((prev) => ({
-        ...prev,
-        totalTimeSec: lastSyncedTime + elapsedSinceSync,
-      }))
-    }, 1000)
-
-    // Sync with server every 5 seconds to get accurate time
-    const syncInterval = setInterval(async () => {
-      try {
-        const token = localStorage.getItem("token")
-        const res = await fetch(`${API_URL}/participant/timer/sync`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        })
-        
-        if (res.ok) {
-          const data = await res.json()
-          // Update synced time and timestamp
-          lastSyncedTime = data.data.totalTimeSec
-          lastSyncTimestamp = Date.now()
-          
-          setTeamData((prev) => ({
-            ...prev,
-            totalTimeSec: data.data.totalTimeSec,
-            status: data.data.status || prev.status,
-            timerPaused: data.data.timerPaused ?? prev.timerPaused,
-          }))
-        }
-      } catch (error) {
-        console.error("Error syncing timer:", error)
-      }
-    }, 5000) // Sync every 5 seconds
-
-    return () => {
-      clearInterval(displayInterval)
-      clearInterval(syncInterval)
-    }
-  }, [API_URL, teamData.status, teamData.timerPaused])
-
-  /* ---------- HANDLERS ---------- */
-
-  const handleRoll = async () => {
-    setGameStatus("ROLLING")
-
-    try {
-      const token = localStorage.getItem("token")
-      const res = await fetch(`${API_URL}/participant/dice/roll`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      })
-
-      // Wait for animation
-      await new Promise(resolve => setTimeout(resolve, 2000))
-
-      if (res.ok) {
-        const data = await res.json()
-        const result = data.data
-
-        // Set the dice value from API
-        setLastDiceValue(result.diceValue)
-
-        // Update team data with results from backend
-        setTeamData((prev) => ({
-          ...prev,
-          currentPosition: result.positionAfter,
-          currentRoom: result.roomAssigned,
-          canRollDice: false,
-        }))
-
-        setCurrentCheckpoint({
-          id: result.checkpoint?.id || `cp_${Date.now()}`,
-          roomNumber: result.roomAssigned,
-          status: "PENDING",
-          isSnakePosition: result.isSnakePosition,
-        })
-
-        setGameStatus("PENDING_APPROVAL")
-
-        toast({
-          title: `Rolled ${result.diceValue}!`,
-          description: `Go to Room ${result.roomAssigned}`,
-        })
-
-        // Refresh teams list to update leaderboard
-        fetchTeams()
-      } else {
-        const error = await res.json()
-        toast({
-          title: "Cannot roll dice",
-          description: error.message || "Failed to roll dice",
-          variant: "destructive",
-        })
-        setGameStatus("IDLE")
-      }
-    } catch (error) {
-      console.error("Error rolling dice:", error)
-      toast({
-        title: "Error",
-        description: "Failed to connect to server",
-        variant: "destructive",
-      })
-      setGameStatus("IDLE")
-    }
-  }
-
-  const handleViewQuestion = () => {
-    // Question is already visible when checkpoint is approved
-    if (questionData) {
-      setGameStatus("SOLVING")
-    } else {
-      toast({
-        title: "No Question Available",
-        description: "Please wait for admin to approve your checkpoint",
-        variant: "destructive",
-      })
-    }
-  }
-
-  const handleSubmitAnswer = async (answer: string, assignmentId: string): Promise<{ autoMarked?: boolean; isCorrect?: boolean; message?: string }> => {
-    try {
-      const token = localStorage.getItem("token")
-      const res = await fetch(`${API_URL}/participant/answer/submit`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          assignmentId,
-          answer,
-        }),
-      })
-
-      const data = await res.json()
-
-      if (res.ok) {
-        // Always unlock dice after answer submission
-        setTeamData(prev => ({ ...prev, canRollDice: true }))
-        setGameStatus("IDLE")
-
-        // Show success message in green
-        toast({
-          title: "Answer Submitted",
-          description: "Your answer has been submitted successfully.",
-          className: "bg-green-100 border-green-500 text-green-900",
-        })
-
-        // Refresh data
-        fetchTeamData()
-        
-        return {
-          autoMarked: data.data?.autoMarked,
-          isCorrect: data.data?.isCorrect,
-          message: data.data?.message || data.message,
-        }
-      } else {
-        toast({
-          title: "Error",
-          description: data.message || "Failed to submit answer",
-          variant: "destructive",
-        })
-        return { message: data.message || "Failed to submit answer" }
-      }
-    } catch (error) {
-      console.error("Error submitting answer:", error)
-      toast({
-        title: "Error",
-        description: "Failed to submit answer. Check your connection.",
-        variant: "destructive",
-      })
-      return { message: "Failed to submit answer" }
-    }
-  }
+  /* ---------- ACTIONS ---------- */
 
   const handleUseHint = async (assignmentId: string): Promise<void> => {
     try {
@@ -441,7 +209,7 @@ export default function ParticipantDashboard() {
         if (data.data?.newTotalTime !== undefined) {
           setTeamData(prev => ({ ...prev, totalTimeSec: data.data.newTotalTime }))
         }
-        
+
         toast({
           title: "Hint Used",
           description: "+60 seconds penalty added to your time",
@@ -466,26 +234,110 @@ export default function ParticipantDashboard() {
     }
   }
 
-  const handleHint = () => {
-    // This function is no longer used but kept for compatibility
-    setTeamData((prev) => ({
-      ...prev,
-      totalTimeSec: prev.totalTimeSec + 60,
-    }))
+  const handleRoll = async () => {
+    setGameStatus("ROLLING")
 
-    toast({
-      title: "Hint requested",
-      description: "+60 seconds penalty applied",
-      variant: "destructive",
-    })
+    try {
+      const token = localStorage.getItem("token")
+
+      const res = await fetch(`${API_URL}/participant/dice/roll`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      await new Promise(r => setTimeout(r, 2000))
+
+      if (!res.ok) throw new Error("Dice roll failed")
+
+      const { data } = await res.json()
+
+      setLastDiceValue(data.diceValue)
+      setTeamData(prev => ({
+        ...prev,
+        currentPosition: data.positionAfter,
+        currentRoom: data.roomAssigned,
+        canRollDice: false,
+      }))
+
+      setGameStatus("PENDING_APPROVAL")
+      fetchTeams()
+    } catch (err) {
+      setGameStatus("IDLE")
+      toast({
+        title: "Error",
+        description: "Failed to roll dice",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleViewQuestion = () => {
+    // Question is already visible when checkpoint is approved
+    if (questionData) {
+      setGameStatus("SOLVING")
+    } else {
+      toast({
+        title: "No Question Available",
+        description: "Please wait for admin to approve your checkpoint",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleSubmitAnswer = async () => {
+    if (!answer.trim() || !questionData?.assignmentId) return
+
+    setSubmitting(true)
+
+    try {
+      const token = localStorage.getItem("token")
+
+      const res = await fetch(
+        `${API_URL}/participant/answer/submit`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            assignmentId: questionData.assignmentId,
+            answer,
+          }),
+        }
+      )
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data.message || "Submission failed")
+      }
+
+      setSubmitResult(data.data)
+      setAnswer("")
+      setGameStatus("IDLE")
+      setTeamData(prev => ({ ...prev, canRollDice: true }))
+
+      fetchTeamData()
+    } catch (err: any) {
+      toast({
+        title: "Error",
+        description: err.message,
+        variant: "destructive",
+      })
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   /* ---------- UI ---------- */
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <p className="text-gray-600">Loading...</p>
+      <div className="min-h-screen flex items-center justify-center">
+        Loading...
       </div>
     )
   }
@@ -502,18 +354,8 @@ export default function ParticipantDashboard() {
         timerPaused={teamData.timerPaused}
       />
 
-      {/* Game Completed Banner */}
-      {teamData.status === "COMPLETED" && (
-        <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white py-4 sm:py-6 md:py-8 px-3 sm:px-4 text-center shadow-lg">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-1 sm:mb-2">🎉 Congratulations! 🎉</h1>
-          <p className="text-base sm:text-lg md:text-xl">You have completed the game!</p>
-          <p className="text-sm sm:text-base md:text-lg mt-1 sm:mt-2">Final Time: {Math.floor(teamData.totalTimeSec / 3600).toString().padStart(2, "0")}:{Math.floor((teamData.totalTimeSec % 3600) / 60).toString().padStart(2, "0")}:{(teamData.totalTimeSec % 60).toString().padStart(2, "0")}</p>
-        </div>
-      )}
-
-      <main className="flex-1 container mx-auto p-3 sm:p-4 lg:p-6 bg-gray-50">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-          {/* Left column */}
+      <main className="flex-1 container mx-auto p-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
             <Dice
               onRoll={handleRoll}
@@ -530,17 +372,18 @@ export default function ParticipantDashboard() {
             <TeamsList teams={teams} />
           </div>
 
-          {/* Right column */}
-          <div className="lg:col-span-1">
-            <QuestionPanel
-              gameStatus={gameStatus}
-              checkpoint={currentCheckpoint}
-              questionData={questionData}
-              onViewQuestion={handleViewQuestion}
-              onSubmitAnswer={handleSubmitAnswer}
-              onUseHint={handleUseHint}
-            />
-          </div>
+          <QuestionPanel
+            gameStatus={gameStatus}
+            checkpoint={currentCheckpoint}
+            questionData={questionData}
+            answer={answer}
+            setAnswer={setAnswer}
+            submitting={submitting}
+            submitResult={submitResult}
+            handleSubmitAnswer={handleSubmitAnswer}
+            onUseHint={handleUseHint}
+            onViewQuestion={handleViewQuestion}
+          />
         </div>
       </main>
 

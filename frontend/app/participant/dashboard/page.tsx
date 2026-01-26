@@ -141,6 +141,13 @@ export default function ParticipantDashboard() {
     }
   }
 
+  function incrementTimer() {
+    setTeamData((prev) => ({
+      ...prev,
+      totalTimeSec: prev.totalTimeSec + 1,
+    }));
+  }
+
   /* ---------- EFFECTS ---------- */
 
   useEffect(() => {
@@ -155,10 +162,12 @@ export default function ParticipantDashboard() {
 
     const teamInterval = setInterval(fetchTeamData, 5000)
     const leaderboardInterval = setInterval(fetchTeams, 15000)
+    const timerInterval = setInterval(incrementTimer, 1000);
 
     return () => {
       clearInterval(teamInterval)
       clearInterval(leaderboardInterval)
+      clearInterval(timerInterval);
     }
   }, [])
 

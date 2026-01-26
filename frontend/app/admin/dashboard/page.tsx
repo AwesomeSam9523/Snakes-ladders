@@ -1,8 +1,9 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import { Navbar } from "@/components/navbar"
+import {useEffect, useState} from "react"
+import {useRouter} from "next/navigation"
+import {Navbar} from "@/components/navbar"
+import {apiService} from "@/lib/service";
 
 interface Checkpoint {
   id: string
@@ -62,25 +63,15 @@ export default function AdminDashboard() {
   const [searchQuery, setSearchQuery] = useState("")
   const [loading, setLoading] = useState(true)
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
-
   // Fetch teams from backend
   const fetchTeams = async () => {
     try {
-      const token = localStorage.getItem("token")
-      const res = await fetch(`${API_URL}/admin/teams`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-      if (res.ok) {
-        const data = await res.json()
-        if (data.data) {
-          setTeams(data.data.map((t: any) => ({
-            ...t,
-            teamId: t.user?.username || t.teamCode,
-          })))
-        }
+      const data = await apiService.fetchTeams();
+      if (data.data) {
+        setTeams(data.data.map((t: any) => ({
+          ...t,
+          teamId: t.user?.username || t.teamCode,
+        })))
       }
     } catch (error) {
       console.error("Error fetching teams:", error)
@@ -98,7 +89,7 @@ export default function AdminDashboard() {
     } else {
       fetchTeams()
       // fetchQuestions removed - questions auto-assigned now
-      
+
       // Auto-refresh teams every 15 seconds to see position updates
       const interval = setInterval(fetchTeams, 15000)
       return () => clearInterval(interval)
@@ -108,23 +99,9 @@ export default function AdminDashboard() {
   // Approve checkpoint via API
   const handleApproveCheckpoint = async (checkpointId: string) => {
     try {
-      const token = localStorage.getItem("token")
-      const res = await fetch(`${API_URL}/admin/checkpoints/${checkpointId}/approve`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      })
-
-      if (res.ok) {
-        // Refresh teams to get updated data
-        fetchTeams()
-        alert("Checkpoint approved successfully!")
-      } else {
-        const error = await res.json()
-        alert(`Error: ${error.message || 'Failed to approve checkpoint'}`)
-      }
+      await apiService.approveCheckpoint(checkpointId);
+      alert('Checkpoint approved successfully!');
+      await apiService.fetchTeams();
     } catch (error) {
       console.error("Error approving checkpoint:", error)
       alert("Failed to approve checkpoint")
@@ -136,23 +113,9 @@ export default function AdminDashboard() {
   // Mark answer as correct or incorrect via API
   const handleMarkAnswer = async (checkpointId: string, isCorrect: boolean) => {
     try {
-      const token = localStorage.getItem("token")
-      const res = await fetch(`${API_URL}/admin/checkpoints/${checkpointId}/mark`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ isCorrect }),
-      })
-
-      if (res.ok) {
-        fetchTeams()
-        alert(`Answer marked as ${isCorrect ? 'correct' : 'incorrect'}!`)
-      } else {
-        const error = await res.json()
-        alert(`Error: ${error.message || 'Failed to mark answer'}`)
-      }
+      await apiService.markAnswer(checkpointId, isCorrect);
+      alert(`Answer marked as ${isCorrect ? 'correct' : 'incorrect'}!`)
+      await apiService.fetchTeams();
     } catch (error) {
       console.error("Error marking answer:", error)
       alert("Failed to mark answer")
@@ -166,21 +129,9 @@ export default function AdminDashboard() {
     }
 
     try {
-      const token = localStorage.getItem("token")
-      const res = await fetch(`${API_URL}/admin/checkpoints/${checkpointId}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-
-      if (res.ok) {
-        fetchTeams()
-        alert("Checkpoint deleted successfully!")
-      } else {
-        const error = await res.json()
-        alert(`Error: ${error.message || 'Failed to delete checkpoint'}`)
-      }
+      await apiService.deleteCheckpoint(checkpointId);
+      await apiService.fetchTeams();
+      alert("Checkpoint deleted successfully!")
     } catch (error) {
       console.error("Error deleting checkpoint:", error)
       alert("Failed to delete checkpoint")
@@ -190,22 +141,9 @@ export default function AdminDashboard() {
   // Pause team timer
   const handlePauseTimer = async (teamId: string) => {
     try {
-      const token = localStorage.getItem("token")
-      const res = await fetch(`${API_URL}/admin/teams/${teamId}/timer/pause`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      })
-
-      if (res.ok) {
-        fetchTeams()
-        alert("Timer paused successfully!")
-      } else {
-        const error = await res.json()
-        alert(`Error: ${error.message || 'Failed to pause timer'}`)
-      }
+      await apiService.pauseTimer(teamId);
+      await apiService.fetchTeams();
+      alert("Timer paused successfully!")
     } catch (error) {
       console.error("Error pausing timer:", error)
       alert("Failed to pause timer")
@@ -215,22 +153,8 @@ export default function AdminDashboard() {
   // Resume team timer
   const handleResumeTimer = async (teamId: string) => {
     try {
-      const token = localStorage.getItem("token")
-      const res = await fetch(`${API_URL}/admin/teams/${teamId}/timer/resume`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      })
-
-      if (res.ok) {
-        fetchTeams()
-        alert("Timer resumed successfully!")
-      } else {
-        const error = await res.json()
-        alert(`Error: ${error.message || 'Failed to resume timer'}`)
-      }
+      await apiService.resumeTimer(teamId);
+      alert("Timer resumed successfully!")
     } catch (error) {
       console.error("Error resuming timer:", error)
       alert("Failed to resume timer")
@@ -240,7 +164,7 @@ export default function AdminDashboard() {
   if (loading) {
     return (
       <div className="min-h-screen bg-white">
-        <Navbar role="admin" />
+        <Navbar role="admin"/>
         <div className="flex items-center justify-center h-96">
           <p className="text-gray-600">Loading teams...</p>
         </div>
@@ -257,7 +181,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-white">
-      <Navbar role="admin" />
+      <Navbar role="admin"/>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <h2 className="text-2xl font-bold text-gray-900 mb-6">Team Management</h2>
@@ -330,7 +254,7 @@ export default function AdminDashboard() {
                                 </span>
                               )}
                             </span>
-                            
+
                             {/* Step 1: Checkpoint Approval Status */}
                             {checkpoint.status === "PENDING" ? (
                               <div className="flex gap-2">
@@ -364,7 +288,8 @@ export default function AdminDashboard() {
                                   <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded font-medium">
                                     {checkpoint.questionAssign.question?.type || 'N/A'}
                                   </span>
-                                  <p className="text-xs text-gray-700">{checkpoint.questionAssign.question?.content || 'Question content unavailable'}</p>
+                                  <p
+                                    className="text-xs text-gray-700">{checkpoint.questionAssign.question?.content || 'Question content unavailable'}</p>
                                 </div>
                               </div>
 
@@ -372,7 +297,8 @@ export default function AdminDashboard() {
                               {checkpoint.status === "APPROVED" && checkpoint.questionAssign.status === "PENDING" ? (
                                 <div className="flex flex-col gap-2 mt-2">
                                   {!checkpoint.questionAssign.participantAnswer && (
-                                    <p className="text-xs text-amber-600">⏳ Waiting for participant to submit answer...</p>
+                                    <p className="text-xs text-amber-600">⏳ Waiting for participant to submit
+                                      answer...</p>
                                   )}
                                   {checkpoint.questionAssign.participantAnswer && (
                                     <div className="flex gap-2">
@@ -390,7 +316,7 @@ export default function AdminDashboard() {
                                       </button>
                                     </div>
                                   )}
-                                  
+
                                   {/* Timer controls for CODING/PHYSICAL questions */}
                                   {(checkpoint.questionAssign.question?.type === "CODING" || checkpoint.questionAssign.question?.type === "PHYSICAL") && (
                                     <div className="flex gap-2 mt-1">

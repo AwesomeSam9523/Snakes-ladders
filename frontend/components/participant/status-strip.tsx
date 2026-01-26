@@ -2,7 +2,14 @@
 
 import { Clock, MapPin } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import type { GameStatus } from "@/app/page"
+
+export type GameStatus =
+  | "IDLE"
+  | "ROLLING"
+  | "PENDING_APPROVAL"
+  | "QUESTION_ASSIGNED"
+  | "SOLVING"
+  | "LOCKED"
 
 interface StatusStripProps {
   currentPosition: number
@@ -16,7 +23,6 @@ const statusLabels: Record<GameStatus, string> = {
   IDLE: "Ready to roll",
   ROLLING: "Rolling dice...",
   PENDING_APPROVAL: "Waiting for admin",
-  AWAITING_QUESTION: "Question pending",
   QUESTION_ASSIGNED: "Question available",
   SOLVING: "Solving question",
   LOCKED: "Answer submitted",

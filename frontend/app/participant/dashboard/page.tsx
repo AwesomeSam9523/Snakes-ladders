@@ -1,17 +1,18 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
+import {useEffect, useState} from "react"
+import {useRouter} from "next/navigation"
 
-import { Header } from "@/components/participant/header"
-import { StatusStrip } from "@/components/participant/status-strip"
-import { Dice } from "@/components/participant/dice"
-import { Board } from "@/components/participant/board"
-import { TeamsList } from "@/components/participant/teams-list"
-import { QuestionPanel } from "@/components/participant/question-panel"
-import { Toaster } from "@/components/ui/toaster"
-import { useToast } from "@/hooks/use-toast"
-import { useCheckVersion } from "@/hooks/use-check-version"
+import {Header} from "@/components/participant/header"
+import {StatusStrip} from "@/components/participant/status-strip"
+import {Dice} from "@/components/participant/dice"
+import {Board} from "@/components/participant/board"
+import {TeamsList} from "@/components/participant/teams-list"
+import {QuestionPanel} from "@/components/participant/question-panel"
+import {Toaster} from "@/components/ui/toaster"
+import {useToast} from "@/hooks/use-toast"
+import {useCheckVersion} from "@/hooks/use-check-version"
+import {apiService} from "@/lib/service";
 
 /* ---------- TYPES ---------- */
 
@@ -42,11 +43,8 @@ export type GameStatus =
 
 export default function ParticipantDashboard() {
   const router = useRouter()
-  const { toast } = useToast()
+  const {toast} = useToast()
   useCheckVersion()
-
-  const API_URL =
-    process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
 
   const [teamData, setTeamData] = useState<TeamData>({
     teamId: "",
@@ -85,57 +83,42 @@ export default function ParticipantDashboard() {
         teamId: username || localStorage.getItem("teamCode") || "",
       }))
 
-      const res = await fetch(`${API_URL}/participant/state`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-
-      if (res.ok) {
-        const { data } = await res.json()
-
-        if (data) {
-          setTeamData(prev => ({
-            ...prev,
-            currentPosition: data.currentPosition ?? 1,
-            currentRoom: data.currentRoom ?? null,
-            canRollDice: data.canRollDice ?? true,
-            totalTimeSec: data.totalTimeSec ?? 0,
-            status: data.status ?? "ACTIVE",
-            timerPaused: data.timerPaused ?? false,
-          }))
-        }
+      const {data} = await apiService.getParticipantState();
+      if (data) {
+        setTeamData(prev => ({
+          ...prev,
+          currentPosition: data.currentPosition ?? 1,
+          currentRoom: data.currentRoom ?? null,
+          canRollDice: data.canRollDice ?? true,
+          totalTimeSec: data.totalTimeSec ?? 0,
+          status: data.status ?? "ACTIVE",
+          timerPaused: data.timerPaused ?? false,
+        }))
       }
 
-      const checkpointRes = await fetch(
-        `${API_URL}/participant/checkpoints/pending`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      )
+      let checkpointData = await apiService.getPendingCheckpoints();
+      checkpointData = checkpointData.data;
+      console.log('checkpointData', JSON.stringify(checkpointData, null, 2));
+      if (!checkpointData) {
+        setGameStatus("IDLE")
+        setCurrentCheckpoint(null)
+        setQuestionData(null)
+        return
+      }
 
-      if (checkpointRes.ok) {
-        const { data } = await checkpointRes.json()
+      setCurrentCheckpoint(checkpointData)
 
-        if (!data) {
-          setGameStatus("IDLE")
-          setCurrentCheckpoint(null)
-          setQuestionData(null)
-          return
-        }
+      if (checkpointData.status === "PENDING") {
+        setGameStatus("PENDING_APPROVAL")
+      }
 
-        setCurrentCheckpoint(data)
-
-        if (data.status === "PENDING") {
-          setGameStatus("PENDING_APPROVAL")
-        }
-
-        if (data.status === "APPROVED" && data.questionAssign?.question) {
-          setQuestionData({
-            assignmentId: data.questionAssign.id,
-            question: data.questionAssign.question,
-            isSnakeDodge: data.isSnakePosition,
-          })
-          setGameStatus("QUESTION_ASSIGNED")
-        }
+      if (checkpointData.status === "APPROVED" && checkpointData.questionAssign?.question) {
+        setQuestionData({
+          assignmentId: checkpointData.questionAssign.id,
+          question: checkpointData.questionAssign.question,
+          isSnakeDodge: checkpointData.isSnakePosition,
+        })
+        setGameStatus("QUESTION_ASSIGNED")
       }
     } catch (err) {
       console.error(err)
@@ -146,20 +129,13 @@ export default function ParticipantDashboard() {
 
   const fetchTeams = async () => {
     try {
-      const token = localStorage.getItem("token")
-      const res = await fetch(`${API_URL}/participant/leaderboard`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-
-      if (res.ok) {
-        const { data } = await res.json()
-        setTeams(
-          data.map((t: any) => ({
-            id: t.teamId || t.id,
-            position: t.currentPosition,
-          }))
-        )
-      }
+      const {data} = await apiService.getLeaderboard();
+      setTeams(
+        data.map((t: any) => ({
+          id: t.teamId || t.id,
+          position: t.currentPosition,
+        }))
+      )
     } catch (err) {
       console.error(err)
     }
@@ -190,39 +166,17 @@ export default function ParticipantDashboard() {
 
   const handleUseHint = async (assignmentId: string): Promise<void> => {
     try {
-      const token = localStorage.getItem("token")
-      const res = await fetch(`${API_URL}/participant/hint/use`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          assignmentId,
-        }),
-      })
+      const {data} = await apiService.useHint(assignmentId);
 
-      const data = await res.json()
-
-      if (res.ok) {
-        // Update the timer with the new total time
-        if (data.data?.newTotalTime !== undefined) {
-          setTeamData(prev => ({ ...prev, totalTimeSec: data.data.newTotalTime }))
-        }
-
-        toast({
-          title: "Hint Used",
-          description: "+60 seconds penalty added to your time",
-          variant: "default",
-        })
-      } else {
-        toast({
-          title: "Error",
-          description: data.message || "Failed to use hint",
-          variant: "destructive",
-        })
-        throw new Error(data.message || "Failed to use hint")
+      if (data?.newTotalTime !== undefined) {
+        setTeamData(prev => ({...prev, totalTimeSec: data.newTotalTime}))
       }
+
+      toast({
+        title: "Hint Used",
+        description: "+60 seconds penalty added to your time",
+        variant: "default",
+      })
     } catch (error) {
       console.error("Error using hint:", error)
       toast({
@@ -238,20 +192,7 @@ export default function ParticipantDashboard() {
     setGameStatus("ROLLING")
 
     try {
-      const token = localStorage.getItem("token")
-
-      const res = await fetch(`${API_URL}/participant/dice/roll`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-
-      await new Promise(r => setTimeout(r, 2000))
-
-      if (!res.ok) throw new Error("Dice roll failed")
-
-      const { data } = await res.json()
+      const data = await apiService.rollDice();
 
       setLastDiceValue(data.diceValue)
       setTeamData(prev => ({
@@ -262,7 +203,7 @@ export default function ParticipantDashboard() {
       }))
 
       setGameStatus("PENDING_APPROVAL")
-      fetchTeams()
+      await fetchTeams()
     } catch (err) {
       setGameStatus("IDLE")
       toast({
@@ -292,35 +233,13 @@ export default function ParticipantDashboard() {
     setSubmitting(true)
 
     try {
-      const token = localStorage.getItem("token")
+      const {data} = await apiService.submitAnswer(questionData.assignmentId, answer)
 
-      const res = await fetch(
-        `${API_URL}/participant/answer/submit`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            assignmentId: questionData.assignmentId,
-            answer,
-          }),
-        }
-      )
-
-      const data = await res.json()
-
-      if (!res.ok) {
-        throw new Error(data.message || "Submission failed")
-      }
-
-      setSubmitResult(data.data)
+      setSubmitResult(data)
       setAnswer("")
       setGameStatus("IDLE")
-      setTeamData(prev => ({ ...prev, canRollDice: true }))
-
-      fetchTeamData()
+      setTeamData(prev => ({...prev, canRollDice: true}))
+      await fetchTeamData()
     } catch (err: any) {
       toast({
         title: "Error",
@@ -344,7 +263,7 @@ export default function ParticipantDashboard() {
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
-      <Header teamId={teamData.teamId} />
+      <Header teamId={teamData.teamId}/>
 
       <StatusStrip
         currentPosition={teamData.currentPosition}
@@ -369,7 +288,7 @@ export default function ParticipantDashboard() {
               teamId={teamData.teamId}
             />
 
-            <TeamsList teams={teams} />
+            <TeamsList teams={teams}/>
           </div>
 
           <QuestionPanel
@@ -387,7 +306,7 @@ export default function ParticipantDashboard() {
         </div>
       </main>
 
-      <Toaster />
+      <Toaster/>
     </div>
   )
 }

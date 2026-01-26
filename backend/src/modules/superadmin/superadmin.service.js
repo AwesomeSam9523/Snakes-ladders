@@ -37,12 +37,51 @@ const findAvailableRoom = async () => {
   throw new Error('All rooms are full. Maximum capacity reached.');
 };
 
-// Create team with User entry for login
-const createTeam = async (teamName, members, password) => {
-  // Find the last team by teamCode to auto-increment
+// Helper function to auto-assign map based on FCFS (10 teams per map)
+const findAvailableMap = async () => {
+  const MAP_CAPACITY = 10;
+  
+  // Get all active maps
+  const maps = await prisma.boardMap.findMany({
+    where: { isActive: true },
+    orderBy: { createdAt: 'asc' }, // FCFS - use oldest maps first
+  });
+
+  if (maps.length === 0) {
+    throw new Error('No active maps available. Please create maps first.');
+  }
+
+  // Get team counts per map
+  const mapCounts = await prisma.team.groupBy({
+    by: ['mapId'],
+    _count: { id: true },
+    where: {
+      mapId: { not: null },
+    },
+  });
+
+  // Create a map of mapId -> count
+  const mapCountMap = {};
+  mapCounts.forEach(mc => {
+    mapCountMap[mc.mapId] = mc._count.id;
+  });
+
+  // Find first map with available capacity (FCFS)
+  for (const map of maps) {
+    const count = mapCountMap[map.id] || 0;
+    if (count < MAP_CAPACITY) {
+      return map.id;
+    }
+  }
+
+  // If all maps are full, throw error (or return first map as fallback)
+  throw new Error('All maps are at capacity (10 teams each)');
+};
+
+const createTeam = async (teamName, password, members) => {
+  // Get the last team to determine team number
   const lastTeam = await prisma.team.findFirst({
-    orderBy: { teamCode: 'desc' },
-    select: { teamCode: true },
+    orderBy: { createdAt: 'desc' },
   });
 
   let newTeamNumber = 1;
@@ -58,8 +97,9 @@ const createTeam = async (teamName, members, password) => {
   const teamCode = `TEAM${newTeamNumber.toString().padStart(3, '0')}`;
   const hashedPassword = await hashPassword(password);
   const assignedRoom = await findAvailableRoom();
+  const assignedMapId = await findAvailableMap(); // Auto-assign map (FCFS, 10 teams per map)
 
-  console.log('Creating team:', { teamCode, teamName, hasPlainPassword: !!password, hasHashedPassword: !!hashedPassword });
+  console.log('Creating team:', { teamCode, teamName, assignedRoom, assignedMapId, hasPlainPassword: !!password, hasHashedPassword: !!hashedPassword });
 
   // Create team first
   const team = await prisma.team.create({
@@ -67,12 +107,14 @@ const createTeam = async (teamName, members, password) => {
       teamCode,
       teamName,
       currentRoom: assignedRoom,
+      mapId: assignedMapId, // Auto-assign map
       members: {
         create: members.map(name => ({ name })),
       },
     },
     include: {
       members: true,
+      map: true, // Include map details in response
     },
   });
 

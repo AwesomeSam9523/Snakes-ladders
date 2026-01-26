@@ -292,11 +292,13 @@ export default function SuperAdminDashboard() {
         // Refresh teams list and activity logs from database
         fetchTeams()
         fetchActivityLogs()
+        fetchMaps() // Refresh map counts
         
         // Show the generated credentials
         if (data.data) {
           const team = data.data
-          alert(`Team created successfully!\n\nLogin Username: ${team.loginUsername || team.teamCode}\nPassword: ${team.generatedPassword}\n\nPlease save these credentials!`)
+          const mapInfo = team.map ? `\nAuto-assigned Map: ${team.map.name}` : ''
+          alert(`Team created successfully!\n\nLogin Username: ${team.loginUsername || team.teamCode}\nPassword: ${team.generatedPassword}${mapInfo}\n\nPlease save these credentials!`)
         }
         
         setNewTeamId("")
@@ -791,7 +793,7 @@ export default function SuperAdminDashboard() {
 
                   {/* Map Assignment Section */}
                   <div className="mb-3 p-3 bg-blue-50 rounded border border-blue-200">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 mb-2">
                       <p className="text-sm font-medium text-gray-700">Board Map:</p>
                       <select
                         value={team.mapId || ""}
@@ -806,7 +808,7 @@ export default function SuperAdminDashboard() {
                         <option value="">Select a map...</option>
                         {maps.map((map) => (
                           <option key={map.id} value={map.id}>
-                            {map.name} ({map.teamsCount} teams)
+                            {map.name} ({map.teamsCount}/10 teams)
                           </option>
                         ))}
                       </select>
@@ -816,6 +818,9 @@ export default function SuperAdminDashboard() {
                         </span>
                       )}
                     </div>
+                    <p className="text-xs text-gray-500 italic">
+                      💡 Maps auto-assigned on team creation (10 teams/map, FCFS). Change here to override.
+                    </p>
                   </div>
 
                   <div className="flex flex-wrap gap-2">

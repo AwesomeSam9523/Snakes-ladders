@@ -24,7 +24,11 @@ class ApiService {
     const token = localStorage.getItem("token");
     const userRole = localStorage.getItem("userRole") as keyof typeof routeTypes;
     const routeType =
-      userRole && !endpoint.startsWith("/auth") ? `/${routeTypes[userRole]}` : "";
+      userRole
+      && !endpoint.startsWith("/auth")
+      && !endpoint.startsWith("/version")
+        ? `/${routeTypes[userRole]}`
+        : "";
     const config: RequestInit = {
       headers: {
         "Content-Type": "application/json",

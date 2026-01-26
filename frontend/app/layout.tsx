@@ -24,9 +24,9 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  React.useEffect(() => {
-    sessionStorage.removeItem('app_version_reloaded')
-  }, [])
+  // React.useEffect(() => {
+  //   sessionStorage.removeItem('app_version_reloaded')
+  // }, [])
   return (
     <html lang="en">
     <body className={`font-sans antialiased`}>

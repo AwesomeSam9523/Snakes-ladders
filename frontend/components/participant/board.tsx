@@ -1,7 +1,8 @@
 "use client"
 
-import { motion } from "framer-motion"
-import { useEffect, useState } from "react"
+import {motion} from "framer-motion"
+import {useEffect, useState} from "react"
+import {apiService} from "@/lib/service";
 
 interface BoardProps {
   currentPosition: number
@@ -11,35 +12,21 @@ interface BoardProps {
 const BOARD_COLS = 10
 const BOARD_ROWS = 15
 
-export function Board({ currentPosition, teamId }: BoardProps) {
+export function Board({currentPosition, teamId}: BoardProps) {
   // Default snake positions if no map assigned
   const [snakeTiles, setSnakeTiles] = useState<number[]>([98, 95, 93, 87, 64, 62, 54, 17])
   const [loading, setLoading] = useState(true)
-  
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
 
   useEffect(() => {
     const fetchBoardState = async () => {
       try {
-        const token = localStorage.getItem("token")
-        const res = await fetch(`${API_URL}/participant/board`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-        
-        if (res.ok) {
-          const data = await res.json()
-          console.log("Board data received:", data)
-          if (data.data && Array.isArray(data.data.snakes)) {
-            console.log("Snake positions:", data.data.snakes)
-            setSnakeTiles(data.data.snakes)
-          } else {
-            console.log("No snake data or wrong format:", data)
-          }
+        const {data} = await apiService.getBoard();
+        console.log("Board data received:", data)
+        if (data && Array.isArray(data.snakes)) {
+          console.log("Snake positions:", data.snakes)
+          setSnakeTiles(data.snakes)
         } else {
-          // If unauthorized or other error, use default snake positions
-          console.log("Using default snake positions (board fetch failed with status:", res.status, ")")
+          console.log("No snake data or wrong format:", data)
         }
       } catch (error) {
         console.error("Error fetching board state:", error)
@@ -47,9 +34,9 @@ export function Board({ currentPosition, teamId }: BoardProps) {
         setLoading(false)
       }
     }
-    
+
     fetchBoardState()
-  }, [API_URL])
+  }, [])
 
   const getPosition = (num: number) => {
     const row = Math.floor((num - 1) / BOARD_COLS)
@@ -62,14 +49,14 @@ export function Board({ currentPosition, teamId }: BoardProps) {
     }
   }
 
-  const tiles = Array.from({ length: 150 }, (_, i) => i + 1)
+  const tiles = Array.from({length: 150}, (_, i) => i + 1)
 
   return (
     <div className="rounded-lg bg-white border border-gray-200 p-4 sm:p-6 shadow-sm">
       <h3 className="text-lg font-bold text-gray-900 mb-4">Game Board</h3>
 
       <div className="relative w-full max-w-4xl mx-auto overflow-x-auto">
-        <svg viewBox="0 0 100 150" className="w-full h-full min-w-[300px]">
+        <svg viewBox="0 0 100 150" className="w-full h-full min-w-75">
           {/* Grid */}
           {tiles.map((num) => {
             const pos = getPosition(num)
@@ -119,9 +106,9 @@ export function Board({ currentPosition, teamId }: BoardProps) {
             cy={getPosition(currentPosition).y * 10 + 5}
             r={2}
             fill="oklch(0.65 0.20 280)"
-            initial={{ scale: 0 }}
-            animate={{ scale: [1, 1.3, 1] }}
-            transition={{ duration: 0.5, repeat: Number.POSITIVE_INFINITY, repeatDelay: 1 }}
+            initial={{scale: 0}}
+            animate={{scale: [1, 1.3, 1]}}
+            transition={{duration: 0.5, repeat: Number.POSITIVE_INFINITY, repeatDelay: 1}}
           />
 
           {snakeTiles.includes(currentPosition) && (
@@ -132,9 +119,9 @@ export function Board({ currentPosition, teamId }: BoardProps) {
               fill="none"
               stroke="oklch(0.55 0.22 25)"
               strokeWidth={0.5}
-              initial={{ scale: 1, opacity: 1 }}
-              animate={{ scale: 2, opacity: 0 }}
-              transition={{ duration: 1.5, repeat: Number.POSITIVE_INFINITY }}
+              initial={{scale: 1, opacity: 1}}
+              animate={{scale: 2, opacity: 0}}
+              transition={{duration: 1.5, repeat: Number.POSITIVE_INFINITY}}
             />
           )}
         </svg>

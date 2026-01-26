@@ -18,8 +18,8 @@ export function useCheckVersion() {
       }
     }
 
-    checkVersion().then(() => {
-      console.log('API Version:', localStorage.getItem('app_version'));
-    })
+    checkVersion();
+    const versionInterval = setInterval(checkVersion, 10000);
+    return () => clearInterval(versionInterval);
   }, [])
 }

@@ -44,7 +44,7 @@ export type GameStatus =
 export default function ParticipantDashboard() {
   const router = useRouter()
   const {toast} = useToast()
-  useCheckVersion()
+  // useCheckVersion()
 
   const [teamData, setTeamData] = useState<TeamData>({
     teamId: "",

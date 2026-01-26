@@ -154,6 +154,7 @@ export default function AdminDashboard() {
   const handleResumeTimer = async (teamId: string) => {
     try {
       await apiService.resumeTimer(teamId);
+      await apiService.fetchTeams();
       alert("Timer resumed successfully!")
     } catch (error) {
       console.error("Error resuming timer:", error)

@@ -2,12 +2,10 @@
 
 import {useEffect, useState} from "react"
 import {useRouter} from "next/navigation"
-import {useCheckVersion} from "@/hooks/use-check-version";
 
 export default function Home() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
-  useCheckVersion();
 
   useEffect(() => {
     // Check if user is already logged in

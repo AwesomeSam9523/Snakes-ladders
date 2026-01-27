@@ -74,7 +74,7 @@ class ApiService {
   async markAnswer(answerId: string, isCorrect: boolean): Promise<any> {
     return this.request(`/checkpoints/${answerId}/mark`, {
       method: 'POST',
-      body: JSON.stringify({ isCorrect }),
+      body: JSON.stringify({isCorrect}),
     });
   }
 
@@ -111,7 +111,7 @@ class ApiService {
   async useHint(assignmentId: string): Promise<any> {
     return this.request('/hint/use', {
       method: 'POST',
-      body: JSON.stringify({ assignmentId }),
+      body: JSON.stringify({assignmentId}),
     });
   }
 
@@ -124,7 +124,7 @@ class ApiService {
   async submitAnswer(assignmentId: string, answer: string): Promise<any> {
     return this.request('/answer/submit', {
       method: 'POST',
-      body: JSON.stringify({ assignmentId, answer }),
+      body: JSON.stringify({assignmentId, answer}),
     });
   }
 
@@ -135,6 +135,94 @@ class ApiService {
   async getVersion(): Promise<string> {
     const data = await this.request<{ version: string }>('/version');
     return data.version;
+  }
+
+  async fetchBoardMaps(): Promise<any> {
+    return this.request('/board/maps')
+  }
+
+  async fetchRoomCapacities(): Promise<any> {
+    return this.request('/rooms/capacities')
+  }
+
+  async fetchAllQuestions(): Promise<any> {
+    return this.request('/questions')
+  }
+
+  async fetchAuditLogs(): Promise<any> {
+    return this.request('/audit-logs')
+  }
+
+  async resetTeamPassword(teamId: string, newPassword: string): Promise<any> {
+    return this.request(`teams/${teamId}/password`, {
+      method: "PUT",
+      body: JSON.stringify({newPassword}),
+    });
+  }
+
+  async createTeam(teamData: { teamName: string; members: string[] }): Promise<any> {
+    return this.request('/teams', {
+      method: "POST",
+      body: JSON.stringify(teamData),
+    });
+  }
+
+  async createQuestion(data: any): Promise<any> {
+    return this.request('/questions', {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteQuestion(questionId: string): Promise<any> {
+    return this.request(`/questions/${questionId}`, {
+      method: "DELETE",
+    });
+  }
+
+  async editQuestion(questionId: string, data: any): Promise<any> {
+    return this.request(`/questions/${questionId}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async disqualifyTeam(teamId: string): Promise<any> {
+    return this.request(`/teams/${teamId}/disqualify`, {
+      method: "POST",
+    });
+  }
+
+  async reinstateTeam(teamId: string): Promise<any> {
+    return this.request(`/teams/${teamId}/reinstate`, {
+      method: "POST",
+    });
+  }
+
+  async changeTeamRoom(teamId: string, roomNumber: string): Promise<any> {
+    return this.request(`/teams/${teamId}/room`, {
+      method: "PUT",
+      body: JSON.stringify({roomNumber}),
+    });
+  }
+
+  async autoAssignRoomToTeam(teamId: string): Promise<any> {
+    return this.request(`/teams/${teamId}/room/auto-assign`, {
+      method: "POST",
+    });
+  }
+
+  async syncTeamPositions(): Promise<any> {
+    return this.request('/teams/sync-positions', {
+      method: "POST",
+    });
+  }
+
+  async assignMapToTeam(teamId: string, mapId: string): Promise<any> {
+    return this.request(`/teams/${teamId}/map`, {
+      method: "PUT",
+      body: JSON.stringify({mapId}),
+    });
   }
 }
 

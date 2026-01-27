@@ -11,8 +11,8 @@ import {TeamsList} from "@/components/participant/teams-list"
 import {QuestionPanel} from "@/components/participant/question-panel"
 import {Toaster} from "@/components/ui/toaster"
 import {useToast} from "@/hooks/use-toast"
-import {useCheckVersion} from "@/hooks/use-check-version"
 import {apiService} from "@/lib/service";
+import {useCheckVersion} from "@/hooks/use-check-version";
 
 /* ---------- TYPES ---------- */
 
@@ -44,7 +44,7 @@ export type GameStatus =
 export default function ParticipantDashboard() {
   const router = useRouter()
   const {toast} = useToast()
-  // useCheckVersion()
+  useCheckVersion()
 
   const [teamData, setTeamData] = useState<TeamData>({
     teamId: "",
@@ -142,6 +142,7 @@ export default function ParticipantDashboard() {
   }
 
   function incrementTimer() {
+    if (teamData.timerPaused) return;
     setTeamData((prev) => ({
       ...prev,
       totalTimeSec: prev.totalTimeSec + 1,
@@ -159,6 +160,11 @@ export default function ParticipantDashboard() {
 
     fetchTeamData()
     fetchTeams()
+
+    const lastDice = localStorage.getItem("lastDiceValue")
+    if (lastDice) {
+      setLastDiceValue(parseInt(lastDice, 10))
+    }
 
     const teamInterval = setInterval(fetchTeamData, 5000)
     const leaderboardInterval = setInterval(fetchTeams, 15000)
@@ -180,6 +186,15 @@ export default function ParticipantDashboard() {
       if (data?.newTotalTime !== undefined) {
         setTeamData(prev => ({...prev, totalTimeSec: data.newTotalTime}))
       }
+      if (data.hint) {
+        setQuestionData((prev: any) => ({
+          ...prev,
+          question: {
+            ...prev.question,
+            hint: data.hint,
+          },
+        }));
+      }
 
       toast({
         title: "Hint Used",
@@ -199,11 +214,11 @@ export default function ParticipantDashboard() {
 
   const handleRoll = async () => {
     setGameStatus("ROLLING")
-
     try {
       const data = await apiService.rollDice();
-
-      setLastDiceValue(data.diceValue)
+      setSubmitResult(null);
+      setLastDiceValue(data.diceValue);
+      localStorage.setItem("lastDiceValue", data.diceValue.toString());
       setTeamData(prev => ({
         ...prev,
         currentPosition: data.positionAfter,

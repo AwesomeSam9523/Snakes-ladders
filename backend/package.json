@@ -15,6 +15,7 @@
     "db:seed": "node prisma/seed.js",
     "db:seed-maps": "node prisma/seed-maps.js",
     "db:seed-rooms": "node prisma/seed-rooms.js",
+    "import-teams": "node data/import-teams.js",
     "postinstall": "npx prisma generate"
   },
   "keywords": [
@@ -37,7 +38,8 @@
     "express-session": "^1.17.3",
     "jsonwebtoken": "^9.0.2",
     "node-cache": "^5.1.2",
-    "pg": "^8.17.1"
+    "pg": "^8.17.1",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "nodemon": "^3.0.2",

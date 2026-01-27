@@ -27,6 +27,7 @@ class ApiService {
       userRole
       && !endpoint.startsWith("/auth")
       && !endpoint.startsWith("/version")
+      && !endpoint.startsWith("/questions")
         ? `/${routeTypes[userRole]}`
         : "";
     const config: RequestInit = {
@@ -148,7 +149,7 @@ class ApiService {
   }
 
   async fetchRoomCapacities(): Promise<any> {
-    return this.request('/rooms/capacities')
+    return this.request('/rooms/capacity')
   }
 
   async fetchAllQuestions(): Promise<any> {

@@ -389,7 +389,7 @@ const undoCheckpoint = async (checkpointId) => {
 };
 
 const getAllTeamsWithDetails = async () => {
-  return await prisma.team.findMany({
+  const teams = await prisma.team.findMany({
     include: {
       members: true,
       user: {
@@ -419,6 +419,23 @@ const getAllTeamsWithDetails = async () => {
       { currentPosition: 'desc' },
       { totalTimeSec: 'asc' },
     ],
+  });
+
+  // Calculate current time for each team based on timerStartedAt
+  const now = new Date();
+  return teams.map(team => {
+    let currentTimeSec = team.totalTimeSec;
+    
+    // If timer is running, calculate elapsed time
+    if (!team.timerPaused && team.status !== 'COMPLETED' && team.timerStartedAt) {
+      const elapsedSinceStart = Math.floor((now - team.timerStartedAt) / 1000);
+      currentTimeSec = team.totalTimeSec + elapsedSinceStart;
+    }
+    
+    return {
+      ...team,
+      totalTimeSec: currentTimeSec
+    };
   });
 };
 

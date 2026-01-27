@@ -21,9 +21,7 @@ export function Board({currentPosition, teamId}: BoardProps) {
     const fetchBoardState = async () => {
       try {
         const {data} = await apiService.getBoard();
-        console.log("Board data received:", data)
         if (data && Array.isArray(data.snakes)) {
-          console.log("Snake positions:", data.snakes)
           setSnakeTiles(data.snakes)
         } else {
           console.log("No snake data or wrong format:", data)

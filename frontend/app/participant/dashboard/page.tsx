@@ -11,8 +11,8 @@ import {TeamsList} from "@/components/participant/teams-list"
 import {QuestionPanel} from "@/components/participant/question-panel"
 import {Toaster} from "@/components/ui/toaster"
 import {useToast} from "@/hooks/use-toast"
-import {useCheckVersion} from "@/hooks/use-check-version"
 import {apiService} from "@/lib/service";
+import {useCheckVersion} from "@/hooks/use-check-version";
 
 /* ---------- TYPES ---------- */
 
@@ -98,7 +98,6 @@ export default function ParticipantDashboard() {
 
       let checkpointData = await apiService.getPendingCheckpoints();
       checkpointData = checkpointData.data;
-      console.log('checkpointData', JSON.stringify(checkpointData, null, 2));
       if (!checkpointData) {
         setGameStatus("IDLE")
         setCurrentCheckpoint(null)
@@ -113,11 +112,14 @@ export default function ParticipantDashboard() {
       }
 
       if (checkpointData.status === "APPROVED" && checkpointData.questionAssign?.question) {
-        setQuestionData({
+        setQuestionData((prev: any) => ({
           assignmentId: checkpointData.questionAssign.id,
-          question: checkpointData.questionAssign.question,
+          question: {
+            ...checkpointData.questionAssign.question,
+            hint: prev?.question?.hint || null,
+          },
           isSnakeDodge: checkpointData.isSnakePosition,
-        })
+        }));
         setGameStatus("QUESTION_ASSIGNED")
       }
     } catch (err) {
@@ -141,6 +143,14 @@ export default function ParticipantDashboard() {
     }
   }
 
+  function incrementTimer() {
+    if (teamData.timerPaused) return;
+    setTeamData((prev) => ({
+      ...prev,
+      totalTimeSec: prev.totalTimeSec + 1,
+    }));
+  }
+
   /* ---------- EFFECTS ---------- */
 
   useEffect(() => {
@@ -153,12 +163,19 @@ export default function ParticipantDashboard() {
     fetchTeamData()
     fetchTeams()
 
+    const lastDice = localStorage.getItem("lastDiceValue")
+    if (lastDice) {
+      setLastDiceValue(parseInt(lastDice, 10))
+    }
+
     const teamInterval = setInterval(fetchTeamData, 5000)
     const leaderboardInterval = setInterval(fetchTeams, 15000)
+    const timerInterval = setInterval(incrementTimer, 1000);
 
     return () => {
       clearInterval(teamInterval)
       clearInterval(leaderboardInterval)
+      clearInterval(timerInterval);
     }
   }, [])
 
@@ -170,6 +187,15 @@ export default function ParticipantDashboard() {
 
       if (data?.newTotalTime !== undefined) {
         setTeamData(prev => ({...prev, totalTimeSec: data.newTotalTime}))
+      }
+      if (data.hint) {
+        setQuestionData((prev: any) => ({
+          ...prev,
+          question: {
+            ...prev.question,
+            hint: data.hint,
+          },
+        }));
       }
 
       toast({
@@ -190,11 +216,11 @@ export default function ParticipantDashboard() {
 
   const handleRoll = async () => {
     setGameStatus("ROLLING")
-
     try {
       const data = await apiService.rollDice();
-
-      setLastDiceValue(data.diceValue)
+      setSubmitResult(null);
+      setLastDiceValue(data.diceValue);
+      localStorage.setItem("lastDiceValue", data.diceValue.toString());
       setTeamData(prev => ({
         ...prev,
         currentPosition: data.positionAfter,

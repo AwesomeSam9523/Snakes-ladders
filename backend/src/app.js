@@ -5,7 +5,7 @@ const { errorHandler, notFoundHandler } = require('./middlewares/error.middlewar
 const { syncAllTeamPositions } = require('./modules/superadmin/superadmin.service');
 
 const app = express();
-const API_VERSION_TIME = Date.now().toString();
+const API_VERSION = process.env.VERCEL_GIT_COMMIT_SHA || 'local';
 
 app.use(cors({
   origin: [
@@ -24,7 +24,7 @@ app.get('/', (req, res) => {
 });
 
 app.get('/api/version', (req, res) => {
-  res.json({ version: API_VERSION_TIME });
+  res.json({ version: API_VERSION });
 });
 
 app.get('/health', (req, res) => {

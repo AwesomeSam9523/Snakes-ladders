@@ -1,15 +1,16 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import { Navbar } from "@/components/navbar"
-import { ROOMS } from "@/lib/constants"
+import {useEffect, useState} from "react"
+import {useRouter} from "next/navigation"
+import {Navbar} from "@/components/navbar"
+import {ROOMS} from "@/lib/constants"
+import {apiService} from "@/lib/service";
 
 interface Team {
   id: string
   teamCode?: string
   teamName?: string
-  teamId?: string  
+  teamId?: string
   members: string[]
   currentPosition: number
   currentRoom: string
@@ -68,7 +69,6 @@ export default function SuperAdminDashboard() {
   const [showNewQuestionModal, setShowNewQuestionModal] = useState(false)
   const [newTeamId, setNewTeamId] = useState("")
   const [newTeamMembers, setNewTeamMembers] = useState("")
-  const [newTeamPassword, setNewTeamPassword] = useState("")
   const [newQuestion, setNewQuestion] = useState("")
   const [newQuestionIsSnake, setNewQuestionIsSnake] = useState<boolean>(false)
   const [newQuestionType, setNewQuestionType] = useState<"CODING" | "NUMERICAL" | "MCQ" | "PHYSICAL">("CODING")
@@ -82,27 +82,19 @@ export default function SuperAdminDashboard() {
   const [searchQuery, setSearchQuery] = useState("")
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([])
   const [generatedPasswords, setGeneratedPasswords] = useState<Record<string, string>>({})
-  const [maps, setMaps] = useState<Array<{id: string, name: string, teamsCount: number}>>([])
-  const [editingTeam, setEditingTeam] = useState<{teamId: string, field: string, value: any} | null>(null)
-  const [roomCapacities, setRoomCapacities] = useState<Array<{room: string, currentTeams: number, maxTeams: number, available: boolean}>>([])
-
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+  const [maps, setMaps] = useState<Array<{ id: string, name: string, teamsCount: number }>>([])
+  const [roomCapacities, setRoomCapacities] = useState<Array<{
+    room: string,
+    currentTeams: number,
+    maxTeams: number,
+    available: boolean
+  }>>([])
 
   // Fetch maps from backend
   const fetchMaps = async () => {
     try {
-      const token = localStorage.getItem("token")
-      const res = await fetch(`${API_URL}/superadmin/board/maps`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-      if (res.ok) {
-        const data = await res.json()
-        if (data.data && data.data.maps) {
-          setMaps(data.data.maps)
-        }
-      }
+      const {data} = await apiService.fetchBoardMaps();
+      setMaps(data.maps)
     } catch (error) {
       console.error("Error fetching maps:", error)
     }
@@ -111,18 +103,8 @@ export default function SuperAdminDashboard() {
   // Fetch room capacities
   const fetchRoomCapacities = async () => {
     try {
-      const token = localStorage.getItem("token")
-      const res = await fetch(`${API_URL}/superadmin/rooms/capacity`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-      if (res.ok) {
-        const data = await res.json()
-        if (data.data) {
-          setRoomCapacities(data.data)
-        }
-      }
+      const {data} = await apiService.fetchRoomCapacities();
+      setRoomCapacities(data)
     } catch (error) {
       console.error("Error fetching room capacities:", error)
     }
@@ -131,27 +113,17 @@ export default function SuperAdminDashboard() {
   // Fetch questions from backend
   const fetchQuestions = async () => {
     try {
-      const token = localStorage.getItem("token")
-      const res = await fetch(`${API_URL}/questions`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-      if (res.ok) {
-        const data = await res.json()
-        if (data.data) {
-          setQuestions(data.data.map((q: any, index: number) => ({
-            id: q.id,
-            questionNumber: `Q${String(index + 1).padStart(3, "0")}`,
-            text: q.content || q.text,
-            hint: q.hint || "",
-            isSnakeQuestion: q.isSnakeQuestion || false,
-            type: q.type || "CODING",
-            options: q.options || [],
-            correctAnswer: q.correctAnswer || "",
-          })))
-        }
-      }
+      const {data} = await apiService.fetchAllQuestions();
+      setQuestions(data.map((q: any, index: number) => ({
+        id: q.id,
+        questionNumber: `Q${String(index + 1).padStart(3, "0")}`,
+        text: q.content || q.text,
+        hint: q.hint || "",
+        isSnakeQuestion: q.isSnakeQuestion || false,
+        type: q.type || "CODING",
+        options: q.options || [],
+        correctAnswer: q.correctAnswer || "",
+      })))
     } catch (error) {
       console.error("Error fetching questions:", error)
     }
@@ -160,32 +132,22 @@ export default function SuperAdminDashboard() {
   // Fetch teams from backend
   const fetchTeams = async () => {
     try {
-      const token = localStorage.getItem("token")
-      const res = await fetch(`${API_URL}/superadmin/teams`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-      if (res.ok) {
-        const data = await res.json()
-        if (data.data) {
-          setTeams(data.data.map((t: any) => ({
-            id: t.id,
-            teamCode: t.teamCode,
-            teamName: t.teamName,
-            teamId: t.user?.username || t.teamCode, // Use username as TEAM ID (e.g., "TEAM001")
-            members: t.members?.map((m: any) => m.name) || [],
-            currentPosition: t.currentPosition || 1,
-            currentRoom: t.currentRoom || "AB1 301",
-            totalTime: t.totalTimeSec || 0,
-            points: t.points || 0,
-            disqualified: t.status === 'DISQUALIFIED',
-            mapId: t.mapId,
-            mapName: t.map?.name,
-            checkpoints: t.checkpoints || [],
-          })))
-        }
-      }
+      const {data} = await apiService.fetchTeams();
+      setTeams(data.map((t: any) => ({
+        id: t.id,
+        teamCode: t.teamCode,
+        teamName: t.teamName,
+        teamId: t.user?.username || t.teamCode, // Use username as TEAM ID (e.g., "TEAM001")
+        members: t.members?.map((m: any) => m.name) || [],
+        currentPosition: t.currentPosition || 1,
+        currentRoom: t.currentRoom || "AB1 301",
+        totalTime: t.totalTimeSec || 0,
+        points: t.points || 0,
+        disqualified: t.status === 'DISQUALIFIED',
+        mapId: t.mapId,
+        mapName: t.map?.name,
+        checkpoints: t.checkpoints || [],
+      })))
     } catch (error) {
       console.error("Error fetching teams:", error)
     }
@@ -194,18 +156,8 @@ export default function SuperAdminDashboard() {
   // Fetch activity logs from backend
   const fetchActivityLogs = async () => {
     try {
-      const token = localStorage.getItem("token")
-      const res = await fetch(`${API_URL}/superadmin/audit-logs`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-      if (res.ok) {
-        const data = await res.json()
-        if (data.data) {
-          setActivityLogs(data.data)
-        }
-      }
+      const {data} = await apiService.fetchAuditLogs();
+      setActivityLogs(data)
     } catch (error) {
       console.error("Error fetching activity logs:", error)
     }
@@ -221,7 +173,7 @@ export default function SuperAdminDashboard() {
       fetchQuestions()
       fetchMaps()
       fetchRoomCapacities()
-      
+
       // Auto-refresh teams, room capacities, and sync positions every 10 seconds
       const interval = setInterval(() => {
         fetchTeams()
@@ -233,9 +185,9 @@ export default function SuperAdminDashboard() {
   }, [router])
 
   const generateRandomPassword = () => {
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
     let password = ""
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 6; i++) {
       password += chars.charAt(Math.floor(Math.random() * chars.length))
     }
     return password
@@ -243,25 +195,11 @@ export default function SuperAdminDashboard() {
 
   const handleGeneratePassword = async (teamId: string) => {
     const newPassword = generateRandomPassword()
-    
-    try {
-      const token = localStorage.getItem("token")
-      const res = await fetch(`${API_URL}/superadmin/teams/${teamId}/password`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ newPassword }),
-      })
 
-      if (res.ok) {
-        setGeneratedPasswords((prev) => ({ ...prev, [teamId]: newPassword }))
-        alert(`Password updated successfully! New password: ${newPassword}`)
-      } else {
-        const error = await res.json()
-        alert(`Failed to update password: ${error.message || 'Unknown error'}`)
-      }
+    try {
+      await apiService.resetTeamPassword(teamId, newPassword);
+      setGeneratedPasswords((prev) => ({...prev, [teamId]: newPassword}))
+      alert(`Password updated successfully! New password: ${newPassword}`)
     } catch (error) {
       console.error("Error updating password:", error)
       alert("Failed to update password. Check if backend is running.")
@@ -272,43 +210,28 @@ export default function SuperAdminDashboard() {
     if (!newTeamId || !newTeamMembers) return
 
     try {
-      const token = localStorage.getItem("token")
       const members = newTeamMembers.split(",").map((m) => m.trim()).filter(m => m)
-      
-      const res = await fetch(`${API_URL}/superadmin/teams`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          teamName: newTeamId,
-          members: members,
-        }),
+
+      const {data} = await apiService.createTeam({
+        teamName: newTeamId,
+        members,
       })
 
-      if (res.ok) {
-        const data = await res.json()
-        // Refresh teams list and activity logs from database
-        fetchTeams()
-        fetchActivityLogs()
-        fetchMaps() // Refresh map counts
-        
-        // Show the generated credentials
-        if (data.data) {
-          const team = data.data
-          const mapInfo = team.map ? `\nAuto-assigned Map: ${team.map.name}` : ''
-          alert(`Team created successfully!\n\nLogin Username: ${team.loginUsername || team.teamCode}\nPassword: ${team.generatedPassword}${mapInfo}\n\nPlease save these credentials!`)
-        }
-        
-        setNewTeamId("")
-        setNewTeamMembers("")
-        setNewTeamPassword("")
-        setShowNewTeamModal(false)
-      } else {
-        const error = await res.json()
-        alert(`Failed to create team: ${error.message || 'Unknown error'}`)
+      // Refresh teams list and activity logs from database
+      fetchTeams()
+      fetchActivityLogs()
+      fetchMaps() // Refresh map counts
+
+      // Show the generated credentials
+      if (data) {
+        const team = data.data
+        const mapInfo = team.map ? `\nAuto-assigned Map: ${team.map.name}` : ''
+        alert(`Team created successfully!\n\nLogin Username: ${team.loginUsername || team.teamCode}\nPassword: ${team.generatedPassword}${mapInfo}\n\nPlease save these credentials!`)
       }
+
+      setNewTeamId("")
+      setNewTeamMembers("")
+      setShowNewTeamModal(false)
     } catch (error) {
       console.error("Error creating team:", error)
       alert("Failed to create team. Check if backend is running.")
@@ -342,7 +265,6 @@ export default function SuperAdminDashboard() {
     }
 
     try {
-      const token = localStorage.getItem("token")
       const payload: any = {
         content: newQuestion,
         hint: newQuestionHint,
@@ -357,22 +279,8 @@ export default function SuperAdminDashboard() {
         payload.correctAnswer = newQuestionCorrectAnswer.trim()
       }
 
-      const res = await fetch(`${API_URL}/questions`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      })
-
-      if (res.ok) {
-        fetchQuestions() // Refresh questions from DB
-        alert("Question created successfully!")
-      } else {
-        const error = await res.json()
-        alert(`Error: ${error.message || 'Failed to create question'}`)
-      }
+      await apiService.createQuestion(payload);
+      alert("Question created successfully!")
     } catch (error) {
       console.error("Error creating question:", error)
       alert("Failed to create question. Check if backend is running.")
@@ -390,23 +298,12 @@ export default function SuperAdminDashboard() {
   const handleDisqualifyTeam = async (teamId: string) => {
     try {
       const team = teams.find(t => t.id === teamId)
-      const endpoint = team?.disqualified ? 'reinstate' : 'disqualify'
-      
-      const token = localStorage.getItem("token")
-      const res = await fetch(`${API_URL}/superadmin/teams/${teamId}/${endpoint}`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
+      team?.disqualified
+        ? await apiService.disqualifyTeam(teamId)
+        : await apiService.reinstateTeam(teamId);
 
-      if (res.ok) {
-        fetchTeams() // Refresh teams from DB
-        alert(`Team ${endpoint}d successfully!`)
-      } else {
-        const error = await res.json()
-        alert(`Error: ${error.message || `Failed to ${endpoint} team`}`)
-      }
+      await fetchTeams() // Refresh teams from DB
+      alert(`Team ${team?.disqualified ? "disqualified" : "reinstated"} successfully!`)
     } catch (error) {
       console.error(`Error updating team status:`, error)
       alert("Failed to update team status. Check if backend is running.")
@@ -417,25 +314,11 @@ export default function SuperAdminDashboard() {
     if (!newRoom) return
 
     try {
-      const token = localStorage.getItem("token")
-      const res = await fetch(`${API_URL}/superadmin/teams/${teamId}/room`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ roomNumber: newRoom }),
-      })
-
-      if (res.ok) {
-        fetchTeams() // Refresh teams from DB
-        setSelectedTeamForEdit(null)
-        setNewRoom("")
-        alert("Room updated successfully!")
-      } else {
-        const error = await res.json()
-        alert(`Error: ${error.message || 'Failed to update room'}`)
-      }
+      await apiService.changeTeamRoom(teamId, newRoom);
+      fetchTeams() // Refresh teams from DB
+      setSelectedTeamForEdit(null)
+      setNewRoom("")
+      alert("Room updated successfully!")
     } catch (error) {
       console.error("Error updating room:", error)
       alert("Failed to update room. Check if backend is running.")
@@ -444,23 +327,10 @@ export default function SuperAdminDashboard() {
 
   const handleAutoAssignRoom = async (teamId: string) => {
     try {
-      const token = localStorage.getItem("token")
-      const res = await fetch(`${API_URL}/superadmin/teams/${teamId}/room/auto-assign`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-
-      if (res.ok) {
-        const data = await res.json()
-        fetchTeams() // Refresh teams from DB
-        setSelectedTeamForEdit(null)
-        alert(`Team automatically assigned to ${data.data.assignedRoom}!`)
-      } else {
-        const error = await res.json()
-        alert(`Error: ${error.message || 'Failed to auto-assign room'}`)
-      }
+      const {data} = await apiService.autoAssignRoomToTeam(teamId);
+      fetchTeams() // Refresh teams from DB
+      setSelectedTeamForEdit(null)
+      alert(`Team automatically assigned to ${data.assignedRoom}!`)
     } catch (error) {
       console.error("Error auto-assigning room:", error)
       alert("Failed to auto-assign room. Check if backend is running.")
@@ -469,17 +339,9 @@ export default function SuperAdminDashboard() {
 
   const handleSyncPositions = async () => {
     try {
-      const token = localStorage.getItem("token")
-      const res = await fetch(`${API_URL}/superadmin/teams/sync-positions`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-
-      if (res.ok) {
-        await fetchTeams() // Refresh teams from DB
-      }
+      await apiService.syncTeamPositions();
+      await fetchTeams() // Refresh teams from DB
+      alert("Synced")
     } catch (error) {
       console.error("Error syncing positions:", error)
     }
@@ -487,23 +349,9 @@ export default function SuperAdminDashboard() {
 
   const handleAssignMap = async (teamId: string, mapId: string) => {
     try {
-      const token = localStorage.getItem("token")
-      const res = await fetch(`${API_URL}/superadmin/teams/${teamId}/map`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ mapId }),
-      })
-
-      if (res.ok) {
-        fetchTeams() // Refresh teams from DB
-        alert("Map assigned successfully!")
-      } else {
-        const error = await res.json()
-        alert(`Error: ${error.message || 'Failed to assign map'}`)
-      }
+      await apiService.assignMapToTeam(teamId, mapId);
+      fetchTeams() // Refresh teams from DB
+      alert("Map assigned successfully!")
     } catch (error) {
       console.error("Error assigning map:", error)
       alert("Failed to assign map. Check if backend is running.")
@@ -516,21 +364,9 @@ export default function SuperAdminDashboard() {
     }
 
     try {
-      const token = localStorage.getItem("token")
-      const res = await fetch(`${API_URL}/questions/${questionId}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-
-      if (res.ok) {
-        fetchQuestions() // Refresh questions from DB
-        alert("Question deleted successfully!")
-      } else {
-        const error = await res.json()
-        alert(`Error: ${error.message || 'Failed to delete question'}`)
-      }
+      await apiService.deleteQuestion(questionId);
+      fetchQuestions() // Refresh questions from DB
+      alert("Question deleted successfully!")
     } catch (error) {
       console.error("Error deleting question:", error)
       alert("Failed to delete question. Check if backend is running.")
@@ -559,7 +395,6 @@ export default function SuperAdminDashboard() {
     }
 
     try {
-      const token = localStorage.getItem("token")
       const payload: any = {
         content: editingQuestion.text,
         hint: editingQuestion.hint,
@@ -574,22 +409,9 @@ export default function SuperAdminDashboard() {
         payload.correctAnswer = editingQuestion.correctAnswer?.trim()
       }
 
-      const res = await fetch(`${API_URL}/questions/${editingQuestion.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      })
-
-      if (res.ok) {
-        fetchQuestions()
-        alert("Question updated successfully!")
-      } else {
-        const error = await res.json()
-        alert(`Error: ${error.message || 'Failed to update question'}`)
-      }
+      await apiService.editQuestion(editingQuestion.id, payload);
+      fetchQuestions()
+      alert("Question updated successfully!")
     } catch (error) {
       console.error("Error updating question:", error)
       alert("Failed to update question. Check if backend is running.")
@@ -605,23 +427,11 @@ export default function SuperAdminDashboard() {
     }
 
     try {
-      const token = localStorage.getItem("token")
-      const res = await fetch(`${API_URL}/superadmin/checkpoints/${checkpointId}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-
-      if (res.ok) {
-        // Refresh teams and activity logs
-        fetchTeams()
-        fetchActivityLogs()
-        alert("Checkpoint undone successfully!")
-      } else {
-        const error = await res.json()
-        alert(`Error: ${error.message || 'Failed to undo checkpoint'}`)
-      }
+      await apiService.deleteCheckpoint(checkpointId)
+      // Refresh teams and activity logs
+      fetchTeams()
+      fetchActivityLogs()
+      alert("Checkpoint undone successfully!")
     } catch (error) {
       console.error("Error undoing checkpoint:", error)
       alert("Failed to undo checkpoint. Check if backend is running.")
@@ -635,7 +445,7 @@ export default function SuperAdminDashboard() {
 
   return (
     <div className="min-h-screen bg-white relative">
-      <Navbar role="superadmin" />
+      <Navbar role="superadmin"/>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-wrap gap-4 mb-8 border-b border-gray-200 pb-4">
@@ -691,33 +501,34 @@ export default function SuperAdminDashboard() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-100">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Rank</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Team Name</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Position</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Points</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Time</th>
-                  </tr>
+                <tr>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Rank</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Team Name</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Position</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Points</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Time</th>
+                </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {leaderboard.map((team, idx) => {
-                    const formatTime = (seconds: number) => {
-                      const h = Math.floor(seconds / 3600)
-                      const m = Math.floor((seconds % 3600) / 60)
-                      const s = seconds % 60
-                      return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`
-                    }
-                    
-                    return (
-                      <tr key={team.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-3 text-sm text-gray-900 font-bold">{idx + 1}</td>
-                        <td className="px-4 py-3 text-sm text-gray-900">{team.teamId || team.teamCode || team.teamName || 'Unknown'}</td>
-                        <td className="px-4 py-3 text-sm text-gray-900">{team.currentPosition}</td>
-                        <td className="px-4 py-3 text-sm text-gray-900">{team.points}</td>
-                        <td className="px-4 py-3 text-sm font-mono text-gray-900">{formatTime(team.totalTime)}</td>
-                      </tr>
-                    )
-                  })}
+                {leaderboard.map((team, idx) => {
+                  const formatTime = (seconds: number) => {
+                    const h = Math.floor(seconds / 3600)
+                    const m = Math.floor((seconds % 3600) / 60)
+                    const s = seconds % 60
+                    return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`
+                  }
+
+                  return (
+                    <tr key={team.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-3 text-sm text-gray-900 font-bold">{idx + 1}</td>
+                      <td
+                        className="px-4 py-3 text-sm text-gray-900">{team.teamId || team.teamCode || team.teamName || 'Unknown'}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900">{team.currentPosition}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900">{team.points}</td>
+                      <td className="px-4 py-3 text-sm font-mono text-gray-900">{formatTime(team.totalTime)}</td>
+                    </tr>
+                  )
+                })}
                 </tbody>
               </table>
             </div>
@@ -750,254 +561,256 @@ export default function SuperAdminDashboard() {
 
             <div className="space-y-3">
               {teams
-                .filter((team) => 
+                .filter((team) =>
                   (team.teamId || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
                   (team.teamCode || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
                   (team.teamName || '').toLowerCase().includes(searchQuery.toLowerCase())
                 )
                 .map((team) => (
-                <div
-                  key={team.id}
-                  className={`border rounded-lg p-4 ${
-                    team.disqualified ? "bg-red-50 border-red-200" : "border-gray-200"
-                  }`}
-                >
-                  <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-3">
-                    <div>
-                      <p className="text-xs text-gray-600 uppercase">Team ID</p>
-                      <p className="font-bold text-gray-900">{team.teamId || team.teamCode || 'N/A'}</p>
+                  <div
+                    key={team.id}
+                    className={`border rounded-lg p-4 ${
+                      team.disqualified ? "bg-red-50 border-red-200" : "border-gray-200"
+                    }`}
+                  >
+                    <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-3">
+                      <div>
+                        <p className="text-xs text-gray-600 uppercase">Team ID</p>
+                        <p className="font-bold text-gray-900">{team.teamId || team.teamCode || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-600 uppercase">Team Name</p>
+                        <p className="font-bold text-gray-900">{team.teamName || '-'}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-600 uppercase">Position</p>
+                        <p className="font-bold text-gray-900">{team.currentPosition}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-600 uppercase">Room</p>
+                        <p className="font-bold text-gray-900">{team.currentRoom}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-600 uppercase">Time (sec)</p>
+                        <p className="font-bold text-gray-900">{team.totalTime}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-600 uppercase">Status</p>
+                        <p className={`font-bold ${team.disqualified ? "text-red-600" : "text-green-600"}`}>
+                          {team.disqualified ? "Disqualified" : "Active"}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-xs text-gray-600 uppercase">Team Name</p>
-                      <p className="font-bold text-gray-900">{team.teamName || '-'}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-600 uppercase">Position</p>
-                      <p className="font-bold text-gray-900">{team.currentPosition}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-600 uppercase">Room</p>
-                      <p className="font-bold text-gray-900">{team.currentRoom}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-600 uppercase">Time (sec)</p>
-                      <p className="font-bold text-gray-900">{team.totalTime}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-600 uppercase">Status</p>
-                      <p className={`font-bold ${team.disqualified ? "text-red-600" : "text-green-600"}`}>
-                        {team.disqualified ? "Disqualified" : "Active"}
-                      </p>
-                    </div>
-                  </div>
 
-                  {/* Map Assignment Section */}
-                  <div className="mb-3 p-3 bg-blue-50 rounded border border-blue-200">
-                    <div className="flex items-center gap-3 mb-2">
-                      <p className="text-sm font-medium text-gray-700">Board Map:</p>
-                      <select
-                        value={team.mapId || ""}
-                        onChange={(e) => {
-                          const mapId = e.target.value
-                          if (mapId) {
-                            handleAssignMap(team.id, mapId)
-                          }
-                        }}
-                        className="px-3 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 bg-white"
-                      >
-                        <option value="">Select a map...</option>
-                        {maps.map((map) => (
-                          <option key={map.id} value={map.id}>
-                            {map.name} ({map.teamsCount}/10 teams)
-                          </option>
-                        ))}
-                      </select>
-                      {team.mapName && (
-                        <span className="text-sm text-blue-700 font-medium">
+                    {/* Map Assignment Section */}
+                    <div className="mb-3 p-3 bg-blue-50 rounded border border-blue-200">
+                      <div className="flex items-center gap-3 mb-2">
+                        <p className="text-sm font-medium text-gray-700">Board Map:</p>
+                        <select
+                          value={team.mapId || ""}
+                          onChange={(e) => {
+                            const mapId = e.target.value
+                            if (mapId) {
+                              handleAssignMap(team.id, mapId)
+                            }
+                          }}
+                          className="px-3 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 bg-white"
+                        >
+                          <option value="">Select a map...</option>
+                          {maps.map((map) => (
+                            <option key={map.id} value={map.id}>
+                              {map.name} ({map.teamsCount}/10 teams)
+                            </option>
+                          ))}
+                        </select>
+                        {team.mapName && (
+                          <span className="text-sm text-blue-700 font-medium">
                           ✓ Currently: {team.mapName}
                         </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-500 italic">
+                        💡 Maps auto-assigned on team creation (10 teams/map, FCFS). Change here to override.
+                      </p>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      {selectedTeamForEdit === team.id ? (
+                        <div className="flex gap-2 w-full">
+                          <select
+                            value={newRoom}
+                            onChange={(e) => setNewRoom(e.target.value)}
+                            className="flex-1 px-3 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:border-gray-600"
+                          >
+                            <option value="">Select room...</option>
+                            {ROOMS.map((room) => {
+                              const capacity = roomCapacities.find(r => r.room === room)
+                              const availableSlots = capacity ? capacity.maxTeams - capacity.currentTeams : 7
+                              const isFull = availableSlots <= 0
+                              return (
+                                <option key={room} value={room} disabled={isFull}>
+                                  {room} ({availableSlots} slots{isFull ? " - FULL" : ""})
+                                </option>
+                              )
+                            })}
+                          </select>
+                          <button
+                            onClick={() => handleChangeRoom(team.id)}
+                            className="px-3 py-1 text-sm bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors font-medium"
+                          >
+                            Update
+                          </button>
+                          <button
+                            onClick={() => handleAutoAssignRoom(team.id)}
+                            className="px-3 py-1 text-sm bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition-colors font-medium whitespace-nowrap"
+                            title="Auto-assign to room with available capacity"
+                          >
+                            Auto-Assign
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedTeamForEdit(null)
+                              setNewRoom("")
+                            }}
+                            className="px-3 py-1 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => {
+                              setSelectedTeamForEdit(team.id)
+                              setNewRoom(String(team.currentRoom))
+                            }}
+                            className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors font-medium"
+                          >
+                            Change Room
+                          </button>
+                          <button
+                            onClick={() => handleDisqualifyTeam(team.id)}
+                            className={`px-3 py-1 text-sm rounded font-medium transition-colors ${
+                              team.disqualified
+                                ? "bg-yellow-100 text-yellow-700 hover:bg-yellow-200"
+                                : "bg-red-100 text-red-700 hover:bg-red-200"
+                            }`}
+                          >
+                            {team.disqualified ? "Reactivate" : "Disqualify"}
+                          </button>
+                          <button
+                            onClick={() => handleGeneratePassword(team.id)}
+                            className="px-3 py-1 text-sm bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition-colors font-medium"
+                          >
+                            Generate Password
+                          </button>
+                        </>
                       )}
                     </div>
-                    <p className="text-xs text-gray-500 italic">
-                      💡 Maps auto-assigned on team creation (10 teams/map, FCFS). Change here to override.
-                    </p>
-                  </div>
 
-                  <div className="flex flex-wrap gap-2">
-                    {selectedTeamForEdit === team.id ? (
-                      <div className="flex gap-2 w-full">
-                        <select
-                          value={newRoom}
-                          onChange={(e) => setNewRoom(e.target.value)}
-                          className="flex-1 px-3 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:border-gray-600"
-                        >
-                          <option value="">Select room...</option>
-                          {ROOMS.map((room) => {
-                            const capacity = roomCapacities.find(r => r.room === room)
-                            const availableSlots = capacity ? capacity.maxTeams - capacity.currentTeams : 7
-                            const isFull = availableSlots <= 0
-                            return (
-                              <option key={room} value={room} disabled={isFull}>
-                                {room} ({availableSlots} slots{isFull ? " - FULL" : ""})
-                              </option>
-                            )
-                          })}
-                        </select>
-                        <button
-                          onClick={() => handleChangeRoom(team.id)}
-                          className="px-3 py-1 text-sm bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors font-medium"
-                        >
-                          Update
-                        </button>
-                        <button
-                          onClick={() => handleAutoAssignRoom(team.id)}
-                          className="px-3 py-1 text-sm bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition-colors font-medium whitespace-nowrap"
-                          title="Auto-assign to room with available capacity"
-                        >
-                          Auto-Assign
-                        </button>
-                        <button
-                          onClick={() => {
-                            setSelectedTeamForEdit(null)
-                            setNewRoom("")
-                          }}
-                          className="px-3 py-1 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    ) : (
-                      <>
-                        <button
-                          onClick={() => {
-                            setSelectedTeamForEdit(team.id)
-                            setNewRoom(String(team.currentRoom))
-                          }}
-                          className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors font-medium"
-                        >
-                          Change Room
-                        </button>
-                        <button
-                          onClick={() => handleDisqualifyTeam(team.id)}
-                          className={`px-3 py-1 text-sm rounded font-medium transition-colors ${
-                            team.disqualified
-                              ? "bg-yellow-100 text-yellow-700 hover:bg-yellow-200"
-                              : "bg-red-100 text-red-700 hover:bg-red-200"
-                          }`}
-                        >
-                          {team.disqualified ? "Reactivate" : "Disqualify"}
-                        </button>
-                        <button
-                          onClick={() => handleGeneratePassword(team.id)}
-                          className="px-3 py-1 text-sm bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition-colors font-medium"
-                        >
-                          Generate Password
-                        </button>
-                      </>
-                    )}
-                  </div>
-
-                  {/* Generated Password Display */}
-                  {generatedPasswords[team.id] && (
-                    <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded">
-                      <p className="text-sm text-green-800 mb-1">
-                        <span className="font-medium">Login Username:</span>{" "}
-                        <span className="font-mono font-bold">{team.teamId || team.teamCode || 'N/A'}</span>
-                      </p>
-                      <p className="text-sm text-green-800 flex justify-between items-center">
+                    {/* Generated Password Display */}
+                    {generatedPasswords[team.id] && (
+                      <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded">
+                        <p className="text-sm text-green-800 mb-1">
+                          <span className="font-medium">Login Username:</span>{" "}
+                          <span className="font-mono font-bold">{team.teamId || team.teamCode || 'N/A'}</span>
+                        </p>
+                        <p className="text-sm text-green-800 flex justify-between items-center">
                         <span>
                           <span className="font-medium">New Password:</span>{" "}
                           <span className="font-mono font-bold">{generatedPasswords[team.id]}</span>
                         </span>
-                        <button
-                          onClick={() => setGeneratedPasswords((prev) => {
-                            const newPasswords = { ...prev }
-                            delete newPasswords[team.id]
-                            return newPasswords
-                          })}
-                          className="text-green-700 hover:text-green-900 text-sm font-medium"
-                        >
-                          ✕ Hide
-                        </button>
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Checkpoints Section */}
-                  {team.checkpoints && team.checkpoints.length > 0 && (
-                    <div className="mt-4 bg-gray-50 p-3 rounded">
-                      <p className="text-sm font-semibold text-gray-700 mb-3">Checkpoints History ({team.checkpoints.length})</p>
-                      <div className="space-y-2">
-                        {team.checkpoints.map((checkpoint) => (
-                          <div
-                            key={checkpoint.id}
-                            className="bg-white p-3 rounded border border-gray-200"
+                          <button
+                            onClick={() => setGeneratedPasswords((prev) => {
+                              const newPasswords = {...prev}
+                              delete newPasswords[team.id]
+                              return newPasswords
+                            })}
+                            className="text-green-700 hover:text-green-900 text-sm font-medium"
                           >
-                            <div className="flex justify-between items-center">
+                            ✕ Hide
+                          </button>
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Checkpoints Section */}
+                    {team.checkpoints && team.checkpoints.length > 0 && (
+                      <div className="mt-4 bg-gray-50 p-3 rounded">
+                        <p className="text-sm font-semibold text-gray-700 mb-3">Checkpoints History
+                          ({team.checkpoints.length})</p>
+                        <div className="space-y-2">
+                          {team.checkpoints.map((checkpoint) => (
+                            <div
+                              key={checkpoint.id}
+                              className="bg-white p-3 rounded border border-gray-200"
+                            >
+                              <div className="flex justify-between items-center">
                               <span className="text-sm font-medium text-gray-700">
                                 Checkpoint #{checkpoint.checkpointNumber} → Position {checkpoint.positionAfter}
                                 {checkpoint.isSnakePosition && (
                                   <span className="ml-2 text-xs text-red-600">🐍 Snake!</span>
                                 )}
                               </span>
-                              
-                              {/* Checkpoint Status */}
-                              <div className="flex items-center gap-2">
-                                {checkpoint.status === "APPROVED" ? (
-                                  <>
-                                    <span className="text-xs text-green-600 font-medium">✓ Approved</span>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleUndoCheckpoint(checkpoint.id)}
-                                      className="px-2 py-0.5 text-xs bg-red-100 text-red-600 rounded hover:bg-red-200 transition-colors"
-                                    >
-                                      Undo
-                                    </button>
-                                  </>
-                                ) : checkpoint.status === "FAILED" ? (
-                                  <span className="text-xs text-red-600 font-medium">✗ Failed</span>
-                                ) : (
-                                  <span className="text-xs text-yellow-600 font-medium">⏳ Pending</span>
-                                )}
-                              </div>
-                            </div>
 
-                            {/* Question Info (if assigned) */}
-                            {checkpoint.questionAssign && (
-                              <div className="mt-2 pt-2 border-t border-gray-100">
-                                <div className="flex justify-between items-center">
+                                {/* Checkpoint Status */}
+                                <div className="flex items-center gap-2">
+                                  {checkpoint.status === "APPROVED" ? (
+                                    <>
+                                      <span className="text-xs text-green-600 font-medium">✓ Approved</span>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleUndoCheckpoint(checkpoint.id)}
+                                        className="px-2 py-0.5 text-xs bg-red-100 text-red-600 rounded hover:bg-red-200 transition-colors"
+                                      >
+                                        Undo
+                                      </button>
+                                    </>
+                                  ) : checkpoint.status === "FAILED" ? (
+                                    <span className="text-xs text-red-600 font-medium">✗ Failed</span>
+                                  ) : (
+                                    <span className="text-xs text-yellow-600 font-medium">⏳ Pending</span>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Question Info (if assigned) */}
+                              {checkpoint.questionAssign && (
+                                <div className="mt-2 pt-2 border-t border-gray-100">
+                                  <div className="flex justify-between items-center">
                                   <span className="text-xs text-gray-600">
                                     Question: <span className="font-medium text-gray-800">
                                       {checkpoint.questionAssign.question?.text?.substring(0, 40) || checkpoint.questionAssign.questionId}
-                                      {(checkpoint.questionAssign.question?.text?.length || 0) > 40 ? "..." : ""}
+                                    {(checkpoint.questionAssign.question?.text?.length || 0) > 40 ? "..." : ""}
                                     </span>
                                   </span>
 
-                                  {/* Answer Status */}
-                                  <div className="flex items-center gap-2">
-                                    {checkpoint.questionAssign.status === "CORRECT" ? (
-                                      <span className="text-xs text-green-600 font-medium">✓ Correct</span>
-                                    ) : checkpoint.questionAssign.status === "INCORRECT" ? (
-                                      <span className="text-xs text-red-600 font-medium">✗ Incorrect</span>
-                                    ) : (
-                                      <span className="text-xs text-yellow-600 font-medium">⏳ Pending</span>
-                                    )}
+                                    {/* Answer Status */}
+                                    <div className="flex items-center gap-2">
+                                      {checkpoint.questionAssign.status === "CORRECT" ? (
+                                        <span className="text-xs text-green-600 font-medium">✓ Correct</span>
+                                      ) : checkpoint.questionAssign.status === "INCORRECT" ? (
+                                        <span className="text-xs text-red-600 font-medium">✗ Incorrect</span>
+                                      ) : (
+                                        <span className="text-xs text-yellow-600 font-medium">⏳ Pending</span>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                            )}
+                              )}
 
-                            {/* Room info */}
-                            <div className="mt-1 text-xs text-gray-500">
-                              Room: {checkpoint.roomNumber} | From: {checkpoint.positionBefore} → {checkpoint.positionAfter}
+                              {/* Room info */}
+                              <div className="mt-1 text-xs text-gray-500">
+                                Room: {checkpoint.roomNumber} |
+                                From: {checkpoint.positionBefore} → {checkpoint.positionAfter}
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </div>
-              ))}
+                    )}
+                  </div>
+                ))}
             </div>
           </div>
         )}
@@ -1023,7 +836,8 @@ export default function SuperAdminDashboard() {
                 >
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <p className="font-semibold text-gray-900 text-sm">{question.questionNumber || `Q${String(index + 1).padStart(3, "0")}`}</p>
+                      <p
+                        className="font-semibold text-gray-900 text-sm">{question.questionNumber || `Q${String(index + 1).padStart(3, "0")}`}</p>
                       {question.isSnakeQuestion && (
                         <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded font-medium">
                           🐍 Snake Question
@@ -1097,12 +911,13 @@ export default function SuperAdminDashboard() {
 
             {activityLogs.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-gray-500">No activity logs yet. Activity will appear here as users interact with the system.</p>
+                <p className="text-gray-500">No activity logs yet. Activity will appear here as users interact with the
+                  system.</p>
               </div>
             ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-100">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-100">
                   <tr>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Timestamp</th>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">User ID</th>
@@ -1110,8 +925,8 @@ export default function SuperAdminDashboard() {
                     <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Action</th>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Details</th>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
                   {activityLogs
                     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
                     .map((log) => (
@@ -1147,9 +962,9 @@ export default function SuperAdminDashboard() {
                         <td className="px-4 py-3 text-sm text-gray-700">{log.details}</td>
                       </tr>
                     ))}
-                </tbody>
-              </table>
-            </div>
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
         )}
@@ -1157,7 +972,7 @@ export default function SuperAdminDashboard() {
 
       {/* Create Team Modal */}
       {showNewTeamModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4" style={{ zIndex: 9999 }}>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4" style={{zIndex: 9999}}>
           <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
             <h3 className="text-lg font-bold text-gray-900 mb-4">Create New Team</h3>
 
@@ -1226,7 +1041,8 @@ export default function SuperAdminDashboard() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Hint <span className="text-red-500">*</span></label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Hint <span
+                  className="text-red-500">*</span></label>
                 <textarea
                   value={newQuestionHint}
                   onChange={(e) => setNewQuestionHint(e.target.value)}
@@ -1344,16 +1160,17 @@ export default function SuperAdminDashboard() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Question Text</label>
                 <textarea
                   value={editingQuestion.text}
-                  onChange={(e) => setEditingQuestion({ ...editingQuestion, text: e.target.value })}
+                  onChange={(e) => setEditingQuestion({...editingQuestion, text: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-gray-600 focus:ring-1 focus:ring-gray-600 h-24 text-gray-900"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Hint <span className="text-red-500">*</span></label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Hint <span
+                  className="text-red-500">*</span></label>
                 <textarea
                   value={editingQuestion.hint}
-                  onChange={(e) => setEditingQuestion({ ...editingQuestion, hint: e.target.value })}
+                  onChange={(e) => setEditingQuestion({...editingQuestion, hint: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-gray-600 focus:ring-1 focus:ring-gray-600 h-20 text-gray-900"
                 />
               </div>
@@ -1362,7 +1179,10 @@ export default function SuperAdminDashboard() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Question Type</label>
                 <select
                   value={editingQuestion.type}
-                  onChange={(e) => setEditingQuestion({ ...editingQuestion, type: e.target.value as "CODING" | "NUMERICAL" | "MCQ" | "PHYSICAL" })}
+                  onChange={(e) => setEditingQuestion({
+                    ...editingQuestion,
+                    type: e.target.value as "CODING" | "NUMERICAL" | "MCQ" | "PHYSICAL"
+                  })}
                   className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-gray-600 focus:ring-1 focus:ring-gray-600 text-gray-900"
                 >
                   <option value="CODING">Coding (Manual Marking)</option>
@@ -1378,7 +1198,10 @@ export default function SuperAdminDashboard() {
                   <input
                     type="text"
                     value={editingQuestion.options?.join(", ") || ""}
-                    onChange={(e) => setEditingQuestion({ ...editingQuestion, options: e.target.value.split(",").map(o => o.trim()) })}
+                    onChange={(e) => setEditingQuestion({
+                      ...editingQuestion,
+                      options: e.target.value.split(",").map(o => o.trim())
+                    })}
                     placeholder="Option 1, Option 2, Option 3, Option 4"
                     className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-gray-600 focus:ring-1 focus:ring-gray-600 text-gray-900"
                   />
@@ -1391,7 +1214,7 @@ export default function SuperAdminDashboard() {
                   <input
                     type="text"
                     value={editingQuestion.correctAnswer || ""}
-                    onChange={(e) => setEditingQuestion({ ...editingQuestion, correctAnswer: e.target.value })}
+                    onChange={(e) => setEditingQuestion({...editingQuestion, correctAnswer: e.target.value})}
                     placeholder={editingQuestion.type === "MCQ" ? "Must match one of the options" : "Enter the exact numerical answer"}
                     className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-gray-600 focus:ring-1 focus:ring-gray-600 text-gray-900"
                   />
@@ -1402,7 +1225,10 @@ export default function SuperAdminDashboard() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Room Type</label>
                 <select
                   value={editingQuestion.roomType || "TECH"}
-                  onChange={(e) => setEditingQuestion({ ...editingQuestion, roomType: e.target.value as "TECH" | "NON_TECH" })}
+                  onChange={(e) => setEditingQuestion({
+                    ...editingQuestion,
+                    roomType: e.target.value as "TECH" | "NON_TECH"
+                  })}
                   className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-gray-600 focus:ring-1 focus:ring-gray-600 text-gray-900"
                 >
                   <option value="TECH">Tech Room</option>

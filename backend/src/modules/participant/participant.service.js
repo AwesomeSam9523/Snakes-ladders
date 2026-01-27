@@ -75,7 +75,7 @@ const getTeamState = async (teamId) => {
 
   // Calculate current time based on server time
   let currentTimeSec = team.totalTimeSec;
-  
+
   // If timer is running (not paused and not completed) and has started
   if (!team.timerPaused && team.status !== 'COMPLETED' && team.timerStartedAt) {
     const now = new Date();
@@ -143,7 +143,6 @@ const getPendingCheckpoint = async (teamId) => {
             select: {
               id: true,
               text: true,
-              hint: true,
               type: true,
               options: true,
               isSnakeQuestion: true,
@@ -285,11 +284,11 @@ const submitAnswer = async (teamId, assignmentId, answer) => {
   // Auto-check for NUMERICAL and MCQ types
   if (question.type === 'NUMERICAL' || question.type === 'MCQ') {
     isAutoMarked = true;
-    
+
     // Normalize answers for comparison
     const submittedAnswer = answer.trim().toLowerCase();
     const correctAnswer = question.correctAnswer?.trim().toLowerCase();
-    
+
     isCorrect = submittedAnswer === correctAnswer;
     newStatus = isCorrect ? 'CORRECT' : 'INCORRECT';
   }
@@ -321,12 +320,12 @@ const submitAnswer = async (teamId, assignmentId, answer) => {
         checkpoint: true,
       },
     }),
-    
+
     // Update team points if auto-marked
     ...(isAutoMarked ? [
       prisma.team.update({
         where: { id: teamId },
-        data: { 
+        data: {
           points: { increment: pointsChange },
           canRollDice: true, // Unlock dice
         },
@@ -338,7 +337,7 @@ const submitAnswer = async (teamId, assignmentId, answer) => {
         data: { canRollDice: true },
       })
     ]),
-    
+
     // Approve the checkpoint
     prisma.checkpoint.update({
       where: { id: assignment.checkpoint.id },
@@ -408,27 +407,27 @@ const useHint = async (teamId, assignmentId) => {
 const syncTimer = async (teamId) => {
   const team = await prisma.team.findUnique({
     where: { id: teamId },
-    select: { 
-      totalTimeSec: true, 
-      status: true, 
+    select: {
+      totalTimeSec: true,
+      status: true,
       timerPaused: true,
       timerStartedAt: true,
       currentPosition: true,
     },
   });
-  
+
   if (!team) {
     return null;
   }
 
   let currentTimeSec = team.totalTimeSec;
   const now = new Date();
-  
+
   // Calculate elapsed time if timer is running
   if (!team.timerPaused && team.status !== 'COMPLETED' && team.timerStartedAt) {
     const elapsedSinceStart = Math.floor((now - team.timerStartedAt) / 1000);
     currentTimeSec = team.totalTimeSec + elapsedSinceStart;
-    
+
     // Update the database with accumulated time and reset start time
     await prisma.team.update({
       where: { id: teamId },
@@ -450,17 +449,17 @@ const syncTimer = async (teamId) => {
         status: 'COMPLETED',
       },
     });
-    return { 
-      totalTimeSec: currentTimeSec, 
-      status: 'COMPLETED', 
-      timerPaused: true 
+    return {
+      totalTimeSec: currentTimeSec,
+      status: 'COMPLETED',
+      timerPaused: true
     };
   }
 
-  return { 
-    totalTimeSec: currentTimeSec, 
-    status: team.status, 
-    timerPaused: team.timerPaused 
+  return {
+    totalTimeSec: currentTimeSec,
+    status: team.status,
+    timerPaused: team.timerPaused
   };
 };
 
@@ -491,8 +490,8 @@ const startTimer = async (teamId) => {
 const pauseTimer = async (teamId) => {
   const team = await prisma.team.findUnique({
     where: { id: teamId },
-    select: { 
-      totalTimeSec: true, 
+    select: {
+      totalTimeSec: true,
       timerStartedAt: true,
       timerPaused: true,
       status: true,

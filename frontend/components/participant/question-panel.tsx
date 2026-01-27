@@ -57,10 +57,10 @@ export function QuestionPanel({
   const [usingHint, setUsingHint] = useState(false)
 
   const handleHintClick = async () => {
-    if (!showHint && questionData?.id) {
+    if (!showHint && questionData?.assignmentId) {
       setUsingHint(true)
       try {
-        await onUseHint(questionData.id)
+        await onUseHint(questionData.assignmentId)
         setShowHint(true)
       } catch (error) {
         console.error("Error using hint:", error)
@@ -163,12 +163,12 @@ export function QuestionPanel({
             <div className="flex items-center gap-2">
               {submitResult.autoMarked ? (
                 submitResult.isCorrect ? (
-                  <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 flex-shrink-0"/>
+                  <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 shrink-0"/>
                 ) : (
-                  <XCircle className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 flex-shrink-0"/>
+                  <XCircle className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 shrink-0"/>
                 )
               ) : (
-                <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0"/>
+                <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 shrink-0"/>
               )}
               <p className="text-xs sm:text-sm font-semibold text-gray-900">{submitResult.message}</p>
             </div>
@@ -242,7 +242,7 @@ export function QuestionPanel({
             {showHint && questionData.question.hint && (
               <div className="p-3 rounded-lg bg-amber-50 border border-amber-200">
                 <div className="flex items-start gap-2">
-                  <HelpCircle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0"/>
+                  <HelpCircle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0"/>
                   <div className="flex-1">
                     <p className="text-xs font-semibold text-amber-900 mb-1">Hint: (+60s penalty)</p>
                     <p className="text-sm text-amber-800">{questionData.question.hint}</p>
@@ -256,10 +256,10 @@ export function QuestionPanel({
                 onClick={handleHintClick}
                 variant="outline"
                 className="flex items-center justify-center gap-2 text-sm w-full sm:w-auto bg-gray-900 text-white border-gray-900 hover:bg-gray-800"
-                disabled={usingHint}
+                disabled={usingHint || showHint}
               >
                 <HelpCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4"/>
-                {usingHint ? "Loading..." : showHint ? "Hide Hint" : "Show Hint (+60s)"}
+                {usingHint ? "Loading..." : showHint ? "Hint used" : "Show Hint (+60s)"}
               </Button>
               <Button onClick={handleSubmitAnswer} disabled={!answer.trim() || submitting}
                       className="flex-1 text-sm bg-gray-900 text-white hover:bg-gray-800 disabled:bg-gray-300 disabled:text-gray-500">

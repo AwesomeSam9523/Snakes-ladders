@@ -132,6 +132,12 @@ class ApiService {
     return this.request('/board');
   }
 
+  async syncTimer(): Promise<any> {
+    return this.request('/timer/sync', {
+      method: 'POST',
+    });
+  }
+
   async getVersion(): Promise<string> {
     const data = await this.request<{ version: string }>('/version');
     return data.version;

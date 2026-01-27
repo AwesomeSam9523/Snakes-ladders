@@ -184,11 +184,21 @@ export default function ParticipantDashboard() {
     const teamInterval = setInterval(fetchTeamData, 5000)
     const leaderboardInterval = setInterval(fetchTeams, 15000)
     const timerInterval = setInterval(incrementTimer, 1000);
+    
+    // Sync timer with database every 10 seconds so superadmin sees updated times
+    const syncTimerInterval = setInterval(async () => {
+      try {
+        await apiService.syncTimer()
+      } catch (error) {
+        console.error("Error syncing timer:", error)
+      }
+    }, 10000)
 
     return () => {
       clearInterval(teamInterval)
       clearInterval(leaderboardInterval)
       clearInterval(timerInterval);
+      clearInterval(syncTimerInterval)
     }
   }, [])
 

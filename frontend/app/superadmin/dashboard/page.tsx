@@ -341,7 +341,7 @@ export default function SuperAdminDashboard() {
     try {
       await apiService.syncTeamPositions();
       await fetchTeams() // Refresh teams from DB
-      alert("Synced")
+      // Sync completed silently
     } catch (error) {
       console.error("Error syncing positions:", error)
     }

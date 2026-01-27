@@ -98,7 +98,6 @@ export default function ParticipantDashboard() {
 
       let checkpointData = await apiService.getPendingCheckpoints();
       checkpointData = checkpointData.data;
-      console.log('checkpointData', JSON.stringify(checkpointData, null, 2));
       if (!checkpointData) {
         setGameStatus("IDLE")
         setCurrentCheckpoint(null)
@@ -113,11 +112,14 @@ export default function ParticipantDashboard() {
       }
 
       if (checkpointData.status === "APPROVED" && checkpointData.questionAssign?.question) {
-        setQuestionData({
+        setQuestionData((prev: any) => ({
           assignmentId: checkpointData.questionAssign.id,
-          question: checkpointData.questionAssign.question,
+          question: {
+            ...checkpointData.questionAssign.question,
+            hint: prev?.question?.hint || null,
+          },
           isSnakeDodge: checkpointData.isSnakePosition,
-        })
+        }));
         setGameStatus("QUESTION_ASSIGNED")
       }
     } catch (err) {

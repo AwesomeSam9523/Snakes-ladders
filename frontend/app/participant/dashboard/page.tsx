@@ -1,6 +1,6 @@
 "use client"
 
-import {useEffect, useState} from "react"
+import {useEffect, useState, useRef} from "react"
 import {useRouter} from "next/navigation"
 
 import {Header} from "@/components/participant/header"
@@ -65,6 +65,19 @@ export default function ParticipantDashboard() {
   const [answer, setAnswer] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const [submitResult, setSubmitResult] = useState<any>(null)
+  const previousSubmitResultRef = useRef<any>(null)
+
+  /* ---------- SCROLL TO TOP ON MANUAL MARKING ---------- */
+  useEffect(() => {
+    // Scroll to top when manual check is marked by admin
+    if (submitResult && !previousSubmitResultRef.current) {
+      // If submitResult appears and it's NOT auto-marked, scroll to top
+      if (!submitResult.autoMarked) {
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      }
+    }
+    previousSubmitResultRef.current = submitResult
+  }, [submitResult])
 
   /* ---------- DATA FETCHING ---------- */
 
@@ -266,6 +279,13 @@ export default function ParticipantDashboard() {
       setGameStatus("IDLE")
       setTeamData(prev => ({...prev, canRollDice: true}))
       await fetchTeamData()
+
+      // Scroll to top after submission
+      // For auto-check (NUMERICAL/MCQ): scroll immediately
+      // For manual-check (CODING/PHYSICAL): scroll will happen when marked by admin
+      if (data.autoMarked) {
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      }
     } catch (err: any) {
       toast({
         title: "Error",

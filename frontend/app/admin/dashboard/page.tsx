@@ -119,8 +119,8 @@ export default function AdminDashboard() {
       router.push("/login")
     } else {
       fetchTeams()
-      // Auto-refresh teams every 15 seconds to see position updates
-      const interval = setInterval(fetchTeams, 15000)
+      // Auto-refresh teams every 3 seconds for real-time checkpoint visibility
+      const interval = setInterval(fetchTeams, 3000)
       return () => clearInterval(interval)
     }
   }, [router])

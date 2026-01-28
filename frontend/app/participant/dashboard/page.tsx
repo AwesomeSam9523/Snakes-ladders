@@ -195,7 +195,7 @@ export default function ParticipantDashboard() {
     }
 
     const teamInterval = setInterval(fetchTeamData, 5000)
-    const leaderboardInterval = setInterval(fetchTeams, 15000)
+    const leaderboardInterval = setInterval(fetchTeams, 5000)
     const timerInterval = setInterval(incrementTimer, 1000);
     
     // Sync timer with database every 10 seconds so superadmin sees updated times
@@ -265,7 +265,9 @@ export default function ParticipantDashboard() {
       }))
 
       setGameStatus("PENDING_APPROVAL")
-      await fetchTeams()
+      
+      // Immediate refetch to update UI and sync with admin portal
+      await Promise.all([fetchTeamData(), fetchTeams()])
     } catch (err) {
       setGameStatus("IDLE")
       toast({
@@ -301,7 +303,9 @@ export default function ParticipantDashboard() {
       setAnswer("")
       setGameStatus("IDLE")
       setTeamData(prev => ({...prev, canRollDice: true}))
-      await fetchTeamData()
+      
+      // Immediate refetch for faster feedback
+      await Promise.all([fetchTeamData(), fetchTeams()])
 
       // Scroll to top after submission
       // For auto-check (NUMERICAL/MCQ): scroll immediately

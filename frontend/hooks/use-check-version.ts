@@ -30,6 +30,7 @@ export function useCheckVersion(intervalMs = 10000) {
           window.location.reload()
         }
       } catch (err) {
+        
         console.error('Version check failed:', err)
       }
     }

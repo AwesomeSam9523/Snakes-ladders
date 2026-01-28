@@ -4,6 +4,7 @@ import {useEffect, useState} from "react"
 import {useRouter} from "next/navigation"
 import {Navbar} from "@/components/navbar"
 import {apiService} from "@/lib/service";
+import {Button} from "@/components/ui/button";
 
 interface Checkpoint {
   id: string
@@ -34,7 +35,7 @@ interface Team {
   id: string
   teamCode: string
   teamName: string
-  teamId?: string  // User's username like "TEAM001"
+  teamId: string  // User's username like "TEAM001"
   members: Array<{ name: string }>
   currentPosition: number
   currentRoom: string
@@ -44,43 +45,73 @@ interface Team {
   checkpoints: Checkpoint[]
 }
 
-interface Question {
-  id: string
-  content: string
-  type?: string
-  questionNumber?: string
-  isSnakeQuestion?: boolean
-}
-
 export default function AdminDashboard() {
   const router = useRouter()
   const [teams, setTeams] = useState<Team[]>([])
-  // questions state removed - no longer needed for manual assignment
-  const [selectedTeam, setSelectedTeam] = useState<Team | null>(null)
-  // showQuestionModal removed - no longer needed
-  const [selectedCheckpoint, setSelectedCheckpoint] = useState<Checkpoint | null>(null)
-  // selectedQuestion removed - no longer needed
   const [searchQuery, setSearchQuery] = useState("")
   const [loading, setLoading] = useState(true)
+  const [teamOffsets, setTeamOffsets] = useState<Record<string, number>>({});
+  const [expanding, setExpanding] = useState<boolean>(false);
+
+  function mergeCheckpoints(
+    existing: Checkpoint[] = [],
+    incoming: Checkpoint[] = []
+  ): Checkpoint[] {
+    const map = new Map<string, Checkpoint>();
+
+    existing.forEach(cp => map.set(cp.id, cp));
+    incoming.forEach(cp => map.set(cp.id, cp));
+
+    return Array.from(map.values()).sort(
+      (a, b) => b.checkpointNumber - a.checkpointNumber
+    );
+  }
+
 
   // Fetch teams from backend
   const fetchTeams = async () => {
     try {
-      const data = await apiService.fetchTeams();
-      if (data.data) {
-        setTeams(data.data.map((t: any) => ({
-          ...t,
-          teamId: t.user?.username || t.teamCode,
-        })))
-      }
-    } catch (error) {
-      console.error("Error fetching teams:", error)
-    } finally {
-      setLoading(false)
-    }
-  }
+      const {data} = await apiService.fetchTeams(false);
 
-  // fetchQuestions removed - no longer needed for automatic assignment
+      setTeams(prevTeams =>
+        data.map((t: any) => {
+          const existingTeam = prevTeams.find(pt => pt.id === t.id);
+
+          return {
+            ...t,
+            teamId: t.user?.username || t.teamCode,
+            checkpoints: mergeCheckpoints(
+              existingTeam?.checkpoints,
+              t.checkpoints
+            ),
+          };
+        })
+      );
+    } catch (error) {
+      console.error("Error fetching teams:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  function collapseCheckpoints(teamId: string) {
+    const offset = (teamOffsets[teamId] ?? 0) - 10;
+    setTeams(prevTeams =>
+      prevTeams.map(team => {
+        if (team.id !== teamId) return team;
+
+        return {
+          ...team,
+          checkpoints: team.checkpoints.slice(0, 1),
+        };
+      })
+    );
+
+    setTeamOffsets(prev => ({
+      ...prev,
+      [teamId]: offset,
+    }));
+  }
 
   useEffect(() => {
     const userRole = localStorage.getItem("userRole")
@@ -88,34 +119,60 @@ export default function AdminDashboard() {
       router.push("/login")
     } else {
       fetchTeams()
-      // fetchQuestions removed - questions auto-assigned now
-
       // Auto-refresh teams every 15 seconds to see position updates
       const interval = setInterval(fetchTeams, 15000)
       return () => clearInterval(interval)
     }
   }, [router])
 
+
   // Approve checkpoint via API
+  async function loadMoreCheckpoints(teamId: string) {
+    const offset = (teamOffsets[teamId] ?? -10) + 10;
+    setExpanding(true);
+    const {data: newCheckpoints} =
+      await apiService.loadMoreCheckpoints(teamId, offset);
+
+    // Update teams state
+    setTeams(prevTeams =>
+      prevTeams.map(team => {
+        if (team.id !== teamId) return team;
+
+        return {
+          ...team,
+          checkpoints: mergeCheckpoints(
+            team.checkpoints || 0,
+            newCheckpoints
+          ),
+        };
+      })
+    );
+    setExpanding(false);
+
+    // Update offset for this team
+    setTeamOffsets(prev => ({
+      ...prev,
+      [teamId]: offset,
+    }));
+  }
+
   const handleApproveCheckpoint = async (checkpointId: string) => {
     try {
       await apiService.approveCheckpoint(checkpointId);
       alert('Checkpoint approved successfully!');
-      await apiService.fetchTeams();
+      await fetchTeams();
     } catch (error) {
       console.error("Error approving checkpoint:", error)
       alert("Failed to approve checkpoint")
     }
   }
 
-  // handleAssignQuestion removed - questions are now auto-assigned during dice roll
-
   // Mark answer as correct or incorrect via API
   const handleMarkAnswer = async (checkpointId: string, isCorrect: boolean) => {
     try {
       await apiService.markAnswer(checkpointId, isCorrect);
       alert(`Answer marked as ${isCorrect ? 'correct' : 'incorrect'}!`)
-      await apiService.fetchTeams();
+      await fetchTeams();
     } catch (error) {
       console.error("Error marking answer:", error)
       alert("Failed to mark answer")
@@ -130,7 +187,7 @@ export default function AdminDashboard() {
 
     try {
       await apiService.deleteCheckpoint(checkpointId);
-      await apiService.fetchTeams();
+      await fetchTeams();
       alert("Checkpoint deleted successfully!")
     } catch (error) {
       console.error("Error deleting checkpoint:", error)
@@ -142,7 +199,7 @@ export default function AdminDashboard() {
   const handlePauseTimer = async (teamId: string) => {
     try {
       await apiService.pauseTimer(teamId);
-      await apiService.fetchTeams();
+      await fetchTeams();
       alert("Timer paused successfully!")
     } catch (error) {
       console.error("Error pausing timer:", error)
@@ -154,7 +211,7 @@ export default function AdminDashboard() {
   const handleResumeTimer = async (teamId: string) => {
     try {
       await apiService.resumeTimer(teamId);
-      await apiService.fetchTeams();
+      await fetchTeams();
       alert("Timer resumed successfully!")
     } catch (error) {
       console.error("Error resuming timer:", error)
@@ -351,6 +408,21 @@ export default function AdminDashboard() {
                     ) : (
                       <p className="text-xs text-gray-500">No checkpoints yet</p>
                     )}
+                    {team.checkpoints.at(-1)?.checkpointNumber === 1 ?
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mt-2"
+                        onClick={() => collapseCheckpoints(team.id)}
+                      >Collapse</Button>
+                      :
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mt-2"
+                        disabled={expanding}
+                        onClick={() => loadMoreCheckpoints(team.id)}
+                      >{expanding ? 'Loading...' : 'Expand'}</Button>}
                   </div>
                 </div>
               </div>
@@ -358,7 +430,6 @@ export default function AdminDashboard() {
           )}
         </div>
       </main>
-      {/* Question Modal removed - no longer needed for automatic assignment */}
     </div>
   )
 }

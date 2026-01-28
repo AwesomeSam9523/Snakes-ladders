@@ -1,17 +1,29 @@
 const adminService = require('./admin.service');
-const { sendSuccess, sendError, sendNotFound, sendBadRequest } = require('../../utils/response.util');
+const { sendSuccess, sendNotFound, sendBadRequest } = require('../../utils/response.util');
 const { MESSAGES } = require('../../config/constants');
 
  //get all teams
  
 const getAllTeams = async (req, res, next) => {
   try {
-    const teams = await adminService.getAllTeams();
+    const { allCheckpoints } = req.query;
+    const teams = await adminService.getAllTeams(allCheckpoints === 'true');
     return sendSuccess(res, teams, 'Teams fetched successfully');
   } catch (error) {
     next(error);
   }
 };
+
+const getTeamCheckpoints = async (req, res, next) => {
+  try {
+    const { teamId } = req.params;
+    const { offset } = req.query;
+    const checkpoints = await adminService.getTeamCheckpoints(teamId, parseInt(offset, 10) || 0);
+    return sendSuccess(res, checkpoints, 'Team checkpoints fetched successfully');
+  } catch (error) {
+    next(error);
+  }
+}
 
 const getTeamById = async (req, res, next) => {
   try {
@@ -156,4 +168,5 @@ module.exports = {
   pauseTeamTimer,
   resumeTeamTimer,
   deleteCheckpoint,
+  getTeamCheckpoints,
 };

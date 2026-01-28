@@ -11,6 +11,7 @@ router.use(adminOnly);
 // Team routes
 router.get('/teams', adminController.getAllTeams);
 router.get('/teams/:teamId', adminController.getTeamById);
+router.get('/teams/:teamId/checkpoints', adminController.getTeamCheckpoints);
 router.get('/teams/:teamId/progress', adminController.getTeamProgress);
 router.post('/teams/:teamId/timer/pause', adminController.pauseTeamTimer);
 router.post('/teams/:teamId/timer/resume', adminController.resumeTeamTimer);

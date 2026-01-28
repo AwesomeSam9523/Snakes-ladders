@@ -1,7 +1,7 @@
 const prisma = require('../../config/db');
 const { logAdminAction, AUDIT_ACTIONS } = require('../audit/audit.service');
 
-const getAllTeams = async () => {
+const getAllTeams = async (allCheckpoints) => {
   return await prisma.team.findMany({
     include: {
       members: true,
@@ -12,7 +12,7 @@ const getAllTeams = async () => {
       },
       checkpoints: {
         orderBy: { checkpointNumber: 'desc' },
-        take: 3, // Limit to last 3 checkpoints per team
+        take: allCheckpoints ? 3 : 1,
         include: {
           questionAssign: {
             include: { question: true },
@@ -21,6 +21,20 @@ const getAllTeams = async () => {
       },
     },
     orderBy: { currentPosition: 'desc' },
+  });
+};
+
+const getTeamCheckpoints = async (teamId, offset = 0) => {
+  return await prisma.checkpoint.findMany({
+    where: { teamId },
+    include: {
+      questionAssign: {
+        include: { question: true },
+      },
+    },
+    orderBy: { checkpointNumber: 'desc' },
+    skip: offset,
+    take: 10,
   });
 };
 
@@ -138,7 +152,7 @@ const markQuestionAnswer = async (assignmentId, isCorrect, adminUsername = 'admi
   }
 
   // Calculate points based on snake position and answer correctness
-  let pointsChange = 0;
+  let pointsChange;
   if (assignment.checkpoint.isSnakePosition) {
     // Snake position: correct = 0, incorrect = -1
     pointsChange = isCorrect ? 0 : -1;
@@ -383,5 +397,6 @@ module.exports = {
   pauseTeamTimer,
   resumeTeamTimer,
   deleteCheckpoint,
+  getTeamCheckpoints,
 };
 

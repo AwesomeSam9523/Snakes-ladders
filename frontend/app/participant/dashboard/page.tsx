@@ -253,10 +253,13 @@ export default function ParticipantDashboard() {
   const handleRoll = async () => {
     setGameStatus("ROLLING")
     try {
-      const data = await apiService.rollDice();
+      const response = await apiService.rollDice();
+      const data = response.data; // Extract data from API response
       setSubmitResult(null);
       setLastDiceValue(data.diceValue);
       localStorage.setItem("lastDiceValue", data.diceValue.toString());
+      
+      // Update position immediately from dice roll response (don't wait for refetch)
       setTeamData(prev => ({
         ...prev,
         currentPosition: data.positionAfter,
@@ -266,13 +269,13 @@ export default function ParticipantDashboard() {
 
       setGameStatus("PENDING_APPROVAL")
       
-      // Immediate refetch to update UI and sync with admin portal
-      await Promise.all([fetchTeamData(), fetchTeams()])
-    } catch (err) {
+      // Update leaderboard immediately for other teams
+      fetchTeams()
+    } catch (err: any) {
       setGameStatus("IDLE")
       toast({
         title: "Error",
-        description: "Failed to roll dice",
+        description: err?.message || "Failed to roll dice",
         variant: "destructive",
       })
     }

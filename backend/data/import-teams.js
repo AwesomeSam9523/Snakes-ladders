@@ -122,7 +122,7 @@ async function importTeams() {
         const assignedMapId = await findAvailableMap();
 
         // Create team
-        const team = await prisma.team.create({
+        const team = prisma.team.create({
           data: {
             teamCode: teamCode.toString(),
             teamName: finalTeamName.toString(),
@@ -139,7 +139,7 @@ async function importTeams() {
         });
 
         // Create User entry for login
-        await prisma.user.create({
+        const user = prisma.user.create({
           data: {
             username: teamCode.toString(),
             password: hashedPassword,
@@ -147,6 +147,8 @@ async function importTeams() {
             teamId: team.id,
           },
         });
+
+        await prisma.$transaction([team, user]);
 
         console.log(`✅ ${teamCode} - ${finalTeamName} created successfully`);
         successCount++;
@@ -159,7 +161,7 @@ async function importTeams() {
 
     console.log('Import Summary:');
     console.log(`✅ Success: ${successCount}`);
-    console.log(`⏭️  Skipped: ${skipCount}`);
+    console.log(`⏭️ Skipped: ${skipCount}`);
     console.log(`❌ Errors: ${errorCount}`);
 
   } catch (error) {

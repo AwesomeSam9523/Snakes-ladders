@@ -62,8 +62,12 @@ class ApiService {
     return response.json();
   }
 
-  async fetchTeams(): Promise<any> {
-    return this.request('/teams')
+  async fetchTeams(getAllCheckpoints = false): Promise<any> {
+    return this.request(`/teams?allCheckpoints=${getAllCheckpoints}`);
+  }
+
+  async loadMoreCheckpoints(teamId: string, offset: number): Promise<any> {
+    return this.request(`/teams/${teamId}/checkpoints?offset=${offset}`);
   }
 
   async approveCheckpoint(checkpointId: string): Promise<any> {

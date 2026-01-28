@@ -135,6 +135,19 @@ export default function ParticipantDashboard() {
         }));
         setGameStatus("QUESTION_ASSIGNED")
       }
+
+      if (checkpointData.status === "APPROVED" && checkpointData.questionAssign?.participantAnswer) {
+        setQuestionData((prev: any) => ({
+          assignmentId: checkpointData.questionAssign.id,
+          question: {
+            ...checkpointData.questionAssign.question,
+            hint: prev?.question?.hint || null,
+          },
+          isSnakeDodge: checkpointData.isSnakePosition,
+          participantAnswer: checkpointData.questionAssign.participantAnswer,
+        }));
+        setGameStatus("SOLVING");
+      }
     } catch (err) {
       console.error(err)
     } finally {

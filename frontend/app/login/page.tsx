@@ -4,6 +4,7 @@ import type React from "react"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import {apiService} from "@/lib/service";
 
 export default function LoginPage() {
   const router = useRouter()
@@ -18,35 +19,23 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, password }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Login failed')
-      }
+      const {data} = await apiService.login(username, password);
 
       // Store token and user info
-      localStorage.setItem('token', data.data.token)
-      localStorage.setItem('userRole', data.data.user.role)
-      localStorage.setItem('userId', data.data.user.id)
-      localStorage.setItem('username', data.data.user.username)
+      localStorage.setItem('token', data.token)
+      localStorage.setItem('userRole', data.user.role)
+      localStorage.setItem('userId', data.user.id)
+      localStorage.setItem('username', data.user.username)
 
       // Store team info for participants
-      if (data.data.team) {
-        localStorage.setItem('teamId', data.data.team.id)
-        localStorage.setItem('teamCode', data.data.team.teamCode)
-        localStorage.setItem('teamName', data.data.team.teamName)
+      if (data.team) {
+        localStorage.setItem('teamId', data.team.id)
+        localStorage.setItem('teamCode', data.team.teamCode)
+        localStorage.setItem('teamName', data.team.teamName)
       }
 
       // Redirect based on role
-      const role = data.data.user.role
+      const role = data.user.role
       if (role === 'admin') {
         router.push('/admin/dashboard')
       } else if (role === 'superadmin') {

@@ -216,7 +216,7 @@ export default function ParticipantDashboard() {
   /* ---------- ACTIONS ---------- */
 
   const handleUseHint = async (assignmentId: string): Promise<void> => {
-    if (systemSettings.locked) return;
+    if (systemSettings.locked === 'true') return;
     try {
       const {data} = await apiService.useHint(assignmentId);
 
@@ -250,7 +250,7 @@ export default function ParticipantDashboard() {
   }
 
   const handleRoll = async () => {
-    if (systemSettings.locked) return;
+    if (systemSettings.locked === 'true') return;
     setGameStatus("ROLLING")
     try {
       const {data} = await apiService.rollDice();
@@ -299,7 +299,7 @@ export default function ParticipantDashboard() {
   }
 
   const handleSubmitAnswer = async () => {
-    if (systemSettings.locked) return;
+    if (systemSettings.locked === 'true') return;
     if (!answer.trim() || !questionData?.assignmentId) return
 
     setSubmitting(true)

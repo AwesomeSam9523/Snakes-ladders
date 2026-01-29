@@ -510,7 +510,7 @@ const getRoomCapacity = async () => {
   });
 
   // Create result with all rooms and their database capacities
-  const result = rooms.map(roomData => {
+  return rooms.map(roomData => {
     const teamCount = roomCounts.find(rc => rc.currentRoom === roomData.roomNumber);
     const currentTeams = teamCount ? teamCount._count.id : 0;
     return {
@@ -520,8 +520,6 @@ const getRoomCapacity = async () => {
       available: currentTeams < roomData.capacity,
     };
   });
-
-  return result;
 };
 
 module.exports = {

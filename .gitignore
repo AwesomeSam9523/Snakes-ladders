@@ -3,6 +3,7 @@ node_modules/
 .pnpm-store/
 
 backend/generated
+backend/data
 
 # Next.js
 .next/

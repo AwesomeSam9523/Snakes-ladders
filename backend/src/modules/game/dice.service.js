@@ -36,6 +36,9 @@ const processDiceRoll = async (teamId) => {
     positionAfter = positionBefore; // Stay at current position
   }
 
+  // Check if team has reached position 150 (win condition)
+  const hasWon = hasReachedGoal(positionAfter);
+
   // Parallel execution: Check snake and get checkpoint count at the same time
   const [snake, checkpointCount] = await Promise.all([
     checkSnakeForTeam(teamId, positionAfter),
@@ -44,7 +47,7 @@ const processDiceRoll = async (teamId) => {
   
   const isSnakePosition = snake !== null;
 
-  // Automatically select question based on position type
+  // Automatically select question based on position type (even at position 150)
   const { question, roomType } = await selectRandomQuestion(teamId, isSnakePosition);
 
   // Get new room based on question type (TECH or NON_TECH)
@@ -52,7 +55,6 @@ const processDiceRoll = async (teamId) => {
 
   // Check if team stayed at same position (roll would exceed 150)
   const stayedAtSamePosition = positionBefore === positionAfter && positionBefore !== GAME_CONFIG.BOARD_SIZE;
-  const hasWon = hasReachedGoal(positionAfter);
   
   // Batch all write operations in a transaction for atomicity and speed
   const [diceRollRecord, , checkpoint] = await prisma.$transaction([
@@ -74,11 +76,11 @@ const processDiceRoll = async (teamId) => {
         currentPosition: positionAfter,
         currentRoom: newRoom,
         canRollDice: stayedAtSamePosition,
-        status: hasWon ? 'COMPLETED' : 'ACTIVE',
+        // Status will be set to COMPLETED when admin approves checkpoint at position 150
       },
     }),
     
-    // Create checkpoint
+    // Create checkpoint - always PENDING, even at position 150
     prisma.checkpoint.create({
       data: {
         teamId,
@@ -92,7 +94,7 @@ const processDiceRoll = async (teamId) => {
     }),
   ]);
 
-  // Create question assignment (separate from transaction to avoid blocking)
+  // Create question assignment
   await prisma.questionAssignment.create({
     data: {
       checkpointId: checkpoint.id,
@@ -111,7 +113,7 @@ const processDiceRoll = async (teamId) => {
       positionAfter, 
       newRoom, 
       isSnakePosition,
-      `Auto-assigned ${question.type} question (${question.id})`
+      hasWon ? 'Reached position 150 - Awaiting admin approval' : `Auto-assigned ${question.type} question (${question.id})`
     )
   ]).catch(err => console.error('Audit logging error:', err));
 

@@ -43,7 +43,20 @@ const approveCheckpoint = async (checkpointId) => {
     },
   });
 
-  // NOTE: Dice roll is NOT unlocked here anymore
+  // Check if team reached position 150 (winning position)
+  if (checkpoint.positionAfter === GAME_CONFIG.BOARD_SIZE) {
+    // Mark team as COMPLETED, disable dice, and pause timer
+    await prisma.team.update({
+      where: { id: checkpoint.teamId },
+      data: {
+        status: 'COMPLETED',
+        canRollDice: false,
+        timerPaused: true,
+      },
+    });
+  }
+
+  // NOTE: Dice roll is NOT unlocked here for normal checkpoints
   // Dice will be unlocked only after question is marked (correct or incorrect)
   // This ensures the participant must answer the question before rolling again
 

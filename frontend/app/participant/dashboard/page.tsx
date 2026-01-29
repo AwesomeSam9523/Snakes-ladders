@@ -13,6 +13,7 @@ import {Toaster} from "@/components/ui/toaster"
 import {useToast} from "@/hooks/use-toast"
 import {apiService} from "@/lib/service";
 import {useCheckVersion} from "@/hooks/use-check-version";
+import {Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription} from "@/components/ui/dialog"
 
 /* ---------- TYPES ---------- */
 
@@ -67,6 +68,7 @@ export default function ParticipantDashboard() {
   const [submitResult, setSubmitResult] = useState<any>(null)
   const previousSubmitResultRef = useRef<any>(null)
   const [systemSettings, setSystemSettings] = useState<any>({})
+  const [showCompletionDialog, setShowCompletionDialog] = useState(false)
 
   /* ---------- SCROLL TO TOP ON MANUAL MARKING ---------- */
   useEffect(() => {
@@ -79,6 +81,13 @@ export default function ParticipantDashboard() {
     }
     previousSubmitResultRef.current = submitResult
   }, [submitResult])
+
+  /* ---------- SHOW COMPLETION DIALOG ON WIN ---------- */
+  useEffect(() => {
+    if (teamData.status === 'COMPLETED' && teamData.currentPosition === 150) {
+      setShowCompletionDialog(true)
+    }
+  }, [teamData.status, teamData.currentPosition])
 
   /* ---------- DATA FETCHING ---------- */
 
@@ -276,12 +285,12 @@ export default function ParticipantDashboard() {
         canRollDice: false,
       }))
 
-      // Show dice roll result popup
+      // Show dice roll result popup (even at position 150)
       toast({
         title: `🎲 Rolled: ${data.diceValue}`,
-        description: `Position ${data.positionBefore} → ${data.positionAfter}${fromFloor && toFloor ? ` | ${fromFloor} → ${toFloor} Floor` : ''}`,
+        description: `Position ${data.positionBefore} → ${data.positionAfter}${data.hasWon ? ' 🏆 Finish Line!' : ''}${fromFloor && toFloor ? ` | ${fromFloor} → ${toFloor} Floor` : ''}`,
         variant: "default",
-        duration: 4000,
+        duration: data.hasWon ? 6000 : 4000,
       })
 
       setGameStatus("PENDING_APPROVAL")
@@ -398,6 +407,22 @@ export default function ParticipantDashboard() {
       </main>
 
       <Toaster/>
+
+      {/* Game Completion Dialog */}
+      <Dialog open={showCompletionDialog} onOpenChange={setShowCompletionDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-3xl font-bold text-center text-green-600">
+              🎉 Congratulations! 🎉
+            </DialogTitle>
+          </DialogHeader>
+          <div className="text-center space-y-3">
+            <div className="text-xl font-semibold">Game Completed!</div>
+            <div>Team {teamData.teamId} has successfully reached position 150!</div>
+            <div className="pt-2 text-4xl">🏆</div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

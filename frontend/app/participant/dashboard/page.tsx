@@ -256,6 +256,8 @@ export default function ParticipantDashboard() {
       const response = await apiService.rollDice();
       const data = response.data; // Extract data from API response
       setSubmitResult(null);
+      
+      // Update dice value immediately
       setLastDiceValue(data.diceValue);
       localStorage.setItem("lastDiceValue", data.diceValue.toString());
       
@@ -266,6 +268,14 @@ export default function ParticipantDashboard() {
         currentRoom: data.roomAssigned,
         canRollDice: false,
       }))
+
+      // Show dice roll result popup
+      toast({
+        title: `🎲 Rolled: ${data.diceValue}`,
+        description: `Moved from position ${data.positionBefore} → ${data.positionAfter}`,
+        variant: "default",
+        duration: 3000,
+      })
 
       setGameStatus("PENDING_APPROVAL")
       

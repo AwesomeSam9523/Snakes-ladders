@@ -14,8 +14,7 @@ const verifyToken = (req, res, next) => {
 
     const token = authHeader.split(' ')[1];
 
-    const decoded = jwt.verify(token, env.JWT_SECRET);
-    req.user = decoded;
+    req.user = jwt.verify(token, env.JWT_SECRET);
     next();
   } catch (error) {
     return sendUnauthorized(res, MESSAGES.INVALID_CREDENTIALS);

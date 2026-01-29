@@ -6,6 +6,7 @@ const { superadminOnly } = require('../../middlewares/role.middleware');
 
 // Public routes
 router.post('/login', authController.login);
+router.get('/settings', authController.status);
 
 // Protected routes (superadmin only)
 router.post('/user/create', verifyToken, superadminOnly, authController.createUser);

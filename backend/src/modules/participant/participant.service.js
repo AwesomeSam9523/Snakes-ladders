@@ -188,7 +188,7 @@ const getPendingCheckpoint = async (teamId) => {
   }
 
   // Finally check for pending checkpoint (waiting for admin approval)
-  const pendingCheckpoint = await prisma.checkpoint.findFirst({
+  return await prisma.checkpoint.findFirst({
     where: {
       teamId,
       status: 'PENDING',
@@ -209,10 +209,8 @@ const getPendingCheckpoint = async (teamId) => {
         },
       },
     },
-    orderBy: { createdAt: 'desc' },
+    orderBy: {createdAt: 'desc'},
   });
-
-  return pendingCheckpoint;
 };
 
  //Check if team can roll dice

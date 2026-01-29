@@ -37,22 +37,20 @@ interface QuestionPanelProps {
   handleSubmitAnswer: () => Promise<void>
   submitResult: { autoMarked?: boolean; isCorrect?: boolean; message?: string } | null,
   submitting: boolean
-  onViewQuestion: () => void
   onUseHint: (assignmentId: string) => Promise<void>
 }
 
 export function QuestionPanel({
-                                answer,
-                                setAnswer,
-                                submitResult,
-                                gameStatus,
-                                checkpoint,
-                                submitting,
-                                onViewQuestion,
-                                questionData,
-                                handleSubmitAnswer,
-                                onUseHint,
-                              }: QuestionPanelProps) {
+    answer,
+    setAnswer,
+    submitResult,
+    gameStatus,
+    checkpoint,
+    submitting,
+    questionData,
+    handleSubmitAnswer,
+    onUseHint,
+  }: QuestionPanelProps) {
   const [showHint, setShowHint] = useState(false)
   const [usingHint, setUsingHint] = useState(false)
 

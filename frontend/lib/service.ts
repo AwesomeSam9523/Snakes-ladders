@@ -235,6 +235,10 @@ class ApiService {
       body: JSON.stringify({mapId}),
     });
   }
+
+  async getSystemSettings(): Promise<any> {
+    return this.request('/auth/settings');
+  }
 }
 
 export const apiService = new ApiService();

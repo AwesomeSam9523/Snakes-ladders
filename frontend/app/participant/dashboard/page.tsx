@@ -379,7 +379,7 @@ export default function ParticipantDashboard() {
           <div className="lg:col-span-2 space-y-6">
             <Dice
               onRoll={handleRoll}
-              canRoll={teamData.canRollDice && gameStatus === "IDLE"}
+              canRoll={teamData.canRollDice && gameStatus === "IDLE" && teamData.currentPosition < 150 && teamData.status !== 'COMPLETED'}
               isRolling={gameStatus === "ROLLING"}
               lastValue={lastDiceValue}
             />

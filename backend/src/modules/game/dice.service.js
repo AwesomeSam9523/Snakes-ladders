@@ -75,7 +75,7 @@ const processDiceRoll = async (teamId) => {
       data: {
         currentPosition: positionAfter,
         currentRoom: newRoom,
-        canRollDice: stayedAtSamePosition,
+        canRollDice: hasWon ? false : stayedAtSamePosition, // Disable dice immediately at position 150
         // Status will be set to COMPLETED when admin approves checkpoint at position 150
       },
     }),

@@ -524,48 +524,6 @@ const getRoomCapacity = async () => {
   return result;
 };
 
-const syncAllTeamPositions = async () => {
-  const teams = await prisma.team.findMany({
-    select: {
-      id: true,
-      teamCode: true,
-      currentPosition: true,
-      currentRoom: true,
-      checkpoints: {
-        where: { status: 'APPROVED' },
-        orderBy: { checkpointNumber: 'desc' },
-        take: 1,
-      },
-    },
-  });
-
-  const updates = [];
-
-  for (const team of teams) {
-    const cp = team.checkpoints[0];
-    if (!cp) continue;
-
-    if (
-      team.currentPosition !== cp.positionAfter ||
-      team.currentRoom !== cp.roomNumber
-    ) {
-      updates.push(
-        prisma.team.update({
-          where: { id: team.id },
-          data: {
-            currentPosition: cp.positionAfter,
-            currentRoom: cp.roomNumber,
-          },
-        })
-      );
-    }
-  }
-
-  if (updates.length) {
-    await prisma.$transaction(updates);
-  }
-};
-
 module.exports = {
   createTeam,
   updateTeamPassword,
@@ -586,6 +544,5 @@ module.exports = {
   getAllMaps: getAllBoardMaps,
   findAvailableRoom,
   getRoomCapacity,
-  syncAllTeamPositions,
 };
 

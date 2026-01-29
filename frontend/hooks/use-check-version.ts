@@ -1,9 +1,7 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
-import { apiService } from '@/lib/service'
-
-const RELOAD_KEY = 'app_version_reloaded'
+import {useEffect, useRef} from 'react'
+import {apiService} from '@/lib/service'
 
 export function useCheckVersion() {
   const reloading = useRef(false)
@@ -22,13 +20,6 @@ export function useCheckVersion() {
         console.log(`Current version: ${storedVersion}, Fetched version: ${version}, Equal: ${storedVersion === version}`)
 
         if (storedVersion !== version) {
-          // Prevent reload loops
-          if (sessionStorage.getItem(RELOAD_KEY)) {
-            console.log('Already reloaded for this version change.')
-            return
-          }
-
-          sessionStorage.setItem(RELOAD_KEY, 'true')
           localStorage.setItem('app_version', version)
 
           reloading.current = true

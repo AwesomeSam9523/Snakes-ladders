@@ -159,7 +159,7 @@ class ApiService {
   }
 
   async resetTeamPassword(teamId: string, newPassword: string): Promise<any> {
-    return this.request(`teams/${teamId}/password`, {
+    return this.request(`/teams/${teamId}/password`, {
       method: "PUT",
       body: JSON.stringify({newPassword}),
     });

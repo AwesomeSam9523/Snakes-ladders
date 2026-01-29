@@ -156,7 +156,7 @@ export default function ParticipantDashboard() {
       const {data} = await apiService.getLeaderboard();
       setTeams(
         data.map((t: any) => ({
-          id: t.teamId || t.id,
+          id: t.teamCode || t.id,
           position: t.currentPosition,
         }))
       )
@@ -334,7 +334,7 @@ export default function ParticipantDashboard() {
 
   /* ---------- UI ---------- */
 
-  if (systemSettings.locked) {
+  if (systemSettings.locked === 'true') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="text-center">

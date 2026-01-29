@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const routes = require('./routes');
+const prisma = require('./config/db');
 const { errorHandler, notFoundHandler } = require('./middlewares/error.middleware');
 const { syncAllTeamPositions } = require('./modules/superadmin/superadmin.service');
 
@@ -35,6 +36,78 @@ app.use('/api', routes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
+
+// Sync timer with database - updates accumulated time and resets timer start
+const syncTimer = async () => {
+  const teams = await prisma.team.findMany({
+    select: {
+      totalTimeSec: true,
+      status: true,
+      timerPaused: true,
+      timerStartedAt: true,
+      currentPosition: true,
+    },
+  });
+
+  if (teams.length === 0) {
+    return;
+  }
+
+  const timerUpdates = {};
+  const timerStops = {};
+
+  for (const team of teams) {
+    let currentTimeSec = team.totalTimeSec;
+    const now = new Date();
+
+    // Calculate elapsed time if timer is running
+    if (!team.timerPaused && team.status !== 'COMPLETED' && team.timerStartedAt) {
+      const elapsedSinceStart = Math.floor((now - team.timerStartedAt) / 1000);
+      currentTimeSec = team.totalTimeSec + elapsedSinceStart;
+
+      // Update the database with accumulated time and reset start time
+      timerUpdates[team.id] = {
+        totalTimeSec: currentTimeSec,
+        timerStartedAt: now,
+      }
+    }
+
+    // Stop timer if reached checkpoint 150
+    const shouldStopTimer = team.currentPosition >= 150;
+    if (shouldStopTimer && !team.timerPaused) {
+      timerStops[team.id] = {
+        timerPaused: true,
+        timerPausedAt: now,
+        status: 'COMPLETED',
+      }
+    }
+  }
+
+  const entries1 = Object.entries(timerUpdates);
+  const updates1 = entries1.map(([teamId, data]) =>
+    prisma.team.update({
+      where: { id: teamId },
+      data: {
+        totalTimeSec: data.totalTimeSec,
+        timerStartedAt: data.timerStartedAt,
+      },
+    })
+  );
+  await prisma.$transaction(updates1);
+
+  const entries2 = Object.entries(timerStops);
+  const updates2 = entries2.map(([teamId, data]) =>
+    prisma.team.update({
+      where: {id: teamId},
+      data: {
+        timerPaused: data.timerPaused,
+        timerPausedAt: data.timerPausedAt,
+        status: data.status,
+      }
+    })
+  );
+  await prisma.$transaction(updates2);
+};
 
 // Auto-sync team positions every 30 seconds (optimized for load)
 setInterval(async () => {

@@ -10,20 +10,7 @@ const getGlobalLeaderboard = async () => {
     select: {
       id: true,
       teamCode: true,
-      teamName: true,
       currentPosition: true,
-      totalTimeSec: true,
-      currentRoom: true,
-      members: true,
-      user: {
-        select: {
-          username: true,
-        },
-      },
-      checkpoints: {
-        where: { status: 'APPROVED' },
-        select: { id: true },
-      },
     },
     orderBy: [
       { currentPosition: 'desc' },
@@ -34,14 +21,8 @@ const getGlobalLeaderboard = async () => {
   return teams.map((team, index) => ({
     rank: index + 1,
     id: team.id,
-    teamId: team.user?.username || team.teamCode,
-    teamName: team.teamName,
+    teamCode: team.teamCode,
     currentPosition: team.currentPosition,
-    totalTimeSec: team.totalTimeSec,
-    currentRoom: team.currentRoom,
-    membersCount: team.members.length,
-    checkpointsCompleted: team.checkpoints.length,
-    progress: Math.round((team.currentPosition / GAME_CONFIG.BOARD_SIZE) * 100),
   }));
 };
 

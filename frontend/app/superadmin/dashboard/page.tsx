@@ -178,7 +178,6 @@ export default function SuperAdminDashboard() {
       const interval = setInterval(() => {
         fetchTeams()
         fetchRoomCapacities()
-        handleSyncPositions()
       }, 10000)
       return () => clearInterval(interval)
     }
@@ -334,16 +333,6 @@ export default function SuperAdminDashboard() {
     } catch (error) {
       console.error("Error auto-assigning room:", error)
       alert("Failed to auto-assign room. Check if backend is running.")
-    }
-  }
-
-  const handleSyncPositions = async () => {
-    try {
-      await apiService.syncTeamPositions();
-      await fetchTeams() // Refresh teams from DB
-      // Sync completed silently
-    } catch (error) {
-      console.error("Error syncing positions:", error)
     }
   }
 

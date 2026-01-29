@@ -187,7 +187,6 @@ app.get('/cron', async (req, res) => {
     return res.json({message: 'Cron job executed'});
   } catch (err) {
     console.error(err);
-    await prisma.$disconnect();
   }
 });
 

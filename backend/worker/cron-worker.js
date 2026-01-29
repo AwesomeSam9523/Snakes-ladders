@@ -51,6 +51,8 @@ async function syncAllTeamPositions() {
   if (updates.length) {
     await prisma.$transaction(updates);
   }
+
+  console.log(`Positions synced. Updates: ${updates.length}`)
 }
 
 /* =========================
@@ -114,6 +116,7 @@ async function syncTimer() {
 
   if (updates.length) await prisma.$transaction(updates);
   if (stops.length) await prisma.$transaction(stops);
+  console.log(`Timer synced. Updates: ${updates.length} | Stops: ${stops.length}`)
 }
 
 /* =========================

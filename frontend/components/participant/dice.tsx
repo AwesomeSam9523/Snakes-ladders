@@ -13,11 +13,13 @@ interface DiceProps {
 }
 
 export function Dice({ onRoll, canRoll, isRolling, lastValue }: DiceProps) {
-  const [displayValue, setDisplayValue] = useState(lastValue || 6)
+  const [displayValue, setDisplayValue] = useState(lastValue || 6);
+  const [intervalVar, setIntervalVar] = useState<NodeJS.Timeout | null>(null);
 
   // Update display value when lastValue changes (from API)
   useEffect(() => {
     if (lastValue) {
+      if (intervalVar) clearInterval(intervalVar)
       setDisplayValue(lastValue)
     }
   }, [lastValue])
@@ -25,14 +27,10 @@ export function Dice({ onRoll, canRoll, isRolling, lastValue }: DiceProps) {
   const handleRoll = () => {
     onRoll()
     // Animate through random numbers while rolling
-    const interval = setInterval(() => {
+    const int = setInterval(() => {
       setDisplayValue(Math.floor(Math.random() * 6) + 1)
     }, 100)
-
-    setTimeout(() => {
-      clearInterval(interval)
-      // Final value will be set by lastValue prop from API
-    }, 1800)
+    setIntervalVar(int);
   }
 
   return (

@@ -16,6 +16,7 @@
     "db:seed-maps": "node prisma/seed-maps.js",
     "db:seed-rooms": "node prisma/seed-rooms.js",
     "import-teams": "node data/import-teams.js",
+    "import-admins": "node data/import-admins.js",
     "postinstall": "npx prisma generate"
   },
   "keywords": [

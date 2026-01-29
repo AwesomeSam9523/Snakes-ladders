@@ -56,6 +56,7 @@ model Room {
   id         String   @id @default(uuid())
   roomNumber String   @unique
   capacity   Int      @default(7)
+  floor      Int      @default(1)
   roomType   RoomType @default(NON_TECH)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -82,7 +83,7 @@ model Team {
   teamCode        String     @unique
   teamName        String
   currentPosition Int        @default(1)
-  currentRoom     String     @default("AB1 301")
+  currentRoom     String     @default("AB1 201")
   totalTimeSec    Int        @default(0)
   points          Int        @default(0)
   status          TeamStatus @default(ACTIVE)

@@ -17,9 +17,22 @@ const isWinningPosition = (position) => {
   return position === GAME_CONFIG.BOARD_SIZE;
 };
 
+// Helper function to extract floor number from room string (e.g., "AB1 201" -> 2, "AB1 105" -> 1)
+const getFloorFromRoom = (roomNumber) => {
+  const match = roomNumber.match(/(\d)\d{2}$/);
+  return match ? parseInt(match[1]) : 1;
+};
+
 const getRandomRoom = async (currentRoom, teamId = null, roomType = null) => {
   // Get all rooms with their capacities from database
   let rooms = await prisma.room.findMany();
+  
+  // Determine current floor and target opposite floor
+  const currentFloor = getFloorFromRoom(currentRoom);
+  const targetFloor = currentFloor === 1 ? 2 : 1;
+  
+  // Filter rooms by opposite floor
+  rooms = rooms.filter(r => r.floor === targetFloor);
   
   // Filter by room type if specified (TECH or NON_TECH)
   if (roomType) {
@@ -50,17 +63,16 @@ const getRandomRoom = async (currentRoom, teamId = null, roomType = null) => {
   });
 
   if (availableRooms.length === 0) {
-    // If no rooms with capacity, pick least full room (excluding current)
-    const otherRooms = rooms.filter(roomData => roomData.roomNumber !== currentRoom);
-    if (otherRooms.length === 0) {
-      throw new Error('No available rooms');
+    // If no rooms with capacity, pick least full room on target floor
+    if (rooms.length === 0) {
+      throw new Error(`No available rooms on floor ${targetFloor}`);
     }
-    // Find least full room
-    const leastFullRoom = otherRooms.reduce((min, room) => {
+    // Find least full room on target floor
+    const leastFullRoom = rooms.reduce((min, room) => {
       const count = roomCountMap[room.roomNumber] || 0;
       const minCount = roomCountMap[min.roomNumber] || 0;
       return count < minCount ? room : min;
-    }, otherRooms[0]);
+    }, rooms[0]);
     return leastFullRoom.roomNumber;
   }
 
@@ -80,6 +92,7 @@ module.exports = {
   calculateNewPosition,
   isWinningPosition,
   getRandomRoom,
+  getFloorFromRoom,
   rollDice,
   hasReachedGoal,
 };

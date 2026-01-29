@@ -261,6 +261,14 @@ export default function ParticipantDashboard() {
       setLastDiceValue(data.diceValue);
       localStorage.setItem("lastDiceValue", data.diceValue.toString());
       
+      // Extract floor info for display
+      const getFloor = (room: string) => {
+        const match = room.match(/(\d)\d{2}$/);
+        return match ? (parseInt(match[1]) === 1 ? "1st" : "2nd") : "";
+      };
+      const fromFloor = getFloor(data.positionBefore ? teamData.currentRoom : "");
+      const toFloor = getFloor(data.roomAssigned);
+      
       // Update position immediately from dice roll response (don't wait for refetch)
       setTeamData(prev => ({
         ...prev,
@@ -272,9 +280,9 @@ export default function ParticipantDashboard() {
       // Show dice roll result popup
       toast({
         title: `🎲 Rolled: ${data.diceValue}`,
-        description: `Moved from position ${data.positionBefore} → ${data.positionAfter}`,
+        description: `Position ${data.positionBefore} → ${data.positionAfter}${fromFloor && toFloor ? ` | ${fromFloor} → ${toFloor} Floor` : ''}`,
         variant: "default",
-        duration: 3000,
+        duration: 4000,
       })
 
       setGameStatus("PENDING_APPROVAL")

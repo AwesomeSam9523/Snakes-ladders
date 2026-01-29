@@ -36,6 +36,19 @@ export function StatusStrip({ currentPosition, roomNumber, status, totalTimeSec,
     return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`
   }
 
+  // Extract floor from room number (e.g., "AB1 201" -> "2nd Floor")
+  const getFloorInfo = (room: string | number) => {
+    const roomStr = String(room);
+    const match = roomStr.match(/(\d)\d{2}$/);
+    if (match) {
+      const floor = parseInt(match[1]);
+      return floor === 1 ? "1st Floor" : "2nd Floor";
+    }
+    return "";
+  };
+
+  const floorInfo = getFloorInfo(roomNumber);
+
   return (
     <div className="border-b border-gray-200 bg-white shadow-sm">
       <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-3">
@@ -52,7 +65,12 @@ export function StatusStrip({ currentPosition, roomNumber, status, totalTimeSec,
               <div className="text-xs sm:text-sm text-gray-600 mb-0.5 sm:mb-1">Room</div>
               <div className="flex items-center gap-1 sm:gap-2">
                 <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-700" />
-                <span className="text-base sm:text-xl font-semibold text-gray-900">{roomNumber || "—"}</span>
+                <div className="flex flex-col">
+                  <span className="text-base sm:text-xl font-semibold text-gray-900">{roomNumber || "—"}</span>
+                  {floorInfo && (
+                    <span className="text-[10px] sm:text-xs text-gray-500 font-medium">{floorInfo}</span>
+                  )}
+                </div>
               </div>
             </div>
 

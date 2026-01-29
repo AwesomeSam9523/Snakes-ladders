@@ -79,6 +79,10 @@ const login = async (username, password) => {
   return response;
 };
 
+const getSystemSettings = async () => {
+  return prisma.systemSettings.findMany();
+}
+
 
 const createUser = async (username, password, role, teamId = null) => {
   const hashedPassword = await hashPassword(password);
@@ -114,5 +118,6 @@ module.exports = {
   login,
   createUser,
   createAdmin,
+  getSystemSettings,
 };
 

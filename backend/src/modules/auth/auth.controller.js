@@ -24,6 +24,15 @@ const login = async (req, res, next) => {
   }
 };
 
+const status = async (req, res, next) => {
+  try {
+    const result = await authService.getSystemSettings();
+    return sendSuccess(res, result, 'Service is running');
+  } catch (error) {
+    next(error);
+  }
+};
+
 //Create a new user
 
 const createUser = async (req, res, next) => {
@@ -70,6 +79,7 @@ const createAdmin = async (req, res, next) => {
 
 module.exports = {
   login,
+  status,
   createUser,
   createAdmin,
 };

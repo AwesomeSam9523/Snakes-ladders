@@ -1,6 +1,6 @@
 "use client"
 
-import {useEffect, useState, useRef} from "react"
+import {useEffect, useRef, useState} from "react"
 import {useRouter} from "next/navigation"
 
 import {Header} from "@/components/participant/header"
@@ -66,6 +66,7 @@ export default function ParticipantDashboard() {
   const [submitting, setSubmitting] = useState(false)
   const [submitResult, setSubmitResult] = useState<any>(null)
   const previousSubmitResultRef = useRef<any>(null)
+  const [systemSettings, setSystemSettings] = useState<any>(null)
 
   /* ---------- SCROLL TO TOP ON MANUAL MARKING ---------- */
   useEffect(() => {
@@ -73,7 +74,7 @@ export default function ParticipantDashboard() {
     if (submitResult && !previousSubmitResultRef.current) {
       // If submitResult appears and it's NOT auto-marked, scroll to top
       if (!submitResult.autoMarked) {
-        window.scrollTo({ top: 0, behavior: 'smooth' })
+        window.scrollTo({top: 0, behavior: 'smooth'})
       }
     }
     previousSubmitResultRef.current = submitResult
@@ -83,13 +84,7 @@ export default function ParticipantDashboard() {
 
   const fetchTeamData = async () => {
     try {
-      const token = localStorage.getItem("token")
       const username = localStorage.getItem("username")
-
-      if (!token) {
-        router.push("/login")
-        return
-      }
 
       setTeamData(prev => ({
         ...prev,
@@ -97,17 +92,18 @@ export default function ParticipantDashboard() {
       }))
 
       const {data} = await apiService.getParticipantState();
-      if (data) {
-        setTeamData(prev => ({
-          ...prev,
-          currentPosition: data.currentPosition ?? 1,
-          currentRoom: data.currentRoom ?? null,
-          canRollDice: data.canRollDice ?? true,
-          totalTimeSec: data.totalTimeSec ?? 0,
-          status: data.status ?? "ACTIVE",
-          timerPaused: data.timerPaused ?? false,
-        }))
-      }
+      setTeamData(prev => ({
+        ...prev,
+        currentPosition: data.currentPosition ?? 1,
+        currentRoom: data.currentRoom ?? null,
+        canRollDice: data.canRollDice ?? true,
+        totalTimeSec: data.totalTimeSec ?? 0,
+        status: data.status ?? "ACTIVE",
+        timerPaused: data.timerPaused ?? false,
+      }))
+
+      let systemSettingsData = await apiService.getSystemSettings();
+      setSystemSettings(systemSettingsData.data);
 
       let checkpointData = await apiService.getPendingCheckpoints();
       checkpointData = checkpointData.data;
@@ -169,6 +165,15 @@ export default function ParticipantDashboard() {
     }
   }
 
+  const fetchSystemSettings = async () => {
+    try {
+      const {data} = await apiService.getSystemSettings();
+      setSystemSettings(data);
+    } catch (err) {
+      console.error("Error fetching system settings:", err);
+    }
+  }
+
   function incrementTimer() {
     if (teamData.timerPaused) return;
     setTeamData((prev) => ({
@@ -188,6 +193,7 @@ export default function ParticipantDashboard() {
 
     fetchTeamData()
     fetchTeams()
+    fetchSystemSettings();
 
     const lastDice = localStorage.getItem("lastDiceValue")
     if (lastDice) {
@@ -196,28 +202,21 @@ export default function ParticipantDashboard() {
 
     const teamInterval = setInterval(fetchTeamData, 5000)
     const leaderboardInterval = setInterval(fetchTeams, 5000)
+    const systemSettingsInterval = setInterval(fetchSystemSettings, 10000);
     const timerInterval = setInterval(incrementTimer, 1000);
-    
-    // Sync timer with database every 10 seconds so superadmin sees updated times
-    const syncTimerInterval = setInterval(async () => {
-      try {
-        await apiService.syncTimer()
-      } catch (error) {
-        console.error("Error syncing timer:", error)
-      }
-    }, 10000)
 
     return () => {
       clearInterval(teamInterval)
       clearInterval(leaderboardInterval)
       clearInterval(timerInterval);
-      clearInterval(syncTimerInterval)
+      clearInterval(systemSettingsInterval);
     }
   }, [])
 
   /* ---------- ACTIONS ---------- */
 
   const handleUseHint = async (assignmentId: string): Promise<void> => {
+    if (systemSettings.locked) return;
     try {
       const {data} = await apiService.useHint(assignmentId);
 
@@ -251,15 +250,16 @@ export default function ParticipantDashboard() {
   }
 
   const handleRoll = async () => {
+    if (systemSettings.locked) return;
     setGameStatus("ROLLING")
     try {
       const {data} = await apiService.rollDice();
       setSubmitResult(null);
-      
+
       // Update dice value immediately
       setLastDiceValue(data.diceValue);
       localStorage.setItem("lastDiceValue", data.diceValue.toString());
-      
+
       // Extract floor info for display
       const getFloor = (room: string) => {
         const match = room.match(/(\d)\d{2}$/);
@@ -267,7 +267,7 @@ export default function ParticipantDashboard() {
       };
       const fromFloor = getFloor(data.positionBefore ? teamData.currentRoom : "");
       const toFloor = getFloor(data.roomAssigned);
-      
+
       // Update position immediately from dice roll response (don't wait for refetch)
       setTeamData(prev => ({
         ...prev,
@@ -285,7 +285,7 @@ export default function ParticipantDashboard() {
       })
 
       setGameStatus("PENDING_APPROVAL")
-      
+
       // Update leaderboard immediately for other teams
       await fetchTeams()
     } catch (err: any) {
@@ -298,20 +298,8 @@ export default function ParticipantDashboard() {
     }
   }
 
-  const handleViewQuestion = () => {
-    // Question is already visible when checkpoint is approved
-    if (questionData) {
-      setGameStatus("SOLVING")
-    } else {
-      toast({
-        title: "No Question Available",
-        description: "Please wait for admin to approve your checkpoint",
-        variant: "destructive",
-      })
-    }
-  }
-
   const handleSubmitAnswer = async () => {
+    if (systemSettings.locked) return;
     if (!answer.trim() || !questionData?.assignmentId) return
 
     setSubmitting(true)
@@ -323,7 +311,7 @@ export default function ParticipantDashboard() {
       setAnswer("")
       setGameStatus("IDLE")
       setTeamData(prev => ({...prev, canRollDice: true}))
-      
+
       // Immediate refetch for faster feedback
       await Promise.all([fetchTeamData(), fetchTeams()])
 
@@ -331,7 +319,7 @@ export default function ParticipantDashboard() {
       // For auto-check (NUMERICAL/MCQ): scroll immediately
       // For manual-check (CODING/PHYSICAL): scroll will happen when marked by admin
       if (data.autoMarked) {
-        window.scrollTo({ top: 0, behavior: 'smooth' })
+        window.scrollTo({top: 0, behavior: 'smooth'})
       }
     } catch (err: any) {
       toast({
@@ -345,6 +333,17 @@ export default function ParticipantDashboard() {
   }
 
   /* ---------- UI ---------- */
+
+  if (systemSettings.locked) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="text-center">
+          <h1>Welcome to Venom by IEEE CS!</h1>
+          <p className="text-lg">{"Game locked. Kindly wait for the organizers to start the game."}</p>
+        </div>
+      </div>
+    )
+  }
 
   if (loading) {
     return (
@@ -394,7 +393,6 @@ export default function ParticipantDashboard() {
             submitResult={submitResult}
             handleSubmitAnswer={handleSubmitAnswer}
             onUseHint={handleUseHint}
-            onViewQuestion={handleViewQuestion}
           />
         </div>
       </main>

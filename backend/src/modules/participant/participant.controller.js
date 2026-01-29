@@ -1,4 +1,5 @@
 const participantService = require('./participant.service');
+const authService = require('../auth/auth.service');
 const { processDiceRoll } = require('../game/dice.service');
 const { getGlobalLeaderboard } = require('../leaderboard/leaderboard.service');
 const { sendSuccess, sendError, sendBadRequest } = require('../../utils/response.util');
@@ -26,9 +27,17 @@ const getTeamState = async (req, res, next) => {
   }
 };
 
+const checkIfLocked = async() => {
+  const settings = await authService.getSystemSettings();
+  return settings.locked === 'true';
+}
+
 //Roll dice
  
 const rollDice = async (req, res, next) => {
+  if (await checkIfLocked()) {
+    return sendBadRequest(res, 'The system is currently locked. Please wait.');
+  }
   try {
     const teamId = req.user.teamId;
     
@@ -97,6 +106,9 @@ const checkCanRollDice = async (req, res, next) => {
 
 // Submit answer for a question
 const submitAnswer = async (req, res, next) => {
+  if (await checkIfLocked()) {
+    return sendBadRequest(res, 'The system is currently locked. Please wait.');
+  }
   try {
     const teamId = req.user.teamId;
     const { assignmentId, answer } = req.body;
@@ -123,6 +135,9 @@ const submitAnswer = async (req, res, next) => {
 
 // Use hint - adds 60 second penalty
 const useHint = async (req, res, next) => {
+  if (await checkIfLocked()) {
+    return sendBadRequest(res, 'The system is currently locked. Please wait.');
+  }
   try {
     const teamId = req.user.teamId;
     const { assignmentId } = req.body;
@@ -142,46 +157,6 @@ const useHint = async (req, res, next) => {
   }
 };
 
-// Sync timer with database
-const syncTimer = async (req, res, next) => {
-  try {
-    const teamId = req.user.teamId;
-    
-    // Server-side timer sync - no client elapsed time needed
-    const result = await participantService.syncTimer(teamId);
-    
-    if (!result) {
-      return sendError(res, 'Team not found', 404);
-    }
-    
-    return sendSuccess(res, result, 'Timer synced');
-  } catch (error) {
-    next(error);
-  }
-};
-
-// Pause timer
-const pauseTimer = async (req, res, next) => {
-  try {
-    const teamId = req.user.teamId;
-    const result = await participantService.pauseTimer(teamId);
-    return sendSuccess(res, result, 'Timer paused');
-  } catch (error) {
-    next(error);
-  }
-};
-
-// Resume timer
-const resumeTimer = async (req, res, next) => {
-  try {
-    const teamId = req.user.teamId;
-    const result = await participantService.resumeTimer(teamId);
-    return sendSuccess(res, result, 'Timer resumed');
-  } catch (error) {
-    next(error);
-  }
-};
-
 module.exports = {
   getDashboard,
   getTeamState,
@@ -193,7 +168,4 @@ module.exports = {
   checkCanRollDice,
   submitAnswer,
   useHint,
-  syncTimer,
-  pauseTimer,
-  resumeTimer,
 };

@@ -30,7 +30,7 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - name: Run cron worker
-        run: backend/worker/cron-worker.js
-        working-directory: backend
+        run: backend
+        working-directory: backend node worker/cron-worker.js
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}

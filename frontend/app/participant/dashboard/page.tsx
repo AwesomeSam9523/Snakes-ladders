@@ -66,7 +66,7 @@ export default function ParticipantDashboard() {
   const [submitting, setSubmitting] = useState(false)
   const [submitResult, setSubmitResult] = useState<any>(null)
   const previousSubmitResultRef = useRef<any>(null)
-  const [systemSettings, setSystemSettings] = useState<any>(null)
+  const [systemSettings, setSystemSettings] = useState<any>({})
 
   /* ---------- SCROLL TO TOP ON MANUAL MARKING ---------- */
   useEffect(() => {
@@ -338,8 +338,8 @@ export default function ParticipantDashboard() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="text-center">
-          <h1>Welcome to Venom by IEEE CS!</h1>
-          <p className="text-lg">{"Game locked. Kindly wait for the organizers to start the game."}</p>
+          <h1 className={"text-3xl pb-4"}>Welcome to Venom by IEEE CS!</h1>
+          <p>{"Game locked. Kindly wait for the organizers to start the game."}</p>
         </div>
       </div>
     )

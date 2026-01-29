@@ -80,7 +80,13 @@ const login = async (username, password) => {
 };
 
 const getSystemSettings = async () => {
-  return prisma.systemSettings.findMany();
+  const data = await prisma.systemSettings.findMany();
+  const result = {};
+  for (const obj of data) {
+    result[obj.key] = obj.value;
+  }
+
+  return result;
 }
 
 

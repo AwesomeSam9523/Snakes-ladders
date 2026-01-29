@@ -1,5 +1,4 @@
-import { PrismaClient } from '@prisma/client';
-
+const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));

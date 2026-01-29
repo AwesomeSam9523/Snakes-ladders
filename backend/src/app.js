@@ -181,8 +181,15 @@ async function runCronJob() {
   }
 }
 
-app.get('/cron', async (req, res) => {
+app.get('/api/cron', async (req, res) => {
   try {
+    const header = req.headers['authorization'] || "";
+    const token = header.replace('Bearer ', '');
+
+    if (process.env.CRON_TOKEN && token !== process.env.CRON_TOKEN) {
+      return res.status(401).json({message: 'Unauthorized'});
+    }
+
     await runCronJob()
     return res.json({message: 'Cron job executed'});
   } catch (err) {

@@ -1,4 +1,4 @@
-const { PrismaClient } = require('../generated/prisma');
+const { PrismaClient } = require('./generated/prisma');
 const { PrismaPg } = require('@prisma/adapter-pg');
 const { Pool } = require('pg');
 require('dotenv').config();
@@ -11,21 +11,13 @@ async function migrateFloorSystem() {
   console.log('🔄 Starting floor system migration...\n');
 
   try {
-    // Step 1: Add floor column to Room table (if not exists)
-    console.log('Step 1: Adding floor column to Room table...');
-    await prisma.$executeRawUnsafe(`
-      ALTER TABLE "Room" 
-      ADD COLUMN IF NOT EXISTS "floor" INTEGER NOT NULL DEFAULT 1;
-    `);
-    console.log('✅ Floor column added\n');
-
-    // Step 2: Delete old rooms
-    console.log('Step 2: Removing old rooms...');
+    // Step 1: Delete old rooms
+    console.log('Step 1: Removing old rooms...');
     await prisma.room.deleteMany({});
     console.log('✅ Old rooms removed\n');
 
-    // Step 3: Create new rooms with floor numbers
-    console.log('Step 3: Creating new 14 rooms (7 per floor)...');
+    // Step 2: Create new rooms with floor numbers
+    console.log('Step 2: Creating new 14 rooms (7 per floor)...');
     const rooms = [
       // FLOOR 1 - 7 rooms
       { roomNumber: 'AB1 101', capacity: 8, floor: 1, roomType: 'TECH' },
@@ -51,8 +43,8 @@ async function migrateFloorSystem() {
     });
     console.log('✅ 14 rooms created\n');
 
-    // Step 4: Update existing teams to new room format
-    console.log('Step 4: Updating existing teams to Floor 2 rooms...');
+    // Step 3: Update existing teams to new room format
+    console.log('Step 3: Updating existing teams to Floor 2 rooms...');
     await prisma.$executeRawUnsafe(`
       UPDATE "Team" 
       SET "currentRoom" = 'AB1 201' 
@@ -60,7 +52,7 @@ async function migrateFloorSystem() {
     `);
     console.log('✅ Teams updated\n');
 
-    // Step 5: Verify migration
+    // Step 4: Verify migration
     const floor1Rooms = await prisma.room.count({ where: { floor: 1 } });
     const floor2Rooms = await prisma.room.count({ where: { floor: 2 } });
     const totalTeams = await prisma.team.count();

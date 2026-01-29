@@ -19,7 +19,7 @@ import {useCheckVersion} from "@/hooks/use-check-version";
 interface TeamData {
   teamId: string
   currentPosition: number
-  currentRoom: string | null
+  currentRoom: string
   canRollDice: boolean
   totalTimeSec: number
   status?: string
@@ -49,7 +49,7 @@ export default function ParticipantDashboard() {
   const [teamData, setTeamData] = useState<TeamData>({
     teamId: "",
     currentPosition: 1,
-    currentRoom: null,
+    currentRoom: "",
     canRollDice: true,
     totalTimeSec: 0,
     status: "ACTIVE",
@@ -253,8 +253,7 @@ export default function ParticipantDashboard() {
   const handleRoll = async () => {
     setGameStatus("ROLLING")
     try {
-      const response = await apiService.rollDice();
-      const data = response.data; // Extract data from API response
+      const {data} = await apiService.rollDice();
       setSubmitResult(null);
       
       // Update dice value immediately
@@ -288,7 +287,7 @@ export default function ParticipantDashboard() {
       setGameStatus("PENDING_APPROVAL")
       
       // Update leaderboard immediately for other teams
-      fetchTeams()
+      await fetchTeams()
     } catch (err: any) {
       setGameStatus("IDLE")
       toast({

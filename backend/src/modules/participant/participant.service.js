@@ -494,7 +494,6 @@ module.exports = {
   canRollDice,
   submitAnswer,
   useHint,
-  syncTimer,
   startTimer,
   pauseTimer,
   resumeTimer,

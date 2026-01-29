@@ -510,7 +510,7 @@ const getRoomCapacity = async () => {
   });
 
   // Create result with all rooms and their database capacities
-  const result = rooms.map(roomData => {
+  return rooms.map(roomData => {
     const teamCount = roomCounts.find(rc => rc.currentRoom === roomData.roomNumber);
     const currentTeams = teamCount ? teamCount._count.id : 0;
     return {
@@ -520,50 +520,6 @@ const getRoomCapacity = async () => {
       available: currentTeams < roomData.capacity,
     };
   });
-
-  return result;
-};
-
-const syncAllTeamPositions = async () => {
-  const teams = await prisma.team.findMany({
-    select: {
-      id: true,
-      teamCode: true,
-      currentPosition: true,
-      currentRoom: true,
-      checkpoints: {
-        where: { status: 'APPROVED' },
-        orderBy: { checkpointNumber: 'desc' },
-        take: 1,
-      },
-    },
-  });
-
-  const updates = [];
-
-  for (const team of teams) {
-    const cp = team.checkpoints[0];
-    if (!cp) continue;
-
-    if (
-      team.currentPosition !== cp.positionAfter ||
-      team.currentRoom !== cp.roomNumber
-    ) {
-      updates.push(
-        prisma.team.update({
-          where: { id: team.id },
-          data: {
-            currentPosition: cp.positionAfter,
-            currentRoom: cp.roomNumber,
-          },
-        })
-      );
-    }
-  }
-
-  if (updates.length) {
-    await prisma.$transaction(updates);
-  }
 };
 
 module.exports = {
@@ -586,6 +542,5 @@ module.exports = {
   getAllMaps: getAllBoardMaps,
   findAvailableRoom,
   getRoomCapacity,
-  syncAllTeamPositions,
 };
 

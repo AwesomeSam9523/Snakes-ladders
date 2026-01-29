@@ -421,14 +421,16 @@ const getAllTeamsWithDetails = async () => {
     ],
   });
 
-  // Calculate current time for each team based on timerStartedAt
+  // Calculate current time for all teams at once (single timestamp for consistency)
   const now = new Date();
+  const nowTimestamp = now.getTime();
+  
   return teams.map(team => {
     let currentTimeSec = team.totalTimeSec;
     
     // If timer is running, calculate elapsed time
     if (!team.timerPaused && team.status !== 'COMPLETED' && team.timerStartedAt) {
-      const elapsedSinceStart = Math.floor((now - team.timerStartedAt) / 1000);
+      const elapsedSinceStart = Math.floor((nowTimestamp - team.timerStartedAt.getTime()) / 1000);
       currentTimeSec = team.totalTimeSec + elapsedSinceStart;
     }
     

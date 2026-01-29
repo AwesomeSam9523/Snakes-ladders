@@ -137,12 +137,6 @@ class ApiService {
     return this.request('/board');
   }
 
-  async syncTimer(): Promise<any> {
-    return this.request('/timer/sync', {
-      method: 'POST',
-    });
-  }
-
   async getVersion(): Promise<string> {
     const data = await this.request<{ version: string }>('/version');
     return data.version;
@@ -219,12 +213,6 @@ class ApiService {
 
   async autoAssignRoomToTeam(teamId: string): Promise<any> {
     return this.request(`/teams/${teamId}/room/auto-assign`, {
-      method: "POST",
-    });
-  }
-
-  async syncTeamPositions(): Promise<any> {
-    return this.request('/teams/sync-positions', {
       method: "POST",
     });
   }

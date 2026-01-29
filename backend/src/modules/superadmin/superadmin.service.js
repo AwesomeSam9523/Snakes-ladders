@@ -526,46 +526,44 @@ const getRoomCapacity = async () => {
 
 const syncAllTeamPositions = async () => {
   const teams = await prisma.team.findMany({
-    select: { id: true, teamCode: true, currentPosition: true, currentRoom: true },
+    select: {
+      id: true,
+      teamCode: true,
+      currentPosition: true,
+      currentRoom: true,
+      checkpoints: {
+        where: { status: 'APPROVED' },
+        orderBy: { checkpointNumber: 'desc' },
+        take: 1,
+      },
+    },
   });
 
-  const results = [];
+  const updates = [];
 
   for (const team of teams) {
-    // Get latest approved checkpoint
-    const latestCheckpoint = await prisma.checkpoint.findFirst({
-      where: { teamId: team.id, status: 'APPROVED' },
-      orderBy: { checkpointNumber: 'desc' },
-    });
+    const cp = team.checkpoints[0];
+    if (!cp) continue;
 
-    if (latestCheckpoint && 
-        (team.currentPosition !== latestCheckpoint.positionAfter || 
-         team.currentRoom !== latestCheckpoint.roomNumber)) {
-      // Update team to match checkpoint
-      await prisma.team.update({
-        where: { id: team.id },
-        data: {
-          currentPosition: latestCheckpoint.positionAfter,
-          currentRoom: latestCheckpoint.roomNumber,
-        },
-      });
-
-      results.push({
-        teamCode: team.teamCode,
-        updated: true,
-        from: { position: team.currentPosition, room: team.currentRoom },
-        to: { position: latestCheckpoint.positionAfter, room: latestCheckpoint.roomNumber },
-      });
-    } else {
-      results.push({
-        teamCode: team.teamCode,
-        updated: false,
-        message: 'Already synced or no approved checkpoints',
-      });
+    if (
+      team.currentPosition !== cp.positionAfter ||
+      team.currentRoom !== cp.roomNumber
+    ) {
+      updates.push(
+        prisma.team.update({
+          where: { id: team.id },
+          data: {
+            currentPosition: cp.positionAfter,
+            currentRoom: cp.roomNumber,
+          },
+        })
+      );
     }
   }
 
-  return results;
+  if (updates.length) {
+    await prisma.$transaction(updates);
+  }
 };
 
 module.exports = {

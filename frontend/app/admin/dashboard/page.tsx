@@ -5,6 +5,8 @@ import {useRouter} from "next/navigation"
 import {Navbar} from "@/components/navbar"
 import {apiService} from "@/lib/service";
 import {Button} from "@/components/ui/button";
+import Image from "next/image";
+import {mayak, venom} from "@/app/fonts";
 
 interface Checkpoint {
   id: string
@@ -45,6 +47,25 @@ interface Team {
   checkpoints: Checkpoint[]
 }
 
+const shimmer = (w: number, h: number) => `
+<svg width="${w}" height="${h}" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <linearGradient id="g">
+      <stop stop-color="#333" offset="20%" />
+      <stop stop-color="#222" offset="50%" />
+      <stop stop-color="#333" offset="70%" />
+    </linearGradient>
+  </defs>
+  <rect width="${w}" height="${h}" fill="#333" />
+  <rect id="r" width="${w}" height="${h}" fill="url(#g)" />
+  <animate xlink:href="#r" attributeName="x" from="-${w}" to="${w}" dur="1s" repeatCount="indefinite"  />
+</svg>`;
+
+const toBase64 = (str: string) =>
+  typeof window === "undefined"
+    ? Buffer.from(str).toString("base64")
+    : window.btoa(str);
+
 export default function AdminDashboard() {
   const router = useRouter()
   const [teams, setTeams] = useState<Team[]>([])
@@ -52,6 +73,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true)
   const [teamOffsets, setTeamOffsets] = useState<Record<string, number>>({});
   const [expanding, setExpanding] = useState<boolean>(false);
+  const [systemSettings, setSystemSettings] = useState<any>({});
 
   function mergeCheckpoints(
     existing: Checkpoint[] = [],
@@ -94,6 +116,15 @@ export default function AdminDashboard() {
     }
   };
 
+  const fetchSystemSettings = async () => {
+    try {
+      const {data} = await apiService.getSystemSettings();
+      setSystemSettings(data);
+    } catch (err) {
+      console.error("Error fetching system settings:", err);
+    }
+  }
+
   function collapseCheckpoints(teamId: string) {
     const offset = (teamOffsets[teamId] ?? 0) - 10;
     setTeams(prevTeams =>
@@ -114,14 +145,15 @@ export default function AdminDashboard() {
   }
 
   useEffect(() => {
-    const userRole = localStorage.getItem("userRole")
-    if (userRole !== "admin") {
-      router.push("/login")
-    } else {
-      fetchTeams()
-      // Auto-refresh teams every 3 seconds for real-time checkpoint visibility
-      const interval = setInterval(fetchTeams, 3000)
-      return () => clearInterval(interval)
+    fetchSystemSettings();
+    fetchTeams()
+    // Auto-refresh teams every 3 seconds for real-time checkpoint visibility
+    const interval = setInterval(fetchTeams, 3000)
+    const systemSettingsInterval = setInterval(fetchSystemSettings, 10000);
+
+    return () => {
+      clearInterval(interval);
+      clearInterval(systemSettingsInterval);
     }
   }, [router])
 
@@ -229,6 +261,53 @@ export default function AdminDashboard() {
       </div>
     )
   }
+
+  if (systemSettings.locked === "true") {
+    return (
+      <div className="fixed inset-0 overflow-hidden bg-black">
+        {/* Background Image */}
+        <Image
+          src="/background.svg"
+          alt="Background"
+          fill
+          priority
+          className="object-cover object-center"
+          placeholder={`data:image/svg+xml;base64,${toBase64(shimmer(1920, 1080))}`}
+        />
+
+        {/* Content overlay */}
+        <div className="absolute inset-0 z-10 flex items-center justify-center mx-16">
+          <div
+            className="flex flex-col items-center justify-center text-center w-[90vw] p-8"
+            style={{
+              borderRadius: 70,
+              background: "rgba(255,255,255,0.10)",
+              boxShadow: "0 2px 32px 0 rgba(0,0,0,0.18)",
+              border: "1px solid rgba(255,255,255,0.7)",
+              backdropFilter: "blur(4px)",
+            }}
+          >
+            <div
+              className={`text-lg md:text-xl font-light mb-2 text-[#D1883F] ${mayak.className}`}
+            >
+              Welcome to
+            </div>
+
+            <div
+              className={`text-[7rem] font-extrabold text-[#D7CFC2] ${venom.className} tracking-tight leading-36`}
+            >
+              VENOM
+            </div>
+
+            <div className={`text-[#D1883F] ${mayak.className}`}>
+              Game locked. Kindly wait for the organizers to start the game.
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
 
   const filteredTeams = teams.filter(
     (team) =>

@@ -9,29 +9,27 @@ const prisma = new PrismaClient({ adapter });
 
 async function seedRooms() {
   console.log('🌱 Seeding rooms...');
-
-  // Define 14 rooms across 2 floors (7 rooms per floor)
-  // Floor 1: AB1 101-107 (3 TECH + 4 NON-TECH)
-  // Floor 2: AB1 201-207 (3 TECH + 4 NON-TECH)
-  // Teams alternate floors on each checkpoint
   const rooms = [
-    // FLOOR 1 - 7 rooms
-    { roomNumber: 'AB1 101', capacity: 8, floor: 1, roomType: 'TECH' },
-    { roomNumber: 'AB1 102', capacity: 7, floor: 1, roomType: 'TECH' },
-    { roomNumber: 'AB1 103', capacity: 6, floor: 1, roomType: 'TECH' },
-    { roomNumber: 'AB1 104', capacity: 9, floor: 1, roomType: 'NON_TECH' },
-    { roomNumber: 'AB1 105', capacity: 8, floor: 1, roomType: 'NON_TECH' },
-    { roomNumber: 'AB1 106', capacity: 7, floor: 1, roomType: 'NON_TECH' },
-    { roomNumber: 'AB1 107', capacity: 10, floor: 1, roomType: 'NON_TECH' },
+    // FLOOR 1 
+    { roomNumber: 'AB1 128', capacity: 8, floor: 1, roomType: 'TECH' },
+    { roomNumber: 'AB1 129', capacity: 7, floor: 1, roomType: 'NON_TECH' },
+    { roomNumber: 'AB1 130', capacity: 6, floor: 1, roomType: 'NON_TECH' },
+    { roomNumber: 'AB1 131', capacity: 9, floor: 1, roomType: 'NON_TECH' },
+    { roomNumber: 'AB1 105', capacity: 9, floor: 1, roomType: 'NON_TECH' },
     
-    // FLOOR 2 - 7 rooms
-    { roomNumber: 'AB1 201', capacity: 8, floor: 2, roomType: 'TECH' },
-    { roomNumber: 'AB1 202', capacity: 7, floor: 2, roomType: 'TECH' },
-    { roomNumber: 'AB1 203', capacity: 6, floor: 2, roomType: 'TECH' },
-    { roomNumber: 'AB1 204', capacity: 9, floor: 2, roomType: 'NON_TECH' },
-    { roomNumber: 'AB1 205', capacity: 8, floor: 2, roomType: 'NON_TECH' },
-    { roomNumber: 'AB1 206', capacity: 7, floor: 2, roomType: 'NON_TECH' },
-    { roomNumber: 'AB1 207', capacity: 10, floor: 2, roomType: 'NON_TECH' },
+    
+    // FLOOR 2 
+    { roomNumber: 'AB1 209', capacity: 8, floor: 2, roomType: 'TECH' },
+    { roomNumber: 'AB1 210', capacity: 7, floor: 2, roomType: 'TECH' },
+    { roomNumber: 'AB1 211', capacity: 6, floor: 2, roomType: 'NON_TECH' },
+    { roomNumber: 'AB1 217', capacity: 9, floor: 2, roomType: 'NON_TECH' },
+    { roomNumber: 'AB1 225', capacity: 8, floor: 2, roomType: 'NON_TECH' },
+  
+     // FLOOR 3 
+    { roomNumber: 'AB1 311', capacity: 8, floor: 3, roomType: 'TECH' },
+    { roomNumber: 'AB1 312', capacity: 7, floor: 3, roomType: 'TECH' },
+    { roomNumber: 'AB1 319', capacity: 6, floor: 3, roomType: 'NON_TECH' },
+    { roomNumber: 'AB1 320', capacity: 9, floor: 3, roomType: 'NON_TECH' },
   ];
 
   await prisma.room.createMany({

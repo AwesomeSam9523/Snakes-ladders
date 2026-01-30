@@ -241,3 +241,9 @@ model SystemSettings {
   key   String @unique
   value String
 }
+
+model Token {
+  userId    String   @unique
+  token     String   @unique
+  createdAt DateTime @default(now())
+}

@@ -1,7 +1,7 @@
 const authService = require('./auth.service');
 const {sendSuccess, sendError} = require('../../utils/response.util');
 const {MESSAGES} = require('../../config/constants');
-const tokenMap = require("../../utils/tokenMap");
+const prisma = require('../../config/db');
 
 const login = async (req, res, next) => {
   try {
@@ -15,7 +15,11 @@ const login = async (req, res, next) => {
     const token = result.token;
     const userId = result.user.id;
 
-    tokenMap.set(userId, token);
+    await prisma.token.upsert({
+      where: {userId},
+      update: {token},
+      create: {userId, token},
+    });
     return sendSuccess(res, result, MESSAGES.LOGIN_SUCCESS);
   } catch (error) {
     if (error.message === 'Invalid credentials') {

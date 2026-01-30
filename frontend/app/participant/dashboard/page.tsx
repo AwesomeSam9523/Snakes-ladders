@@ -209,6 +209,11 @@ export default function ParticipantDashboard() {
       setLastDiceValue(parseInt(lastDice, 10))
     }
 
+    const lastAnswer = localStorage.getItem("currentAnswer")
+    if (lastAnswer) {
+      setAnswer(lastAnswer)
+    }
+
     const teamInterval = setInterval(fetchTeamData, 5000)
     const leaderboardInterval = setInterval(fetchTeams, 5000)
     const systemSettingsInterval = setInterval(fetchSystemSettings, 10000);
@@ -316,6 +321,11 @@ export default function ParticipantDashboard() {
     }
   }
 
+  const saveAndSetAnswer = (answer: string) => {
+    localStorage.setItem("currentAnswer", answer);
+    setAnswer(answer);
+  }
+
   const handleSubmitAnswer = async () => {
     if (systemSettings.locked === 'true') return;
     if (!answer.trim() || !questionData?.assignmentId) return
@@ -406,7 +416,7 @@ export default function ParticipantDashboard() {
             checkpoint={currentCheckpoint}
             questionData={questionData}
             answer={answer}
-            setAnswer={setAnswer}
+            setAnswer={saveAndSetAnswer}
             submitting={submitting}
             submitResult={submitResult}
             handleSubmitAnswer={handleSubmitAnswer}

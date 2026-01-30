@@ -1,10 +1,10 @@
 const prisma = require('../../config/db');
-const { rollDice, calculateNewPosition, getRandomRoom, hasReachedGoal } = require('./game.utils');
-const { checkSnakeForTeam } = require('./board.service');
-const { selectRandomQuestion } = require('./question.assignment');
-const { GAME_CONFIG } = require('../../config/constants');
-const { logDiceRoll, logCheckpointReached } = require('../audit/audit.service');
-const { startTimer } = require('../participant/participant.service');
+const {rollDice, getRandomRoom, hasReachedGoal} = require('./game.utils');
+const {checkSnakeForTeam} = require('./board.service');
+const {selectRandomQuestion} = require('./question.assignment');
+const {GAME_CONFIG} = require('../../config/constants');
+const {logDiceRoll, logCheckpointReached} = require('../audit/audit.service');
+const {startTimer} = require('../participant/participant.service');
 
 const processDiceRoll = async (teamId) => {
   // Start timer on first dice roll if not already started
@@ -12,7 +12,7 @@ const processDiceRoll = async (teamId) => {
 
   // Get current team state
   const team = await prisma.team.findUnique({
-    where: { id: teamId },
+    where: {id: teamId},
     select: {
       teamCode: true,
       teamName: true,
@@ -29,7 +29,15 @@ const processDiceRoll = async (teamId) => {
   // Roll the dice
   const diceValue = rollDice();
   const positionBefore = team.currentPosition;
-  let positionAfter = calculateNewPosition(positionBefore, diceValue);
+  let positionAfter = positionBefore + diceValue;
+
+  if (positionAfter > 150) {
+    return {
+      diceValue,
+      positionBefore,
+      invalidRoll: true,
+    }
+  }
 
   // Check if team would exceed 150
   if (positionAfter > GAME_CONFIG.BOARD_SIZE) {
@@ -42,24 +50,24 @@ const processDiceRoll = async (teamId) => {
   // Parallel execution: Check snake and get checkpoint count at the same time
   const [snake, checkpointCount] = await Promise.all([
     checkSnakeForTeam(teamId, positionAfter),
-    prisma.checkpoint.count({ where: { teamId } })
+    prisma.checkpoint.count({where: {teamId}})
   ]);
-  
+
   const isSnakePosition = snake !== null;
 
   // Automatically select question based on position type (even at position 150)
-  const { question, roomType } = await selectRandomQuestion(teamId, isSnakePosition);
+  const {question, roomType} = await selectRandomQuestion(teamId, isSnakePosition);
 
   // Get new room based on question type (TECH or NON_TECH)
   const newRoom = await getRandomRoom(team.currentRoom, teamId, roomType);
 
   // Check if team stayed at same position (roll would exceed 150)
   const stayedAtSamePosition = positionBefore === positionAfter && positionBefore !== GAME_CONFIG.BOARD_SIZE;
-  
+
   // Batch all write operations in a transaction for atomicity and speed
-  const [diceRollRecord, , checkpoint] = await prisma.$transaction([
+  const {checkpoint, diceRoll} = await prisma.$transaction(async(tx) => {
     // Record the dice roll
-    prisma.diceRoll.create({
+    const diceRoll = await tx.diceRoll.create({
       data: {
         teamId,
         value: diceValue,
@@ -67,21 +75,21 @@ const processDiceRoll = async (teamId) => {
         positionTo: positionAfter,
         roomAssigned: newRoom,
       },
-    }),
-    
+    });
+
     // Update team position and room
-    prisma.team.update({
-      where: { id: teamId },
+    await tx.team.update({
+      where: {id: teamId},
       data: {
         currentPosition: positionAfter,
         currentRoom: newRoom,
         canRollDice: hasWon ? false : stayedAtSamePosition, // Disable dice immediately at position 150
         // Status will be set to COMPLETED when admin approves checkpoint at position 150
       },
-    }),
-    
+    });
+
     // Create checkpoint - always PENDING, even at position 150
-    prisma.checkpoint.create({
+    const checkpoint = await tx.checkpoint.create({
       data: {
         teamId,
         checkpointNumber: checkpointCount + 1,
@@ -91,27 +99,32 @@ const processDiceRoll = async (teamId) => {
         status: 'PENDING',
         isSnakePosition,
       },
-    }),
-  ]);
+    });
 
-  // Create question assignment
-  await prisma.questionAssignment.create({
-    data: {
-      checkpointId: checkpoint.id,
-      questionId: question.id,
-      status: 'PENDING',
-    },
+    // Create question assignment
+    await tx.questionAssignment.create({
+      data: {
+        checkpointId: checkpoint.id,
+        questionId: question.id,
+        status: 'PENDING',
+      },
+    });
+
+    return {
+      checkpoint,
+      diceRoll,
+    }
   });
 
   // Fire and forget: Log operations don't need to block response
   Promise.all([
     logDiceRoll(team.teamCode, team.teamName, diceValue, positionBefore, positionAfter),
     logCheckpointReached(
-      team.teamCode, 
-      team.teamName, 
-      checkpointCount + 1, 
-      positionAfter, 
-      newRoom, 
+      team.teamCode,
+      team.teamName,
+      checkpointCount + 1,
+      positionAfter,
+      newRoom,
       isSnakePosition,
       hasWon ? 'Reached position 150 - Awaiting admin approval' : `Auto-assigned ${question.type} question (${question.id})`
     )
@@ -127,15 +140,15 @@ const processDiceRoll = async (teamId) => {
     questionType: question.type,
     questionAssigned: true,
     checkpoint,
-    diceRoll: diceRollRecord,
+    diceRoll,
     hasWon,
   };
 };
 
 const getDiceRollHistory = async (teamId) => {
   return await prisma.diceRoll.findMany({
-    where: { teamId },
-    orderBy: { createdAt: 'desc' },
+    where: {teamId},
+    orderBy: {createdAt: 'desc'},
   });
 };
 

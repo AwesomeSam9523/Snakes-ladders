@@ -15,19 +15,21 @@ const getFloorFromRoom = (roomNumber) => {
 const getRandomRoom = async (currentRoom, teamId = null, roomType = null) => {
   // Get all rooms with their capacities from database
   let rooms = await prisma.room.findMany();
-  
-  // Determine current floor and target opposite floor
+
+  // Determine current floor and pick a random different floor (out of 3)
   const currentFloor = getFloorFromRoom(currentRoom);
-  const targetFloor = currentFloor === 1 ? 2 : 1;
-  
-  // Filter rooms by opposite floor
+  const allFloors = [1, 2, 3];
+  const otherFloors = allFloors.filter(f => f !== currentFloor);
+  const targetFloor = otherFloors[Math.floor(Math.random() * otherFloors.length)];
+
+  // Filter rooms by the randomly chosen different floor
   rooms = rooms.filter(r => r.floor === targetFloor);
-  
+
   // Filter by room type if specified (TECH or NON_TECH)
   if (roomType) {
     rooms = rooms.filter(r => r.roomType === roomType);
   }
-  
+
   // Get team counts per room
   const roomCounts = await prisma.team.groupBy({
     by: ['currentRoom'],

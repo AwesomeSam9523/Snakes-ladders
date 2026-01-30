@@ -11,11 +11,17 @@ const GAME_CONFIG = {
   STARTING_POSITION: 1,
 };
 
-// Room numbers (AB1 301 - AB1 315)
+// Room numbers for 3 floors (update as needed)
+// Example: Floor 1: AB1 128, 129, 130, 131, 105
+//          Floor 2: AB1 209, 210, 211, 217, 225
+//          Floor 3: AB1 311, 312, 319, 320
 const ROOMS = [
-  'AB1 301', 'AB1 302', 'AB1 303', 'AB1 304', 'AB1 305',
-  'AB1 306', 'AB1 307', 'AB1 308', 'AB1 309', 'AB1 310',
-  'AB1 311', 'AB1 312', 'AB1 313', 'AB1 314', 'AB1 315'
+  // Floor 1
+  'AB1 128', 'AB1 129', 'AB1 130', 'AB1 131', 'AB1 105',
+  // Floor 2
+  'AB1 209', 'AB1 210', 'AB1 211', 'AB1 217', 'AB1 225',
+  // Floor 3
+  'AB1 311', 'AB1 312', 'AB1 319', 'AB1 320'
 ];
 
 // Roles for authentication

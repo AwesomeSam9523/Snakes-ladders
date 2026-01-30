@@ -3,6 +3,7 @@ const cors = require('cors');
 const routes = require('./routes');
 const prisma = require('./config/db');
 const {errorHandler, notFoundHandler} = require('./middlewares/error.middleware');
+const {performance} = require("perf_hooks");
 
 const app = express();
 const API_VERSION = process.env.VERCEL_GIT_COMMIT_SHA || 'local';
@@ -162,13 +163,19 @@ async function runCronJob() {
   let second = 0;
 
   try {
-    while (Date.now() - start < 56_000) {
-      if (second % 5 === 0) {
+    while (Date.now() - start < 21000) {
+      if (second % 10 === 0) {
+        const start1 = performance.now();
         await syncTimer();
+        const end1 = performance.now();
+        console.log(`syncTimer took ${(end1 - start1).toFixed(2)} ms`);
       }
 
-      if (second % 20 === 0) {
+      if (second % 10 === 0) {
+        const start2 = performance.now();
         await syncAllTeamPositions();
+        const end2 = performance.now();
+        console.log(`syncAllTeamPositions took ${(end2 - start2).toFixed(2)} ms`);
       }
 
       await sleep(1000);

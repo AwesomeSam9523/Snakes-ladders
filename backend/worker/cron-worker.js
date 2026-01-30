@@ -138,12 +138,12 @@ async function main() {
   let second = 0;
 
   try {
-    while (Date.now() - start < 28_000) {
-      if (second % 5 === 0) {
+    while (Date.now() - start < 22_000) {
+      if (second % 10 === 0) {
         await syncTimer();
       }
 
-      if (second % 20 === 0) {
+      if (second % 10 === 0) {
         await syncAllTeamPositions();
       }
 

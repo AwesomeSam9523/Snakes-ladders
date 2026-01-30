@@ -394,7 +394,7 @@ export default function ParticipantDashboard() {
                 className="text-lg md:text-xl font-light text-gray-200 mb-2 md:mb-0"
                 style={{
                   letterSpacing: '0.04em',
-                  fontFamily: 'Mayak',
+                  font:'Mayak',
                   marginBottom: '0.06em',
                   lineHeight: 1,
                 }}

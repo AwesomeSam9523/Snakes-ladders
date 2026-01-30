@@ -51,7 +51,7 @@ export default function LoginPage() {
     }
   }
 
-  return (
+ return (
     <div className="min-h-screen w-full flex items-center justify-center px-4 sm:px-6 lg:px-8 bg-cover bg-center" style={{ backgroundImage: 'url(/login.png)' }}>
       <div
         className="flex flex-col items-center justify-center"
@@ -64,13 +64,13 @@ export default function LoginPage() {
           border: '0.6px solid #FFFFFF',
           boxShadow: '0 2px 32px 0 rgba(0,0,0,0.18)',
           padding: '2.5rem 2rem',
-          backdropFilter: 'blur(4px)',
+          backdropFilter: 'blur(2px)',
         }}
       >
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-extrabold tracking-wide mb-2" style={{ fontFamily: 'Orbitron, sans-serif', color: '#fff' }}>Welcome!</h1>
-          <p className="text-gray-300 text-base" style={{ fontFamily: 'Orbitron, sans-serif', fontWeight: 400 }}>Please sign in to your account</p>
+          <h1 className="text-4xl font-extrabold tracking-wide mb-2" style={{ fontFamily: '', color: '#fff' }}>Welcome!</h1>
+          <p className="text-gray-300 text-base" style={{ fontFamily: 'Oskari G2', fontWeight: 400 }}>Please sign in to your account</p>
         </div>
         <form onSubmit={handleLogin} className="w-full flex flex-col gap-6">
           {/* Error Message */}

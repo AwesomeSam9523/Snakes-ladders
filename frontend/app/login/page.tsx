@@ -9,6 +9,25 @@ import {mayak, oskariG2} from "@/app/fonts";
 import Image from "next/image";
 import {useIsMobile} from "@/hooks/use-mobile";
 
+const shimmer = (w: number, h: number) => `
+<svg width="${w}" height="${h}" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <linearGradient id="g">
+      <stop stop-color="#333" offset="20%" />
+      <stop stop-color="#222" offset="50%" />
+      <stop stop-color="#333" offset="70%" />
+    </linearGradient>
+  </defs>
+  <rect width="${w}" height="${h}" fill="#333" />
+  <rect id="r" width="${w}" height="${h}" fill="url(#g)" />
+  <animate xlink:href="#r" attributeName="x" from="-${w}" to="${w}" dur="1s" repeatCount="indefinite"  />
+</svg>`;
+
+const toBase64 = (str: string) =>
+  typeof window === "undefined"
+    ? Buffer.from(str).toString("base64")
+    : window.btoa(str);
+
 export default function LoginPage() {
   const router = useRouter()
   const [username, setUsername] = useState("")
@@ -85,7 +104,7 @@ export default function LoginPage() {
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 rounded-full shadow-none bg-[#232323] text-white placeholder-gray-400 border-none focus:ring-2 focus:ring-yellow-500"
+              className="w-full pl-12 pr-4 py-3 rounded-full outline-0 shadow-none bg-[#232323] text-white placeholder-gray-400 border-none focus:ring-2 focus:ring-yellow-500"
               placeholder="Username"
               required
               autoComplete="username"
@@ -116,18 +135,21 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-16 h-6 mx-auto flex items-center justify-center rounded-[1.3rem] border-2 border-yellow-500 text-yellow-500 bg-transparent hover:bg-yellow-500 hover:text-black transition-colors duration-200 text-2xl mt-2 disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-16 h-7 mx-auto flex items-center justify-center rounded-[1.3rem] border-2 border-yellow-500 text-yellow-500 bg-transparent cursor-pointer hover:bg-[#242323] hover:text-black transition-colors duration-200 text-2xl mt-2 disabled:opacity-60 disabled:cursor-not-allowed"
             style={{boxShadow: '0 0 0 2px rgba(255,193,7,0.08)'}}
           >
-            <Image src={"/arrowButton.svg"} alt={"Arrow Button"} width={24} height={15}/>
+            <Image src={"/arrowButton.svg"} alt={"Arrow Button"} width={30} height={18}/>
           </button>
         </form>
       </div>
       <div className="fixed inset-0 -z-10 w-screen h-screen">
-        <img
+        <Image
           src={isMobile ? "/loginMobile.svg" : "/login.svg"}
-          alt="Login Background"
+          fill
+          priority
           className="w-full h-full min-w-full min-h-full object-cover object-top"
+          placeholder={`data:image/svg+xml;base64,${toBase64(shimmer(1920, 1080))}`}
+          alt="Login Background"
           draggable="false"
         />
       </div>

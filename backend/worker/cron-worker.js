@@ -140,11 +140,17 @@ async function main() {
   try {
     while (Date.now() - start < 22_000) {
       if (second % 10 === 0) {
+        const start1 = performance.now();
         await syncTimer();
+        const end1 = performance.now();
+        console.log(`syncTimer took ${(end1 - start1).toFixed(2)} ms`);
       }
 
       if (second % 10 === 0) {
+        const start2 = performance.now();
         await syncAllTeamPositions();
+        const end2 = performance.now();
+        console.log(`syncAllTeamPositions took ${(end2 - start2).toFixed(2)} ms`);
       }
 
       await sleep(1000);

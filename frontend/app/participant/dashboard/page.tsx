@@ -1,6 +1,7 @@
 "use client"
 
 import {useEffect, useRef, useState} from "react"
+import Image from "next/image"
 import {useRouter} from "next/navigation"
 
 import {Header} from "@/components/participant/header"
@@ -15,6 +16,7 @@ import {apiService} from "@/lib/service";
 import {useCheckVersion} from "@/hooks/use-check-version";
 import {Dialog, DialogContent, DialogHeader, DialogTitle} from "@/components/ui/dialog"
 import {mayak, venom} from "@/app/fonts";
+import {motion} from "framer-motion";
 
 /* ---------- TYPES ---------- */
 
@@ -40,6 +42,25 @@ export type GameStatus =
   | "QUESTION_ASSIGNED"
   | "SOLVING"
   | "LOCKED"
+
+const shimmer = (w: number, h: number) => `
+<svg width="${w}" height="${h}" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <linearGradient id="g">
+      <stop stop-color="#333" offset="20%" />
+      <stop stop-color="#222" offset="50%" />
+      <stop stop-color="#333" offset="70%" />
+    </linearGradient>
+  </defs>
+  <rect width="${w}" height="${h}" fill="#333" />
+  <rect id="r" width="${w}" height="${h}" fill="url(#g)" />
+  <animate xlink:href="#r" attributeName="x" from="-${w}" to="${w}" dur="1s" repeatCount="indefinite"  />
+</svg>`;
+
+const toBase64 = (str: string) =>
+  typeof window === "undefined"
+    ? Buffer.from(str).toString("base64")
+    : window.btoa(str);
 
 /* ---------- COMPONENT ---------- */
 
@@ -70,6 +91,7 @@ export default function ParticipantDashboard() {
   const previousSubmitResultRef = useRef<any>(null)
   const [systemSettings, setSystemSettings] = useState<any>({})
   const [showCompletionDialog, setShowCompletionDialog] = useState(false)
+  const teamDataRef = useRef(teamData);
 
   /* ---------- SCROLL TO TOP ON MANUAL MARKING ---------- */
   useEffect(() => {
@@ -93,17 +115,13 @@ export default function ParticipantDashboard() {
     try {
       const username = localStorage.getItem("username")
 
-      setTeamData(prev => ({
-        ...prev,
-        teamId: username || localStorage.getItem("teamCode") || "",
-      }))
-
       const {data} = await apiService.getParticipantState();
       setTeamData(prev => ({
         ...prev,
+        teamId: username || localStorage.getItem("teamCode") || "",
         currentPosition: data.currentPosition ?? 1,
         currentRoom: data.currentRoom ?? null,
-        canRollDice: data.canRollDice ?? true,
+        canRollDice: data.canRollDice ?? false,
         totalTimeSec: data.totalTimeSec ?? 0,
         status: data.status ?? "ACTIVE",
         timerPaused: data.timerPaused ?? false,
@@ -182,15 +200,22 @@ export default function ParticipantDashboard() {
   }
 
   function incrementTimer() {
-    if (teamData.timerPaused) return;
-    if (teamData.currentPosition === 150) return;
-    setTeamData((prev) => ({
+    const data = teamDataRef.current;
+
+    if (data.timerPaused) return;
+    if (data.currentPosition === 150) return;
+
+    setTeamData(prev => ({
       ...prev,
       totalTimeSec: prev.totalTimeSec + 1,
     }));
   }
 
   /* ---------- EFFECTS ---------- */
+
+  useEffect(() => {
+    teamDataRef.current = teamData;
+  }, [teamData]);
 
   useEffect(() => {
     const role = localStorage.getItem("userRole")
@@ -361,28 +386,30 @@ export default function ParticipantDashboard() {
 
   /* ---------- UI ---------- */
 
-  if (systemSettings.locked === 'true') {
+  if (loading) {
     return (
-      <div
-        className="fixed inset-0 flex items-center justify-center bg-black overflow-hidden"
-        style={{
-          backgroundImage: 'url(/background.svg)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-        }}
-      >
-        <div
-          className="absolute inset-0 flex items-center justify-center z-10 mx-16"
-        >
+      <div className="fixed inset-0 overflow-hidden bg-black">
+        {/* Background Image */}
+        <Image
+          src="/background.svg"
+          alt="Background"
+          fill
+          priority
+          className="object-cover object-top"
+          placeholder={`data:image/svg+xml;base64,${toBase64(shimmer(1920, 1080))}`}
+
+        />
+
+        {/* Content overlay */}
+        <div className="absolute inset-0 z-10 flex items-center justify-center mx-16">
           <div
-            className="flex flex-col items-center justify-center text-center width-[90vw] p-8"
+            className="flex flex-col items-center justify-center text-center w-[40vw] p-8"
             style={{
               borderRadius: 70,
-              background: 'rgba(255,255,255,0.10)',
-              boxShadow: '0 2px 32px 0 rgba(0,0,0,0.18)',
-              border: '1px solid rgba(255,255,255,0.7)',
-              backdropFilter: 'blur(4px)',
+              background: "rgba(255,255,255,0.10)",
+              boxShadow: "0 2px 32px 0 rgba(0,0,0,0.18)",
+              border: "1px solid rgba(255,255,255,0.7)",
+              backdropFilter: "blur(4px)",
             }}
           >
             <div
@@ -390,32 +417,80 @@ export default function ParticipantDashboard() {
             >
               Welcome to
             </div>
+
             <div
               className={`text-[7rem] font-extrabold text-[#D7CFC2] ${venom.className} tracking-tight leading-36`}
             >
               VENOM
             </div>
+
+            <div className={`text-[#D1883F] ${mayak.className}`}>
+              The IEEE CS Edition of Snakes and Ladders
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (systemSettings.locked === "true") {
+    return (
+      <div className="fixed inset-0 overflow-hidden bg-black">
+        {/* Background Image */}
+        <Image
+          src="/background.svg"
+          alt="Background"
+          fill
+          priority
+          className="object-cover object-center"
+          placeholder={`data:image/svg+xml;base64,${toBase64(shimmer(1920, 1080))}`}
+        />
+
+        {/* Content overlay */}
+        <div className="absolute inset-0 z-10 flex items-center justify-center mx-16">
+          <div
+            className="flex flex-col items-center justify-center text-center w-[90vw] p-8"
+            style={{
+              borderRadius: 70,
+              background: "rgba(255,255,255,0.10)",
+              boxShadow: "0 2px 32px 0 rgba(0,0,0,0.18)",
+              border: "1px solid rgba(255,255,255,0.7)",
+              backdropFilter: "blur(4px)",
+            }}
+          >
             <div
-              className={`text-[#D1883F] ${mayak.className}`}
+              className={`text-lg md:text-xl font-light mb-2 text-[#D1883F] ${mayak.className}`}
             >
+              Welcome to
+            </div>
+
+            <div
+              className={`text-[7rem] font-extrabold text-[#D7CFC2] ${venom.className} tracking-tight leading-36`}
+            >
+              VENOM
+            </div>
+
+            <div className={`text-[#D1883F] ${mayak.className}`}>
               Game locked. Kindly wait for the organizers to start the game.
             </div>
           </div>
         </div>
       </div>
-    )
+    );
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        Loading...
-      </div>
-    )
-  }
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
+    <motion.div
+      className="min-h-screen flex flex-col bg-white"
+      initial={{y: "100vh"}}
+      animate={{y: 0}}
+      transition={{
+        type: "spring",
+        stiffness: 90,
+        damping: 20,
+      }}
+    >
       <Header teamId={teamData.teamId}/>
 
       <StatusStrip
@@ -475,6 +550,6 @@ export default function ParticipantDashboard() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </motion.div>
   )
 }

@@ -52,7 +52,7 @@ export default function LoginPage() {
   }
 
  return (
-    <div className="min-h-screen w-full flex items-center justify-center px-4 sm:px-6 lg:px-8 bg-cover bg-center" style={{ backgroundImage: 'url(/login.png)' }}>
+    <div className="min-h-screen w-full flex items-center justify-center px-4 sm:px-6 lg:px-8 overflow-hidden">
       <div
         className="flex flex-col items-center justify-center"
         style={{
@@ -60,11 +60,11 @@ export default function LoginPage() {
           maxWidth: 420,
           minWidth: 320,
           borderRadius: 84.1,
-          background: 'rgba(24,24,24,0.85)',
+          background: 'rgba(255,255,255,0.10)',
           border: '0.6px solid #FFFFFF',
           boxShadow: '0 2px 32px 0 rgba(0,0,0,0.18)',
           padding: '2.5rem 2rem',
-          backdropFilter: 'blur(2px)',
+          backdropFilter: 'blur(8px)',
         }}
       >
         {/* Header */}
@@ -126,6 +126,15 @@ export default function LoginPage() {
             <FiArrowRight style={{ width: 38, height: 24 }} />
           </button>
         </form>
+      </div>
+      <div className="fixed inset-0 -z-10 w-screen h-screen">
+        <img
+          src="/background.png"
+          alt="Login Background"
+          className="w-full h-full min-w-0 min-h-0 object-cover object-center"
+          style={{ maxWidth: '100vw', maxHeight: '100vh' }}
+          draggable="false"
+        />
       </div>
     </div>
   )

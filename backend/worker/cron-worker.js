@@ -138,7 +138,7 @@ async function main() {
   let second = 0;
 
   try {
-    while (Date.now() - start < 56_000) {
+    while (Date.now() - start < 28_000) {
       if (second % 5 === 0) {
         await syncTimer();
       }

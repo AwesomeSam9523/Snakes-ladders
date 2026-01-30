@@ -57,7 +57,7 @@ interface ActivityLog {
   userRole: "admin" | "superadmin" | "participant"
   action: string
   details: string
-  timestamp: string
+  timestamp: Date
 }
 
 export default function SuperAdminDashboard() {
@@ -157,6 +157,9 @@ export default function SuperAdminDashboard() {
   const fetchActivityLogs = async () => {
     try {
       const {data} = await apiService.fetchAuditLogs();
+      for (const log of data) {
+        log.timestamp = new Date(log.timestamp)
+      }
       setActivityLogs(data)
     } catch (error) {
       console.error("Error fetching activity logs:", error)
@@ -917,10 +920,10 @@ export default function SuperAdminDashboard() {
                   </thead>
                   <tbody className="divide-y divide-gray-200">
                   {activityLogs
-                    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+                    .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
                     .map((log) => (
                       <tr key={log.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-3 text-sm text-gray-600">{log.timestamp}</td>
+                        <td className="px-4 py-3 text-sm text-gray-600">{log.timestamp.toLocaleString()}</td>
                         <td className="px-4 py-3 text-sm text-gray-900 font-medium">{log.userId}</td>
                         <td className="px-4 py-3 text-sm">
                           <span

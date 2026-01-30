@@ -1,17 +1,21 @@
 const authService = require('./auth.service');
-const { sendSuccess, sendError } = require('../../utils/response.util');
-const { MESSAGES } = require('../../config/constants');
-
+const {sendSuccess, sendError} = require('../../utils/response.util');
+const {MESSAGES} = require('../../config/constants');
+const tokenMap = require("../../utils/tokenMap");
 
 const login = async (req, res, next) => {
   try {
-    const { username, password } = req.body;
+    const {username, password} = req.body;
 
     if (!username || !password) {
       return sendError(res, 'Username and password are required', 400);
     }
 
     const result = await authService.login(username, password);
+    const token = result.token;
+    const userId = result.user.id;
+
+    tokenMap.set(userId, token);
     return sendSuccess(res, result, MESSAGES.LOGIN_SUCCESS);
   } catch (error) {
     if (error.message === 'Invalid credentials') {
@@ -37,7 +41,7 @@ const status = async (req, res, next) => {
 
 const createUser = async (req, res, next) => {
   try {
-    const { username, password, role, teamId } = req.body;
+    const {username, password, role, teamId} = req.body;
 
     if (!username || !password || !role) {
       return sendError(res, 'Username, password, and role are required', 400);
@@ -61,7 +65,7 @@ const createUser = async (req, res, next) => {
 
 const createAdmin = async (req, res, next) => {
   try {
-    const { username, password } = req.body;
+    const {username, password} = req.body;
 
     if (!username || !password) {
       return sendError(res, 'Username and password are required', 400);

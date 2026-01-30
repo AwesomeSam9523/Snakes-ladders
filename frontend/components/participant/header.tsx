@@ -3,6 +3,8 @@
 import { LogOut } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
+import HeaderLogo from "../../public/header-logo.svg";
+import Image from "next/image";
 
 interface HeaderProps {
   teamId: string
@@ -26,10 +28,13 @@ export function Header({ teamId }: HeaderProps) {
     <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/95 backdrop-blur-sm shadow-sm">
       <div className="container mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gray-900 flex items-center justify-center flex-shrink-0">
-            <span className="text-white font-bold text-base sm:text-lg">S&L</span>
-          </div>
-          <span className="font-semibold text-sm sm:text-base md:text-lg truncate text-gray-900">Snake & Ladder — Tech Quest</span>
+          <Image
+            src={HeaderLogo}
+            alt={"Venom by IEEE CS"}
+            width={200}
+            height={100}
+            className={"h-12"}
+          />
         </div>
 
         <div className="flex items-center gap-2 sm:gap-4">

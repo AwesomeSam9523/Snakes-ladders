@@ -17,8 +17,6 @@ export function useCheckVersion() {
           return
         }
 
-        console.log(`Current version: ${storedVersion}, Fetched version: ${version}, Equal: ${storedVersion === version}`)
-
         if (storedVersion !== version) {
           localStorage.setItem('app_version', version)
 

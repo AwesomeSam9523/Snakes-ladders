@@ -1,5 +1,5 @@
 const prisma = require('../../config/db');
-const {rollDice, calculateNewPosition, getRandomRoom, hasReachedGoal} = require('./game.utils');
+const {rollDice, getRandomRoom, hasReachedGoal} = require('./game.utils');
 const {checkSnakeForTeam} = require('./board.service');
 const {selectRandomQuestion} = require('./question.assignment');
 const {GAME_CONFIG} = require('../../config/constants');
@@ -29,7 +29,15 @@ const processDiceRoll = async (teamId) => {
   // Roll the dice
   const diceValue = rollDice();
   const positionBefore = team.currentPosition;
-  let positionAfter = calculateNewPosition(positionBefore, diceValue);
+  let positionAfter = positionBefore + diceValue;
+
+  if (positionAfter > 150) {
+    return {
+      diceValue,
+      positionBefore,
+      invalidRoll: true,
+    }
+  }
 
   // Check if team would exceed 150
   if (positionAfter > GAME_CONFIG.BOARD_SIZE) {
@@ -57,9 +65,9 @@ const processDiceRoll = async (teamId) => {
   const stayedAtSamePosition = positionBefore === positionAfter && positionBefore !== GAME_CONFIG.BOARD_SIZE;
 
   // Batch all write operations in a transaction for atomicity and speed
-  const [diceRollRecord, _, checkpoint, __] = await prisma.$transaction([
+  const {checkpoint, diceRoll} = await prisma.$transaction(async(tx) => {
     // Record the dice roll
-    prisma.diceRoll.create({
+    const diceRoll = await tx.diceRoll.create({
       data: {
         teamId,
         value: diceValue,
@@ -67,10 +75,10 @@ const processDiceRoll = async (teamId) => {
         positionTo: positionAfter,
         roomAssigned: newRoom,
       },
-    }),
+    });
 
     // Update team position and room
-    prisma.team.update({
+    await tx.team.update({
       where: {id: teamId},
       data: {
         currentPosition: positionAfter,
@@ -78,10 +86,10 @@ const processDiceRoll = async (teamId) => {
         canRollDice: hasWon ? false : stayedAtSamePosition, // Disable dice immediately at position 150
         // Status will be set to COMPLETED when admin approves checkpoint at position 150
       },
-    }),
+    });
 
     // Create checkpoint - always PENDING, even at position 150
-    prisma.checkpoint.create({
+    const checkpoint = await tx.checkpoint.create({
       data: {
         teamId,
         checkpointNumber: checkpointCount + 1,
@@ -91,17 +99,22 @@ const processDiceRoll = async (teamId) => {
         status: 'PENDING',
         isSnakePosition,
       },
-    }),
+    });
 
     // Create question assignment
-    prisma.questionAssignment.create({
+    await tx.questionAssignment.create({
       data: {
         checkpointId: checkpoint.id,
         questionId: question.id,
         status: 'PENDING',
       },
-    })
-  ]);
+    });
+
+    return {
+      checkpoint,
+      diceRoll,
+    }
+  });
 
   // Fire and forget: Log operations don't need to block response
   Promise.all([
@@ -127,7 +140,7 @@ const processDiceRoll = async (teamId) => {
     questionType: question.type,
     questionAssigned: true,
     checkpoint,
-    diceRoll: diceRollRecord,
+    diceRoll,
     hasWon,
   };
 };

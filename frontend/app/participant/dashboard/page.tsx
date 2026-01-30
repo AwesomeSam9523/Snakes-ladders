@@ -13,7 +13,7 @@ import {Toaster} from "@/components/ui/toaster"
 import {useToast} from "@/hooks/use-toast"
 import {apiService} from "@/lib/service";
 import {useCheckVersion} from "@/hooks/use-check-version";
-import {Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription} from "@/components/ui/dialog"
+import {Dialog, DialogContent, DialogHeader, DialogTitle} from "@/components/ui/dialog"
 
 /* ---------- TYPES ---------- */
 
@@ -265,9 +265,18 @@ export default function ParticipantDashboard() {
       const {data} = await apiService.rollDice();
       setSubmitResult(null);
 
-      // Update dice value immediately
       setLastDiceValue(data.diceValue);
       localStorage.setItem("lastDiceValue", data.diceValue.toString());
+
+      if (data.invalidRoll) {
+        setGameStatus("IDLE");
+        toast({
+          title: "Too Far!",
+          description: `🎲 You need ${150 - data.positionBefore}${data.positionBefore !== 149 ? ' or less' : ''}.`,
+          variant: "default",
+        })
+        return;
+      }
 
       // Extract floor info for display
       const getFloor = (room: string) => {

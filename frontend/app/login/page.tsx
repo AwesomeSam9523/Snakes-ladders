@@ -1,12 +1,13 @@
 "use client"
 
-import React, { useState } from "react"
-import { useRouter } from "next/navigation"
+import React, {useState} from "react"
+import {useRouter} from "next/navigation"
 import {apiService} from "@/lib/service";
-import { FaUser, FaLock } from 'react-icons/fa';
-import { FiArrowRight } from 'react-icons/fi';
-import { HiEye, HiEyeOff } from 'react-icons/hi';
+import {FaLock, FaUser} from 'react-icons/fa';
+import {HiEye, HiEyeOff} from 'react-icons/hi';
 import {mayak, oskariG2} from "@/app/fonts";
+import Image from "next/image";
+import {useIsMobile} from "@/hooks/use-mobile";
 
 export default function LoginPage() {
   const router = useRouter()
@@ -15,6 +16,7 @@ export default function LoginPage() {
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const isMobile = useIsMobile()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -52,28 +54,23 @@ export default function LoginPage() {
     }
   }
 
- return (
-    <div className="min-h-screen w-full flex items-center justify-center px-4 sm:px-6 lg:px-8 overflow-hidden">
+  return (
+    <div className="min-h-screen w-full flex items-center justify-center overflow-hidden">
       <div
-        className="flex flex-col items-center justify-center"
+        className="flex flex-col items-center justify-center px-6 py-8 mx-8 rounded-[2.5rem]"
         style={{
-          width: 400,
-          maxWidth: 420,
-          minWidth: 320,
-          borderRadius: 84.1,
           background: 'rgba(255,255,255,0.10)',
           border: '0.6px solid #FFFFFF',
           boxShadow: '0 2px 32px 0 rgba(0,0,0,0.18)',
-          padding: '2.5rem 2rem',
           backdropFilter: 'blur(8px)',
         }}
       >
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className={`text-5xl font-extrabold tracking-wide mb-2 text-white ${mayak.className}`}>Welcome!</h1>
-          <p className={`text-gray-300 text-base ${oskariG2.className}`}>Please sign in to your account</p>
+          <h1 className={`text-3xl font-extrabold tracking-wide mb-2 text-white ${mayak.className}`}>Welcome!</h1>
+          <p className={`text-gray-300 text-sm ${oskariG2.className}`}>Please sign in to your account</p>
         </div>
-        <form onSubmit={handleLogin} className="w-full flex flex-col gap-6">
+        <form onSubmit={handleLogin} className="w-full flex flex-col gap-3 text-xs">
           {/* Error Message */}
           {error && (
             <div className="p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm text-center">
@@ -81,28 +78,28 @@ export default function LoginPage() {
             </div>
           )}
           <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg">
-              <FaUser />
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+              <FaUser/>
             </span>
             <input
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 rounded-full shadow-none bg-[#232323] text-white placeholder-gray-400 border-none focus:ring-2 focus:ring-yellow-500 text-base"
+              className="w-full pl-12 pr-4 py-3 rounded-full shadow-none bg-[#232323] text-white placeholder-gray-400 border-none focus:ring-2 focus:ring-yellow-500"
               placeholder="Username"
               required
               autoComplete="username"
             />
           </div>
           <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg">
-              <FaLock />
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+              <FaLock/>
             </span>
             <input
               type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full pl-12 pr-12 py-3 rounded-full shadow-none bg-[#232323] text-white placeholder-gray-400 border-none focus:ring-2 focus:ring-yellow-500 text-base"
+              className="w-full pl-12 pr-12 py-3 rounded-full shadow-none bg-[#232323] text-white placeholder-gray-400 border-none focus:ring-2 focus:ring-yellow-500"
               placeholder="Password"
               required
               autoComplete="current-password"
@@ -113,22 +110,22 @@ export default function LoginPage() {
               onClick={() => setShowPassword((v) => !v)}
               tabIndex={-1}
             >
-              {showPassword ? <HiEyeOff /> : <HiEye />}
+              {showPassword ? <HiEyeOff/> : <HiEye/>}
             </button>
           </div>
           <button
             type="submit"
             disabled={loading}
-            className="w-28 h-12 mx-auto flex items-center justify-center rounded-full border-2 border-yellow-500 text-yellow-500 bg-transparent hover:bg-yellow-500 hover:text-black transition-colors duration-200 text-2xl mt-2 disabled:opacity-60 disabled:cursor-not-allowed"
-            style={{ boxShadow: '0 0 0 2px rgba(255,193,7,0.08)' }}
+            className="w-16 h-6 mx-auto flex items-center justify-center rounded-[1.3rem] border-2 border-yellow-500 text-yellow-500 bg-transparent hover:bg-yellow-500 hover:text-black transition-colors duration-200 text-2xl mt-2 disabled:opacity-60 disabled:cursor-not-allowed"
+            style={{boxShadow: '0 0 0 2px rgba(255,193,7,0.08)'}}
           >
-            <FiArrowRight style={{ width: 38, height: 24 }} />
+            <Image src={"/arrowButton.svg"} alt={"Arrow Button"} width={24} height={15}/>
           </button>
         </form>
       </div>
       <div className="fixed inset-0 -z-10 w-screen h-screen">
         <img
-          src="/login.svg"
+          src={isMobile ? "/loginMobile.svg" : "/login.svg"}
           alt="Login Background"
           className="w-full h-full min-w-full min-h-full object-cover object-top"
           draggable="false"

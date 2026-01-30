@@ -82,14 +82,11 @@ export default function ParticipantDashboard() {
     previousSubmitResultRef.current = submitResult
   }, [submitResult])
 
-  /* ---------- SHOW COMPLETION DIALOG ON WIN ---------- */
   useEffect(() => {
     if (teamData.status === 'COMPLETED' && teamData.currentPosition === 150) {
       setShowCompletionDialog(true)
     }
   }, [teamData.status, teamData.currentPosition])
-
-  /* ---------- DATA FETCHING ---------- */
 
   const fetchTeamData = async () => {
     try {
@@ -185,6 +182,7 @@ export default function ParticipantDashboard() {
 
   function incrementTimer() {
     if (teamData.timerPaused) return;
+    if (teamData.currentPosition === 150) return; 
     setTeamData((prev) => ({
       ...prev,
       totalTimeSec: prev.totalTimeSec + 1,

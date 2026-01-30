@@ -234,7 +234,7 @@ const getAllAuditLogs = async (limit = 100) => {
       userRole: role,
       action: getActionDescription(log.action, details),
       details: details.message || log.target || log.action,
-      timestamp: log.createdAt.toISOString().replace('T', ' ').substring(0, 19),
+      timestamp: log.createdAt.toISOString(),
     };
   });
 };

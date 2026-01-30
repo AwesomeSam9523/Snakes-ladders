@@ -6,6 +6,7 @@ import {apiService} from "@/lib/service";
 import { FaUser, FaLock } from 'react-icons/fa';
 import { FiArrowRight } from 'react-icons/fi';
 import { HiEye, HiEyeOff } from 'react-icons/hi';
+import {mayak, oskariG2} from "@/app/fonts";
 
 export default function LoginPage() {
   const router = useRouter()
@@ -69,8 +70,8 @@ export default function LoginPage() {
       >
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-extrabold tracking-wide mb-2" style={{ fontFamily: '', color: '#fff' }}>Welcome!</h1>
-          <p className="text-gray-300 text-base" style={{ fontFamily: 'Oskari G2', fontWeight: 400 }}>Please sign in to your account</p>
+          <h1 className={`text-5xl font-extrabold tracking-wide mb-2 text-white ${mayak.className}`}>Welcome!</h1>
+          <p className={`text-gray-300 text-base ${oskariG2.className}`}>Please sign in to your account</p>
         </div>
         <form onSubmit={handleLogin} className="w-full flex flex-col gap-6">
           {/* Error Message */}
@@ -87,11 +88,10 @@ export default function LoginPage() {
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 rounded-full bg-[#232323] text-white placeholder-gray-400 border-none focus:ring-2 focus:ring-yellow-500 text-base"
+              className="w-full pl-12 pr-4 py-3 rounded-full shadow-none bg-[#232323] text-white placeholder-gray-400 border-none focus:ring-2 focus:ring-yellow-500 text-base"
               placeholder="Username"
               required
               autoComplete="username"
-              style={{ boxShadow: 'none' }}
             />
           </div>
           <div className="relative">
@@ -102,11 +102,10 @@ export default function LoginPage() {
               type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full pl-12 pr-12 py-3 rounded-full bg-[#232323] text-white placeholder-gray-400 border-none focus:ring-2 focus:ring-yellow-500 text-base"
+              className="w-full pl-12 pr-12 py-3 rounded-full shadow-none bg-[#232323] text-white placeholder-gray-400 border-none focus:ring-2 focus:ring-yellow-500 text-base"
               placeholder="Password"
               required
               autoComplete="current-password"
-              style={{ boxShadow: 'none' }}
             />
             <button
               type="button"
@@ -129,10 +128,9 @@ export default function LoginPage() {
       </div>
       <div className="fixed inset-0 -z-10 w-screen h-screen">
         <img
-          src="/background.png"
+          src="/login.svg"
           alt="Login Background"
-          className="w-full h-full min-w-0 min-h-0 object-cover object-center"
-          style={{ maxWidth: '100vw', maxHeight: '100vh' }}
+          className="w-full h-full min-w-full min-h-full object-cover object-top"
           draggable="false"
         />
       </div>

@@ -14,6 +14,7 @@ import {useToast} from "@/hooks/use-toast"
 import {apiService} from "@/lib/service";
 import {useCheckVersion} from "@/hooks/use-check-version";
 import {Dialog, DialogContent, DialogHeader, DialogTitle} from "@/components/ui/dialog"
+import {mayak, venom} from "@/app/fonts";
 
 /* ---------- TYPES ---------- */
 
@@ -182,7 +183,7 @@ export default function ParticipantDashboard() {
 
   function incrementTimer() {
     if (teamData.timerPaused) return;
-    if (teamData.currentPosition === 150) return; 
+    if (teamData.currentPosition === 150) return;
     setTeamData((prev) => ({
       ...prev,
       totalTimeSec: prev.totalTimeSec + 1,
@@ -365,63 +366,37 @@ export default function ParticipantDashboard() {
       <div
         className="fixed inset-0 flex items-center justify-center bg-black overflow-hidden"
         style={{
-          backgroundImage: 'url(/background.png)',
-          backgroundSize: 'cover', 
+          backgroundImage: 'url(/background.svg)',
+          backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
         }}
       >
         <div
-          className="absolute inset-0 flex items-center justify-center z-10 mt-8 sm:mt-16 md:mt-24"
+          className="absolute inset-0 flex items-center justify-center z-10 mx-16"
         >
           <div
-            className="flex flex-col items-center justify-center text-center"
+            className="flex flex-col items-center justify-center text-center width-[90vw] p-8"
             style={{
-              width: '90vw',
-              maxWidth: 748,
-              minWidth: 260,
-              height: 'auto',
-              minHeight: 120,
               borderRadius: 70,
               background: 'rgba(255,255,255,0.10)',
               boxShadow: '0 2px 32px 0 rgba(0,0,0,0.18)',
               border: '1px solid rgba(255,255,255,0.7)',
-              padding: '2rem',
               backdropFilter: 'blur(4px)',
             }}
           >
-          <div
-                className="text-lg md:text-xl font-light text-gray-200 mb-2 md:mb-0"
-                style={{
-                  letterSpacing: '0.04em',
-                  font:'Mayak',
-                  marginBottom: '0.06em',
-                  lineHeight: 1,
-                }}
-              >
-                Welcome to
-              </div>
-              <div
-                className="text-[3rem] sm:text-[4rem] md:text-[6.5rem] font-extrabold tracking-widest text-[#D7CFC2]"
-                style={{
-                  letterSpacing: '0.00em',
-                  fontFamily: 'MatamorosNFW01-Regular',
-                  marginTop: 0,
-                  lineHeight: 1,
-                }}
-              >
-                VENOM
-              </div> <div
-              className="mt-2"
-              style={{
-                fontFamily: 'Mayak',
-                fontWeight: 800,
-                fontSize: '1.4rem',
-                color: '#D1883F',
-                letterSpacing: '0.06em',
-                lineHeight: 1.22,
-                textAlign: 'center',
-              }}
+            <div
+              className={`text-lg md:text-xl font-light mb-2 text-[#D1883F] ${mayak.className}`}
+            >
+              Welcome to
+            </div>
+            <div
+              className={`text-[7rem] font-extrabold text-[#D7CFC2] ${venom.className} tracking-tight leading-36`}
+            >
+              VENOM
+            </div>
+            <div
+              className={`text-[#D1883F] ${mayak.className}`}
             >
               Game locked. Kindly wait for the organizers to start the game.
             </div>

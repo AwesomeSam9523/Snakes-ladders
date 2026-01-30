@@ -16,10 +16,9 @@ const verifyToken = async(req, res, next) => {
     const token = authHeader.split(' ')[1];
 
     req.user = jwt.verify(token, env.JWT_SECRET);
-
     const tokenExists = await prisma.token.findUnique({
       where: {
-        userId: req.user.id,
+        userId: req.user.userId,
       }
     });
 

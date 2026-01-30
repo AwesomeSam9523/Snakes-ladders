@@ -37,7 +37,7 @@ export function Dice({ onRoll, canRoll, isRolling, lastValue }: DiceProps) {
     <div className="flex flex-col items-center gap-4 sm:gap-6 p-4 sm:p-6 md:p-8 rounded-lg bg-white border border-gray-200 shadow-sm">
       <motion.div
         animate={isRolling ? { rotateX: 360, rotateY: 360 } : {}}
-        transition={{ duration: 2, ease: "linear", repeat: Infinity }}
+        transition={{ duration: 2, ease: "linear", repeat: 2 }}
         className="relative w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-xl bg-linear-to-br from-gray-800 to-gray-900 shadow-2xl flex items-center justify-center"
       >
         <span className="text-5xl sm:text-5xl md:text-6xl font-bold text-white">{displayValue}</span>

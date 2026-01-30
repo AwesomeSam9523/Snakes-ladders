@@ -2,9 +2,10 @@ const jwt = require('jsonwebtoken');
 const env = require('../config/env');
 const { MESSAGES } = require('../config/constants');
 const { sendUnauthorized } = require('../utils/response.util');
+const prisma = require('../config/db');
 
 //Verify JWT token middleware
-const verifyToken = (req, res, next) => {
+const verifyToken = async(req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
 
@@ -15,7 +16,22 @@ const verifyToken = (req, res, next) => {
     const token = authHeader.split(' ')[1];
 
     req.user = jwt.verify(token, env.JWT_SECRET);
-    next();
+    const tokenExists = await prisma.token.findUnique({
+      where: {
+        userId: req.user.userId,
+      }
+    });
+
+    if (!tokenExists)
+      next();
+    else {
+      const storedToken = tokenExists.token;
+      if (storedToken !== token) {
+        return sendUnauthorized(res, MESSAGES.UNAUTHORIZED);
+      } else {
+        next();
+      }
+    }
   } catch (error) {
     return sendUnauthorized(res, MESSAGES.INVALID_CREDENTIALS);
   }

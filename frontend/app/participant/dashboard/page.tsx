@@ -403,7 +403,7 @@ export default function ParticipantDashboard() {
         {/* Content overlay */}
         <div className="absolute inset-0 z-10 flex items-center justify-center mx-16">
           <div
-            className="flex flex-col items-center justify-center text-center w-[40vw] p-8"
+            className="flex flex-col items-center justify-center text-center w-screen p-8 md:w-160"
             style={{
               borderRadius: 70,
               background: "rgba(255,255,255,0.10)",

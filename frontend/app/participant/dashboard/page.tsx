@@ -13,7 +13,7 @@ import {Toaster} from "@/components/ui/toaster"
 import {useToast} from "@/hooks/use-toast"
 import {apiService} from "@/lib/service";
 import {useCheckVersion} from "@/hooks/use-check-version";
-import {Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription} from "@/components/ui/dialog"
+import {Dialog, DialogContent, DialogHeader, DialogTitle} from "@/components/ui/dialog"
 
 /* ---------- TYPES ---------- */
 
@@ -207,6 +207,11 @@ export default function ParticipantDashboard() {
       setLastDiceValue(parseInt(lastDice, 10))
     }
 
+    const lastAnswer = localStorage.getItem("currentAnswer")
+    if (lastAnswer) {
+      setAnswer(lastAnswer)
+    }
+
     const teamInterval = setInterval(fetchTeamData, 5000)
     const leaderboardInterval = setInterval(fetchTeams, 5000)
     const systemSettingsInterval = setInterval(fetchSystemSettings, 10000);
@@ -263,9 +268,18 @@ export default function ParticipantDashboard() {
       const {data} = await apiService.rollDice();
       setSubmitResult(null);
 
-      // Update dice value immediately
       setLastDiceValue(data.diceValue);
       localStorage.setItem("lastDiceValue", data.diceValue.toString());
+
+      if (data.invalidRoll) {
+        setGameStatus("IDLE");
+        toast({
+          title: "Too Far!",
+          description: `🎲 You need ${150 - data.positionBefore}${data.positionBefore !== 149 ? ' or less' : ''}.`,
+          variant: "default",
+        })
+        return;
+      }
 
       // Extract floor info for display
       const getFloor = (room: string) => {
@@ -303,6 +317,11 @@ export default function ParticipantDashboard() {
         variant: "destructive",
       })
     }
+  }
+
+  const saveAndSetAnswer = (answer: string) => {
+    localStorage.setItem("currentAnswer", answer);
+    setAnswer(answer);
   }
 
   const handleSubmitAnswer = async () => {
@@ -395,7 +414,7 @@ export default function ParticipantDashboard() {
             checkpoint={currentCheckpoint}
             questionData={questionData}
             answer={answer}
-            setAnswer={setAnswer}
+            setAnswer={saveAndSetAnswer}
             submitting={submitting}
             submitResult={submitResult}
             handleSubmitAnswer={handleSubmitAnswer}

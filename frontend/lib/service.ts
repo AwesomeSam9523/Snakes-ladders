@@ -62,6 +62,13 @@ class ApiService {
     return response.json();
   }
 
+  async login(username: string, password: string): Promise<any> {
+    return this.request('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({username, password}),
+    });
+  }
+
   async fetchTeams(getAllCheckpoints = false): Promise<any> {
     return this.request(`/teams?allCheckpoints=${getAllCheckpoints}`);
   }
@@ -159,7 +166,7 @@ class ApiService {
   }
 
   async resetTeamPassword(teamId: string, newPassword: string): Promise<any> {
-    return this.request(`teams/${teamId}/password`, {
+    return this.request(`/teams/${teamId}/password`, {
       method: "PUT",
       body: JSON.stringify({newPassword}),
     });

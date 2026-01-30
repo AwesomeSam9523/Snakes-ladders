@@ -1,11 +1,9 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
-import { apiService } from '@/lib/service'
+import {useEffect, useRef} from 'react'
+import {apiService} from '@/lib/service'
 
-const RELOAD_KEY = 'app_version_reloaded'
-
-export function useCheckVersion(intervalMs = 10000) {
+export function useCheckVersion() {
   const reloading = useRef(false)
 
   useEffect(() => {
@@ -20,23 +18,19 @@ export function useCheckVersion(intervalMs = 10000) {
         }
 
         if (storedVersion !== version) {
-          // Prevent reload loops
-          if (sessionStorage.getItem(RELOAD_KEY)) return
-
-          sessionStorage.setItem(RELOAD_KEY, 'true')
           localStorage.setItem('app_version', version)
 
           reloading.current = true
+          console.log('Reloading app due to version change...')
           window.location.reload()
         }
       } catch (err) {
-        
         console.error('Version check failed:', err)
       }
     }
 
     checkVersion()
-    const id = setInterval(checkVersion, intervalMs)
+    const id = setInterval(checkVersion, 10000)
     return () => clearInterval(id)
-  }, [intervalMs])
+  }, [])
 }

@@ -39,7 +39,7 @@ const findAvailableRoom = async () => {
 
 // Helper function to auto-assign map based on FCFS (10 teams per map)
 const findAvailableMap = async () => {
-  const MAP_CAPACITY = 10;
+  const MAP_CAPACITY = 20;
   
   // Get all active maps
   const maps = await prisma.boardMap.findMany({

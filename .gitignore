@@ -55,3 +55,4 @@ prisma/*.db-journal
 *.cache
 .turbo
 /backend/data/Teams.csv
+/backend/data/Admins.csv

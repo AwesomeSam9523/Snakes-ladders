@@ -168,8 +168,8 @@ class ApiService {
     return this.request('/questions')
   }
 
-  async fetchAuditLogs(): Promise<any> {
-    return this.request('/audit-logs')
+  async fetchAuditLogs(searchAuditQuery: string): Promise<any> {
+    return this.request(`/audit-logs?searchAuditQuery=${encodeURIComponent(searchAuditQuery)}`);
   }
 
   async resetTeamPassword(teamId: string, newPassword: string): Promise<any> {

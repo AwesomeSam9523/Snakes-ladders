@@ -545,7 +545,7 @@ export default function ParticipantDashboard() {
           </DialogHeader>
           <div className="text-center space-y-3">
             <div className="text-xl font-semibold">Game Completed!</div>
-            <div>Team {teamData.teamId} has successfully reached position 150!</div>
+            <div>Team {teamData.teamId} has successfully reached position 150! Report to room AB1-010.</div>
             <div className="pt-2 text-4xl">🏆</div>
           </div>
         </DialogContent>

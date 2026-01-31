@@ -181,6 +181,7 @@ export default function SuperAdminDashboard() {
       const interval = setInterval(() => {
         fetchTeams()
         fetchRoomCapacities()
+        fetchActivityLogs()
       }, 10000)
       return () => clearInterval(interval)
     }

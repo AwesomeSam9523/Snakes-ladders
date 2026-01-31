@@ -13,7 +13,7 @@ const createTeam = async (req, res, next) => {
     }
 
     const password = generateRandomPassword(8);
-    const team = await superadminService.createTeam(teamName, members, password);
+    const team = await superadminService.createTeam(teamName, password, members);
 
     return sendCreated(res, team, MESSAGES.TEAM_CREATED);
   } catch (error) {

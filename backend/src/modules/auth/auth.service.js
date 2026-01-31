@@ -27,8 +27,6 @@ const login = async (username, password) => {
   const isValidPassword = await comparePassword(password, user.password);
   
   if (!isValidPassword) {
-    // Log failed login attempt
-    await logLogin(username, 'unknown', false);
     throw new Error('Invalid credentials');
   }
 

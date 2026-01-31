@@ -55,11 +55,18 @@ class ApiService {
       throw new Error("Unauthorized");
     }
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status} at ${endpoint}`);
+    let resJson;
+    try {
+      resJson = await response.json();
+    } catch (e) {
+      console.log(e)
     }
 
-    return response.json();
+    if (!response.ok) {
+      throw new Error((resJson ? resJson.message : "") || `HTTP error! status: ${response.status} at ${endpoint}`);
+    }
+
+    return resJson;
   }
 
   async login(username: string, password: string): Promise<any> {

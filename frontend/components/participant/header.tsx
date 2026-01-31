@@ -4,6 +4,7 @@ import { LogOut } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
+import HeaderLogo from "@/public/header-logo.svg"
 
 interface HeaderProps {
   teamId: string

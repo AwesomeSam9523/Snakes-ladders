@@ -440,7 +440,6 @@ export default function SuperAdminDashboard() {
   // Calculate leaderboard - sort by points (descending), then by time (ascending)
   const leaderboard = [...teams]
     .filter((t) => !t.disqualified)
-    .sort((a, b) => b.points - a.points || a.totalTime - b.totalTime)
 
   return (
     <div className="min-h-screen bg-white relative">

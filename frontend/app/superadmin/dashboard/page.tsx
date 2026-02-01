@@ -20,6 +20,7 @@ interface Team {
   disqualified: boolean
   mapId?: string
   mapName?: string
+  score: number
   checkpoints: Array<{
     id: string
     checkpointNumber: number
@@ -505,6 +506,7 @@ export default function SuperAdminDashboard() {
                   <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Position</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Points</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Time</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Score</th>
                 </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -524,6 +526,7 @@ export default function SuperAdminDashboard() {
                       <td className="px-4 py-3 text-sm text-gray-900">{team.currentPosition}</td>
                       <td className="px-4 py-3 text-sm text-gray-900">{team.points}</td>
                       <td className="px-4 py-3 text-sm font-mono text-gray-900">{formatTime(team.totalTime)}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900">{team.score}</td>
                     </tr>
                   )
                 })}

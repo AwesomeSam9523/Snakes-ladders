@@ -408,8 +408,8 @@ const getAllTeamsWithDetails = async () => {
       (team.points - minPoints) / pointsRange;
 
     const score =
-      0.6 * scaledTime +
-      0.4 * scaledPoints;
+      0.4 * scaledTime +
+      0.6 * scaledPoints;
 
     return {
       ...team,
